@@ -187,7 +187,7 @@ def parse_args():
 def setup(rank):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
-    world_size = os.environ["WORLD_SIZE"]
+    world_size = int(os.environ["WORLD_SIZE"])
     # initialize the process group
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
