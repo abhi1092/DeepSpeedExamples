@@ -12,8 +12,8 @@ if [ "$ZERO_STAGE" == "" ]; then
     ZERO_STAGE=2
 fi
 mkdir -p $OUTPUT
-
-torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=1 --rdzv_id=101 --rdzv_endpoint="abhi-deepspeed-1-master-0:${MASTER_PORT}"  --nproc_per_node=1 main.py \
+NEW_PORT=23457
+torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=1 --rdzv_id=101 --rdzv_endpoint="abhi-deepspeed-1-master-0:${NEW_PORT}"  --nproc_per_node=1 main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
    --model_name_or_path facebook/opt-1.3b \
