@@ -21,6 +21,7 @@ from transformers import (
 
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
+import torch.distributed as dist
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -183,10 +184,16 @@ def parse_args():
 
     return args
 
+def setup(rank):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    world_size = os.environ["WORLD_SIZE"]
+    # initialize the process group
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
 def main():
     args = parse_args()
-
+    setup(args.local_rank)
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
