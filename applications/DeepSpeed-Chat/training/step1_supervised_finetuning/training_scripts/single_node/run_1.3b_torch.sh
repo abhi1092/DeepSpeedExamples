@@ -24,6 +24,7 @@ torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=1 --rdzv_id
    --model_name_or_path facebook/opt-1.3b \
    --per_device_train_batch_size 8 \
    --per_device_eval_batch_size 8 \
+   --data_output_path /app/tmp \
    --max_seq_len 512 \
    --learning_rate 9.65e-6 \
    --weight_decay 0. \
