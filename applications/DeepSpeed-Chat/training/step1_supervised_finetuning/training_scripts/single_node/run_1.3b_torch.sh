@@ -17,7 +17,7 @@ NEW_PORT=23457
 torchrun \
    --nproc_per_node 1 --nnodes ${WORLD_SIZE}  \
    --rdzv_id=12345 \
-   --rdzv_backend=c10d \
+   --rdzv_backend=gloo \
     main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
