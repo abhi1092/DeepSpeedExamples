@@ -28,12 +28,14 @@ def demo_basic():
 
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
-
-    optimizer.zero_grad()
-    outputs = ddp_model(torch.randn(20, 10))
-    labels = torch.randn(20, 5).to(device_id)
-    loss_fn(outputs, labels).backward()
-    optimizer.step()
+    for i in range(1000):
+        optimizer.zero_grad()
+        outputs = ddp_model(torch.randn(20, 10))
+        labels = torch.randn(20, 5).to(device_id)
+        loss = loss_fn(outputs, labels)
+        print(f"running basic DDP example on rank {rank}. Loss {loss}")
+        loss.backward()
+        optimizer.step()
 
 if __name__ == "__main__":
     demo_basic()
