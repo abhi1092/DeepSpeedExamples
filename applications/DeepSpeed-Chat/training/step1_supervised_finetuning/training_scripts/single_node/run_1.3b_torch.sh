@@ -17,7 +17,7 @@ NEW_PORT=23457
 python3 -m torch.distributed.run \
    --nproc_per_node 1 --nnodes ${WORLD_SIZE}  \
    --rdzv_id=101 \
-   --rdzv_endpoint="abhi-deepspeed-1-master-0:$NEW_PORT" \
+   --rdzv_endpoint="abhi-deepspeed-1-worker-0:$NEW_PORT" \
    --rdzv_backend=c10d \
     main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
