@@ -28,6 +28,7 @@ torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=1 --rdzv_id
    --max_seq_len 512 \
    --learning_rate 9.65e-6 \
    --weight_decay 0. \
+   --local_rank 0 \
    --num_train_epochs 16 \
    --gradient_accumulation_steps 1 \
    --lr_scheduler_type cosine \
