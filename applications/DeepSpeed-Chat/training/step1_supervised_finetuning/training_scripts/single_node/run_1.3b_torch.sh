@@ -14,7 +14,7 @@ fi
 mkdir -p $OUTPUT
 NEW_PORT=23457
 
-python3 -m torch.distributed.run \
+torchrun \
    --nproc_per_node 1 --nnodes ${WORLD_SIZE}  \
    --rdzv_id=12345 \
    --host abhi-deepspeed-1-worker-0 \
