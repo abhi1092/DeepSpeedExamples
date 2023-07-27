@@ -13,7 +13,13 @@ if [ "$ZERO_STAGE" == "" ]; then
 fi
 mkdir -p $OUTPUT
 NEW_PORT=23457
-torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=1  --nproc_per_node=1 main.py \
+
+python3 -m torch.distributed.run \
+   --nproc_per_node 1 --nnodes ${WORLD_SIZE}  \
+   --rdzv_id=101 \
+   --rdzv_endpoint="abhi-deepspeed-1-master-0:$NEW_PORT" \
+   --rdzv_backend=c10d \
+    main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
    --model_name_or_path facebook/opt-1.3b \
