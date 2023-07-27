@@ -206,6 +206,7 @@ def main():
 
     args.global_rank = torch.distributed.get_rank()
     print("Global rank: ", args.global_rank)
+    print("Local rank: ", os.environ["LOCAL_RANK"])
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
                                     enable_tensorboard=args.enable_tensorboard,
