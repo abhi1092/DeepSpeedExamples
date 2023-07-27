@@ -279,7 +279,9 @@ def create_prompt_dataset(local_rank,
     )  # hash the file name to avoid too long file name
     train_fname = f"{output_path}/traindata_{fname}.pt"
     eval_fname = f"{output_path}/evaldata_{fname}.pt"
-
+    print(train_fname)
+    print(output_path)
+    print("===============")
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
