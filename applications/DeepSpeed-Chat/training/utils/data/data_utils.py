@@ -286,7 +286,9 @@ def create_prompt_dataset(local_rank,
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
-
+    print("done with distributed.all_reduce")
+    print(f"{reload=}")
+    print(f"{(buf_create_cache.item() != 0)=}")
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         print("here")
         if len(data_path) == 1:  # Single dataset.
@@ -352,7 +354,9 @@ def create_prompt_dataset(local_rank,
         print(f"Saving to {train_fname}")
         print("=============")
         torch.save(eval_dataset, eval_fname)
+    print("Waiting dist barrier")
     torch.distributed.barrier()
+    print("Done with distributed.barrier")
     return torch.load(train_fname), torch.load(eval_fname)
 
 
