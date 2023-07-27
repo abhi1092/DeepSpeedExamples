@@ -205,6 +205,7 @@ def main():
         deepspeed.init_distributed()
 
     args.global_rank = torch.distributed.get_rank()
+    args.local_rank = int(os.environ["LOCAL_RANK"])
     print("Global rank: ", args.global_rank)
     print("Local rank: ", os.environ["LOCAL_RANK"])
     ds_config = get_train_ds_config(offload=args.offload,
