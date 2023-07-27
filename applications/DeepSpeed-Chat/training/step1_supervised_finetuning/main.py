@@ -193,6 +193,7 @@ def setup(rank):
 
 def main():
     args = parse_args()
+    dist.init_process_group("nccl")
     # setup(args.local_rank)
 
     if args.local_rank == -1:
