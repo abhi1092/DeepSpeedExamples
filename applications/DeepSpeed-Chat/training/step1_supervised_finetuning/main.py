@@ -193,7 +193,8 @@ def setup(rank):
 
 def main():
     args = parse_args()
-    setup(args.local_rank)
+    # setup(args.local_rank)
+
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
