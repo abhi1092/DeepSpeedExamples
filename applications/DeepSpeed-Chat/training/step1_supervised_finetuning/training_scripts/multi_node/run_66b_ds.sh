@@ -13,7 +13,7 @@ if [ "$ZERO_STAGE" == "" ]; then
 fi
 mkdir -p $OUTPUT
 
-deepspeed --num_nodes=2 --num_gpus=8  --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT main.py \
+deepspeed --num_nodes=2 --num_gpus=8  --master_addr=$MASTER_ADDR --master_port=$MASTER_PORT --hostfile=hostfile main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
    --model_name_or_path facebook/opt-1.3b \
