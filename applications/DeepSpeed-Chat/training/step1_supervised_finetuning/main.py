@@ -195,7 +195,10 @@ def main():
     args = parse_args()
     dist.init_process_group("nccl")
     # setup(args.local_rank)
-
+    print(args.local_rank)
+    args.local_rank = os.environ["RANK"]
+    print(args.local_rank)
+    exit()
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
