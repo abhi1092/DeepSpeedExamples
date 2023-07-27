@@ -285,12 +285,12 @@ def create_prompt_dataset(local_rank,
     print("local rank; ",local_rank)
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
-    print("Waiting for torch all reduce")
     torch.distributed.all_reduce(buf_create_cache)
-    print("Done for torch all reduce")
 
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
+        print("here")
         if len(data_path) == 1:  # Single dataset.
+            print(len(data_path))
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
                 seed, tokenizer, end_of_conversation_token, max_seq_len)
@@ -299,6 +299,7 @@ def create_prompt_dataset(local_rank,
             eval_datasets = []
             train_size = 0
             eval_size = 0
+            print(data_path)
             for d_path in data_path:
                 train_dataset, eval_dataset = create_dataset(
                     local_rank, d_path, data_split, output_path, train_phase,
