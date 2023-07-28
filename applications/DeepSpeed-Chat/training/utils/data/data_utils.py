@@ -288,7 +288,8 @@ def create_prompt_dataset(local_rank,
     torch.distributed.all_reduce(buf_create_cache)
     print("done with distributed.all_reduce")
     print(f"{reload=}")
-    print(f"{(buf_create_cache.item() != 0)=}")
+    print(f"buf_create_cache.item() != 0 {buf_create_cache.item() != 0}")
+    print("Stuck at resovling buf_create_cache")
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         print("here")
         if len(data_path) == 1:  # Single dataset.
