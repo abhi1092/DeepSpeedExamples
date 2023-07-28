@@ -285,6 +285,7 @@ def create_prompt_dataset(local_rank,
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     print(f"{buf_create_cache.shape=}")
+    print(f"{buf_create_cache.device=}")
     print(f"{cache_found=}")
     print(f"Starting distributed.all_reduce {local_rank}")
     torch.distributed.barrier()
