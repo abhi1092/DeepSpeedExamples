@@ -195,17 +195,23 @@ def main():
     args = parse_args()
     dist.init_process_group("nccl")
     # setup(args.local_rank)
+    args.local_rank = int(os.environ["LOCAL_RANK"])
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
+        print(f"{device=}")
+        print(f"{args.local_rank=} {torch.cuda.default_device()=}")
+        print(f"{args.local_rank=} {torch.cuda.current_device()=}")
+        print(f"{args.local_rank=} {torch.cuda.default_tensor_type().device=}")
+
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
         deepspeed.init_distributed()
 
     args.global_rank = torch.distributed.get_rank()
-    args.local_rank = int(os.environ["LOCAL_RANK"])
+
     print("Global rank: ", args.global_rank)
     print("Local rank: ", os.environ["LOCAL_RANK"])
     ds_config = get_train_ds_config(offload=args.offload,
