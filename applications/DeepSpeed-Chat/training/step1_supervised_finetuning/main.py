@@ -201,10 +201,10 @@ def main():
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
-        print(f"{device=}")
-        print(f"{args.local_rank=} {torch.cuda.default_device()=}")
-        print(f"{args.local_rank=} {torch.cuda.current_device()=}")
-        print(f"{args.local_rank=} {torch.cuda.default_tensor_type().device=}")
+        # print(f"{device=}")
+        # print(f"{args.local_rank=} {torch.cuda.default_device()=}")
+        # print(f"{args.local_rank=} {torch.cuda.current_device()=}")
+        # print(f"{args.local_rank=} {torch.cuda.default_tensor_type().device=}")
 
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
