@@ -287,6 +287,7 @@ def create_prompt_dataset(local_rank,
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     print(f"Starting distributed.all_reduce {local_rank}")
     torch.distributed.all_reduce(buf_create_cache)
+    torch.distributed.barrier()
     print(f"done with distributed.all_reduce {local_rank}")
     print(f"{reload=}")
     print(f"buf_create_cache.item() != 0 {buf_create_cache.item() != 0}")
