@@ -3,6 +3,7 @@ import argparse
 
 import torch
 import torch.distributed as dist
+import deepspeed
 
 # Environment variables set by torch.distributed.launch
 LOCAL_RANK = int(os.environ['LOCAL_RANK'])
@@ -33,7 +34,8 @@ def run(backend):
     print('all reduce worker_{} local rank {} has received data from rank {}\n'.format(WORLD_RANK, LOCAL_RANK, 0), tensor)
 
 def init_processes(backend):
-    dist.init_process_group(backend, rank=WORLD_RANK, world_size=WORLD_SIZE)
+    # dist.init_process_group(backend, rank=WORLD_RANK, world_size=WORLD_SIZE)
+    deepspeed.init_distributed()
     run(backend)
 
 
