@@ -279,25 +279,11 @@ def create_prompt_dataset(local_rank,
     )  # hash the file name to avoid too long file name
     train_fname = f"{output_path}/traindata_{fname}.pt"
     eval_fname = f"{output_path}/evaldata_{fname}.pt"
-    print(train_fname)
-    print(output_path)
-    print("local rank; ",local_rank)
+
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
-    # buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
-    buf_create_cache = torch.ByteTensor([False]).cuda()
-    print(f"{buf_create_cache=}")
-    print(f"{buf_create_cache.shape=}")
-    print(f"{local_rank=} {buf_create_cache.device=}")
-    print(f"{cache_found=}")
-    print(f"Starting distributed.all_reduce {local_rank}")
-    torch.distributed.barrier()
-    torch.distributed.all_reduce(buf_create_cache, op=torch.distributed.ReduceOp.MAX)
-    print(f"done with distributed.all_reduce {local_rank}")
-    torch.distributed.barrier()
-    print(f"{reload=}")
-    print(f"buf_create_cache.item() != 0 {buf_create_cache.item() != 0}")
-    print("Stuck at resovling buf_create_cache")
-    if local_rank >= 0 and (buf_create_cache.item() != 0 or reload):
+    buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
+    torch.distributed.all_reduce(buf_create_cache)
+    if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         print("here")
         if len(data_path) == 1:  # Single dataset.
             print(len(data_path))
