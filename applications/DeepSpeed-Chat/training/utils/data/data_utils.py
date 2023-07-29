@@ -282,9 +282,9 @@ def create_prompt_dataset(global_rank,local_rank,
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
-    # tensor = torch.ByteTensor([False]).cuda()
-    # torch.distributed.all_reduce(tensor)
-    # print(f"All reduce test 3 on global rank {global_rank} rank {local_rank}")
+    tensor = torch.ByteTensor([False]).cuda()
+    torch.distributed.all_reduce(tensor)
+    print(f"All reduce test 3 on global rank {global_rank} rank {local_rank}")
 
     torch.distributed.all_reduce(buf_create_cache)
     print(f"{local_rank} done with all reduce")
