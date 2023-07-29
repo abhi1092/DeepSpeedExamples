@@ -16,8 +16,10 @@ def run(backend):
 
     # Need to put tensor on a GPU device for nccl backend
     if backend == 'nccl':
-        device = torch.device("cuda:{}".format(LOCAL_RANK))
-        tensor = tensor.to(device)
+        # device = torch.device("cuda:{}".format(LOCAL_RANK))
+        torch.cuda.set_device(LOCAL_RANK)
+        # tensor = tensor.to(device)
+        tensor = tensor.cuda()
 
 
     if WORLD_RANK == 0:
