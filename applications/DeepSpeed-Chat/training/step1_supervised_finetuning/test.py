@@ -24,7 +24,7 @@ def run(backend):
             print('worker_{} sent data to Rank {}\n'.format(0, rank_recv))
     else:
         dist.recv(tensor=tensor, src=0)
-        print('worker_{} has received data from rank {}\n'.format(WORLD_RANK, 0))
+        print('worker_{} local rank {} has received data from rank {}\n'.format(WORLD_RANK, LOCAL_RANK, 0))
 
 
 def init_processes(backend):
