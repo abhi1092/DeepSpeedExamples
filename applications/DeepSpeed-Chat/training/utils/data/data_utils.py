@@ -289,7 +289,7 @@ def create_prompt_dataset(local_rank,
     print(f"{cache_found=}")
     print(f"Starting distributed.all_reduce {local_rank}")
     torch.distributed.barrier()
-    torch.distributed.all_reduce(buf_create_cache)
+    torch.distributed.all_reduce(buf_create_cache, op=torch.distributed.ReduceOp.MAX)
     print(f"done with distributed.all_reduce {local_rank}")
     torch.distributed.barrier()
     print(f"{reload=}")
