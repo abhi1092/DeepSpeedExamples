@@ -208,8 +208,8 @@ def main():
 
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
-        deepspeed.init_distributed()
-        # deepspeed.init_distributed(backend='gloo')
+        # deepspeed.init_distributed()
+        deepspeed.init_distributed(backend='gloo')
 
     args.global_rank = torch.distributed.get_rank()
 
