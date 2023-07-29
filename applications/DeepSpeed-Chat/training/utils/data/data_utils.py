@@ -284,6 +284,7 @@ def create_prompt_dataset(local_rank,
     print("local rank; ",local_rank)
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
+    print(f"{buf_create_cache=}")
     print(f"{buf_create_cache.shape=}")
     print(f"{local_rank=} {buf_create_cache.device=}")
     print(f"{cache_found=}")
