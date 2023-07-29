@@ -11,12 +11,14 @@ WORLD_RANK = int(os.environ['RANK'])
 
 
 def run(backend):
-    tensor = torch.zeros(1)
+    # tensor = torch.zeros(1)
+    tensor = torch.ByteTensor([False])
 
     # Need to put tensor on a GPU device for nccl backend
     if backend == 'nccl':
         device = torch.device("cuda:{}".format(LOCAL_RANK))
         tensor = tensor.to(device)
+
 
     if WORLD_RANK == 0:
         for rank_recv in range(1, WORLD_SIZE):
