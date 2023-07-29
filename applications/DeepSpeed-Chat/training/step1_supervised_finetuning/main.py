@@ -210,9 +210,9 @@ def main():
     print("Global rank: ", args.global_rank)
     print("Local rank: ", os.environ["LOCAL_RANK"])
 
-    # tensor = torch.ByteTensor([False]).cuda()
-    # torch.distributed.all_reduce(tensor)
-    # print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
+    tensor = torch.ByteTensor([False]).cuda()
+    torch.distributed.all_reduce(tensor)
+    print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
 
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
