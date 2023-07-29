@@ -26,7 +26,7 @@ def run(backend):
         dist.recv(tensor=tensor, src=0)
         print('worker_{} local rank {} has received data from rank {}\n'.format(WORLD_RANK, LOCAL_RANK, 0))
     result = torch.distributed.all_reduce(tensor)
-    print('worker_{} local rank {} has received data from rank {}\n'.format(WORLD_RANK, LOCAL_RANK, 0), result)
+    print('all reduce worker_{} local rank {} has received data from rank {}\n'.format(WORLD_RANK, LOCAL_RANK, 0), result)
 
 def init_processes(backend):
     dist.init_process_group(backend, rank=WORLD_RANK, world_size=WORLD_SIZE)
