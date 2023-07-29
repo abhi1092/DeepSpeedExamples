@@ -250,7 +250,7 @@ def main():
     train_phase = 1
     # tensor = torch.ByteTensor([False]).cuda()
     # torch.distributed.all_reduce(tensor)
-    # print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
+    # print(f"All reduce test 2 on global rank {args.global_rank} rank {args.local_rank}")
 
     train_dataset, eval_dataset = create_prompt_dataset(
         args.global_rank,
