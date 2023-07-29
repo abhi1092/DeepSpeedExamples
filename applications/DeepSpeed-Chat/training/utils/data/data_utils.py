@@ -295,7 +295,7 @@ def create_prompt_dataset(local_rank,
     print(f"{reload=}")
     print(f"buf_create_cache.item() != 0 {buf_create_cache.item() != 0}")
     print("Stuck at resovling buf_create_cache")
-    if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
+    if local_rank >= 0 and (buf_create_cache.item() != 0 or reload):
         print("here")
         if len(data_path) == 1:  # Single dataset.
             print(len(data_path))
