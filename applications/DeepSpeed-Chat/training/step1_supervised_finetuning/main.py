@@ -195,8 +195,6 @@ def main():
     # setup(args.local_rank)
     os.environ["LOCAL_RANK"] = "1"
     args.local_rank = int(os.environ["LOCAL_RANK"])
-    print(torch.distributed.get_rank())
-    exit()
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
@@ -209,7 +207,7 @@ def main():
 
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
-        deepspeed.init_distributed(rank=torch.distributed.get_rank())
+        deepspeed.init_distributed(rank=int(os.environ["RANK"]), world_size=int(os.environ["WORLD_SIZE"]))
 
     args.global_rank = torch.distributed.get_rank()
 
