@@ -225,11 +225,10 @@ def main():
 
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
-
-    torch.distributed.barrier()
     tensor = torch.ByteTensor([False]).cuda()
     torch.distributed.all_reduce(tensor)
     print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
+    torch.distributed.barrier()
 
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
     tokenizer.pad_token = tokenizer.eos_token

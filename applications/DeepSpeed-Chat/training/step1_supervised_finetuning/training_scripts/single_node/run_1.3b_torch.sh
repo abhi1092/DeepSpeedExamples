@@ -21,7 +21,7 @@ torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=1 --rdzv_id
     main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
-   --model_name_or_path facebook/opt-1.3b \
+   --model_name_or_path facebook/opt-66b \
    --per_device_train_batch_size 8 \
    --per_device_eval_batch_size 8 \
    --data_output_path /app/tmp \
