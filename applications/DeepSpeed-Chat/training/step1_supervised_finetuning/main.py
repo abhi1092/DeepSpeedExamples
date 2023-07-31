@@ -194,7 +194,7 @@ def main():
     args = parse_args()
     # setup(args.local_rank)
     # os.environ["LOCAL_RANK"] = "1"
-    args.local_rank = int(os.environ["LOCAL_RANK"])
+    # args.local_rank = int(os.environ["LOCAL_RANK"])
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
@@ -203,7 +203,7 @@ def main():
 
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
-        deepspeed.init_distributed(rank=int(os.environ["RANK"]), world_size=int(os.environ["WORLD_SIZE"]))
+        deepspeed.init_distributed()
 
     args.global_rank = torch.distributed.get_rank()
 
@@ -225,9 +225,9 @@ def main():
 
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
-    tensor = torch.ByteTensor([False]).cuda()
-    torch.distributed.all_reduce(tensor)
-    print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
+    # tensor = torch.ByteTensor([False]).cuda()
+    # torch.distributed.all_reduce(tensor)
+    # print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
     torch.distributed.barrier()
 
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
