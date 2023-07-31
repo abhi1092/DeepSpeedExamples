@@ -29,7 +29,5 @@ deepspeed main.py \
    --seed 1234 \
    --gradient_checkpointing \
    --zero_stage $ZERO_STAGE \
-   --lora_dim 128 \
-   --lora_module_name decoder.layers. \
    --deepspeed \
    --output_dir $OUTPUT
