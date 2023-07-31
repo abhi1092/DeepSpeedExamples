@@ -255,7 +255,7 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
     return train_dataset, eval_dataset
 
 
-def create_prompt_dataset(global_rank,local_rank,
+def create_prompt_dataset(local_rank,
                           data_path,
                           data_split,
                           output_path,
@@ -282,16 +282,10 @@ def create_prompt_dataset(global_rank,local_rank,
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
-    # tensor = torch.ByteTensor([False]).cuda()
-    # torch.distributed.all_reduce(tensor)
-    # print(f"All reduce test 3 on global rank {global_rank} rank {local_rank}")
-
     torch.distributed.all_reduce(buf_create_cache)
-    print(f"{local_rank} done with all reduce")
+
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
-        print("here")
         if len(data_path) == 1:  # Single dataset.
-            print(len(data_path))
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
                 seed, tokenizer, end_of_conversation_token, max_seq_len)
@@ -300,7 +294,6 @@ def create_prompt_dataset(global_rank,local_rank,
             eval_datasets = []
             train_size = 0
             eval_size = 0
-            print(data_path)
             for d_path in data_path:
                 train_dataset, eval_dataset = create_dataset(
                     local_rank, d_path, data_split, output_path, train_phase,
@@ -350,12 +343,8 @@ def create_prompt_dataset(global_rank,local_rank,
                 shuffle_idx = get_shuffle_idx(seed, len(eval_dataset))
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
         torch.save(train_dataset, train_fname)
-        print(f"Saving to {train_fname}")
-        print("=============")
         torch.save(eval_dataset, eval_fname)
-    print("Waiting dist barrier")
     torch.distributed.barrier()
-    print("Done with distributed.barrier")
     return torch.load(train_fname), torch.load(eval_fname)
 
 

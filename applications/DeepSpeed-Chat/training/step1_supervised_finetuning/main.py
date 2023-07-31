@@ -18,9 +18,9 @@ from transformers import (
     default_data_collator,
     get_scheduler,
 )
+
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
-import torch.distributed as dist
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -183,34 +183,20 @@ def parse_args():
 
     return args
 
-def setup(rank):
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
-    world_size = int(os.environ["WORLD_SIZE"])
-    # initialize the process group
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
 def main():
     args = parse_args()
-    # setup(args.local_rank)
-    # os.environ["LOCAL_RANK"] = "1"
-    # args.local_rank = int(os.environ["LOCAL_RANK"])
+
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
-
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
         deepspeed.init_distributed()
 
     args.global_rank = torch.distributed.get_rank()
-
-    print("Global rank: ", args.global_rank)
-    print("Local rank: ", os.environ["LOCAL_RANK"])
-
-
 
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
@@ -225,9 +211,7 @@ def main():
 
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
-    # tensor = torch.ByteTensor([False]).cuda()
-    # torch.distributed.all_reduce(tensor)
-    # print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
+
     torch.distributed.barrier()
 
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
@@ -248,12 +232,7 @@ def main():
 
     # Prepare the data
     train_phase = 1
-    # tensor = torch.ByteTensor([False]).cuda()
-    # torch.distributed.all_reduce(tensor)
-    # print(f"All reduce test 2 on global rank {args.global_rank} rank {args.local_rank}")
-
     train_dataset, eval_dataset = create_prompt_dataset(
-        args.global_rank,
         args.local_rank,
         args.data_path,
         args.data_split,
