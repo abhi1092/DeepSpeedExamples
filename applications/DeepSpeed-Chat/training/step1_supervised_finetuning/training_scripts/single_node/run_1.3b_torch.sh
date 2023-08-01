@@ -40,26 +40,47 @@ NEW_PORT=23457
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
 
-deepspeed main.py \
+#deepspeed main.py \
+#   --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
+#   --data_split 2,4,4 \
+#   --model_name_or_path facebook/opt-66b \
+#   --per_device_train_batch_size 8 \
+#   --per_device_eval_batch_size 8 \
+#   --data_output_path /app/tmp \
+#   --max_seq_len 512 \
+#   --learning_rate 9.65e-6 \
+#   --weight_decay 0. \
+#   --num_train_epochs 16 \
+#   --print_loss \
+#   --gradient_accumulation_steps 1 \
+#   --lr_scheduler_type cosine \
+#   --num_warmup_steps 0 \
+#   --seed 1234 \
+#   --zero_stage $ZERO_STAGE \
+#   --deepspeed \
+#   --enable_tensorboard \
+#   --tensorboard_path $OUTPUT \
+#   --output_dir $OUTPUT
+
+torchrun --nnodes=1 --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=102 --rdzv_endpoint="${MASTER_ADDR}:${NEW_PORT}" \
+    main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
    --model_name_or_path facebook/opt-66b \
-   --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 8 \
-   --data_output_path /app/tmp \
+   --per_device_train_batch_size 1 \
+   --per_device_eval_batch_size 1 \
    --max_seq_len 512 \
-   --learning_rate 9.65e-6 \
-   --weight_decay 0. \
-   --num_train_epochs 16 \
-   --print_loss \
+   --learning_rate 1e-4 \
+   --weight_decay 0.1 \
+   --num_train_epochs 2  \
+   --offload \
    --gradient_accumulation_steps 1 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
    --seed 1234 \
+   --gradient_checkpointing \
    --zero_stage $ZERO_STAGE \
    --deepspeed \
-   --enable_tensorboard \
-   --tensorboard_path $OUTPUT \
    --output_dir $OUTPUT
 
 
