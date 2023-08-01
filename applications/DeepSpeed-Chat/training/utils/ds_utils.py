@@ -27,9 +27,9 @@ def get_train_ds_config(offload,
         "offload_optimizer": {
             "device": device
         },
-        "stage3_param_persistence_threshold": "auto",
-        "stage3_max_live_parameters": 1e9,
-        "stage3_prefetch_bucket_size": "auto",
+        "stage3_param_persistence_threshold": 1e4,
+        "stage3_max_live_parameters": 6e9,
+        "stage3_prefetch_bucket_size": 3e7,
         "memory_efficient_linear": False
     }
     # "fp16": {
@@ -59,6 +59,14 @@ def get_train_ds_config(offload,
             "enabled": enable_tensorboard,
             "output_path": f"{tb_path}/ds_tensorboard_logs/",
             "job_name": f"{tb_name}_tensorboard"
+        },
+        "flops_profiler": {
+            "enabled": true,
+            "profile_step": 1,
+            "module_depth": -1,
+            "top_modules": 1,
+            "detailed": true,
+            "output_file": null
         }
     }
 
