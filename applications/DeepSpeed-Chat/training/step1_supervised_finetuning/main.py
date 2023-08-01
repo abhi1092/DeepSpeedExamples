@@ -186,6 +186,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    print(args.local_rank)
     if args.local_rank == -1:
         device = torch.device("cuda")
         print("Here")
