@@ -76,6 +76,7 @@ torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id
    --gradient_accumulation_steps 1 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
+   --print_loss \
    --seed 1234 \
    --gradient_checkpointing \
    --zero_stage 3 \
