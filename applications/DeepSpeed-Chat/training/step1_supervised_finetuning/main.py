@@ -186,11 +186,9 @@ def parse_args():
 
 def main():
     args = parse_args()
-    print(f"{args.local_rank=}")
+    args.local_rank = os.environ["LOCAL_RANK"]
     if args.local_rank == -1:
         device = torch.device("cuda")
-        print("Here")
-        exit()
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
