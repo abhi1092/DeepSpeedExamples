@@ -73,7 +73,6 @@ torchrun --nnodes=1 --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=102 --rdzv_
    --learning_rate 1e-4 \
    --weight_decay 0.1 \
    --num_train_epochs 2  \
-   --offload \
    --gradient_accumulation_steps 1 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
