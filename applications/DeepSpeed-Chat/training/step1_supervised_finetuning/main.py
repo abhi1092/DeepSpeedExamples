@@ -213,7 +213,8 @@ def main():
     set_random_seed(args.seed)
     print("Setting random seed")
     torch.distributed.barrier()
-
+    print("========DS config")
+    print(ds_config)
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
     tokenizer.pad_token = tokenizer.eos_token
     # make sure tokenizer is right pad in our logic
