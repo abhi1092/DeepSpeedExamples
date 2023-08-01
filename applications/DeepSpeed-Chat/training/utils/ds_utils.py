@@ -61,12 +61,12 @@ def get_train_ds_config(offload,
             "job_name": f"{tb_name}_tensorboard"
         },
         "flops_profiler": {
-            "enabled": true,
+            "enabled": True,
             "profile_step": 1,
             "module_depth": -1,
             "top_modules": 1,
-            "detailed": true,
-            "output_file": null
+            "detailed": True,
+            "output_file": None
         }
     }
 
