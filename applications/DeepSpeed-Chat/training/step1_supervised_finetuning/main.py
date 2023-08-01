@@ -195,7 +195,7 @@ def main():
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
         deepspeed.init_distributed()
-
+        print("Dist initialized")
     args.global_rank = torch.distributed.get_rank()
 
     ds_config = get_train_ds_config(offload=args.offload,
@@ -211,13 +211,14 @@ def main():
 
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
-
+    print("Setting random seed")
     torch.distributed.barrier()
 
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
     tokenizer.pad_token = tokenizer.eos_token
     # make sure tokenizer is right pad in our logic
     tokenizer.padding_side = 'right'
+    print("Creating model")
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
