@@ -62,7 +62,7 @@ NEW_PORT=23457
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
 
-torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=102 --rdzv_endpoint="${MASTER_ADDR}:${NEW_PORT}" \
+torchrun --nnodes=1 --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=102 --rdzv_endpoint="${MASTER_ADDR}:${NEW_PORT}" \
     main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
@@ -72,7 +72,7 @@ torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id
    --max_seq_len 512 \
    --learning_rate 1e-4 \
    --weight_decay 0.1 \
-   --num_train_epochs 2  \
+   --num_train_epochs 1  \
    --gradient_accumulation_steps 1 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
