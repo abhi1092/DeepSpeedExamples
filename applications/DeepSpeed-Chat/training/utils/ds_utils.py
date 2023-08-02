@@ -60,14 +60,14 @@ def get_train_ds_config(offload,
             "output_path": f"{tb_path}/ds_tensorboard_logs/",
             "job_name": f"{tb_name}_tensorboard"
         },
-        "flops_profiler": {
-            "enabled": True,
-            "profile_step": 1,
-            "module_depth": -1,
-            "top_modules": 1,
-            "detailed": True,
-            "output_file": None
-        }
+        # "flops_profiler": {
+        #     "enabled": True,
+        #     "profile_step": 1,
+        #     "module_depth": -1,
+        #     "top_modules": 1,
+        #     "detailed": True,
+        #     "output_file": None
+        # }
     }
 
 
