@@ -66,7 +66,7 @@ def get_train_ds_config(offload,
             "module_depth": -1,
             "top_modules": 1,
             "detailed": True,
-            "output_file": f"{tb_path}/profiler_log.log"
+            "output_file": None
         }
     }
 
