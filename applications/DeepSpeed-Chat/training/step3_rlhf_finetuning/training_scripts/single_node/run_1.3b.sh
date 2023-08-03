@@ -24,7 +24,7 @@ Num_Padding_at_Beginning=1 # this is model related
 Actor_Lr=9.65e-6
 Critic_Lr=5e-6
 
-deepspeed --master_port 12346 main.py \
+torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint="${MASTER_ADDR}:${MASTER_PORT}" main.py \
    --data_path Dahoas/rm-static \
    --data_split 2,4,4 \
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
@@ -51,5 +51,5 @@ deepspeed --master_port 12346 main.py \
    --output_dir $OUTPUT \
    --print_answers \
    --enable_tensorboard \
-   --tensorboard_path $OUTPUT \
-    &> $OUTPUT/training.log
+   --tensorboard_path $OUTPUT 
+    # &> $OUTPUT/training.log
