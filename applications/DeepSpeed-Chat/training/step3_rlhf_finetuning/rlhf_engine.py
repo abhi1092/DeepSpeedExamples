@@ -209,7 +209,7 @@ class DeepSpeedRLHFEngine():
             tokenizer=self.tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=True,
+            rlhf_training=False,
             disable_dropout=self.args.disable_critic_dropout)
 
         # LoRA
