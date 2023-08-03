@@ -382,7 +382,7 @@ def create_datasets(args, tokenizer, train_phase=3):
 
 def main():
     args = parse_args()
-
+    args.local_rank = int(os.environ["LOCAL_RANK"])
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
