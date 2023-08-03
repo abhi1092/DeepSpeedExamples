@@ -53,7 +53,7 @@ torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id
    --critic_zero_stage $CRITIC_ZERO_STAGE \
    --actor_gradient_checkpointing \
    --disable_actor_dropout \
-   --output_dir $OUTPUT 
+   --output_dir $OUTPUT \
    --inference_tp_size 8 \
    --tp_gather_partition_size 4 
 #    --actor_lora_dim 128 \
