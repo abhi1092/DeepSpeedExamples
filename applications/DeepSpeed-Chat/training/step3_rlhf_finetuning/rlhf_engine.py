@@ -271,7 +271,7 @@ class DeepSpeedRLHFEngine():
             tokenizer=self.tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=True)
+            rlhf_training=False)
 
         reward_engine, *_ = deepspeed.initialize(model=reward_model,
                                                  config=ds_config)
