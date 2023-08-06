@@ -772,7 +772,7 @@ class LmqgQagjaquadDataset(PromptRawDataset):
 
 class ShareOasstCustom(LocalJsonFileDataset):
     def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
-        super().__init__(output_path, seed, local_rank, dataset_name)
+        # super().__init__(output_path, seed, local_rank, dataset_name)
         self.dataset_name = "local/share_oasst"
         self.dataset_name_clean = "share_oasst"
         self.raw_datasets = load_dataset('json',
