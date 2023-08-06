@@ -767,3 +767,19 @@ class LmqgQagjaquadDataset(PromptRawDataset):
             f"Warning: dataset {self.dataset_name} does not include rejected response."
         )
         return None
+
+#custom dataset including sharegpt and openassistant
+
+class ShareOasstCustom(LocalJsonFileDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
+        super().__init__(output_path, seed, local_rank, dataset_name)
+        self.dataset_name = "local/share_oasst"
+        self.dataset_name_clean = "share_oasst"
+        self.raw_datasets = load_dataset('json',
+                                         data_files={
+                                             "train":
+                                             dataset_path,
+                                             "eval":
+                                             dataset_path,
+                                         })
+    

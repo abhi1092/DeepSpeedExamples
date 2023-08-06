@@ -75,6 +75,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
             )
         return raw_datasets.LocalJsonFileDataset(output_path, seed, local_rank,
                                                  dataset_name, chat_path)
+    elif "rlhf_oasst_share_en" in dataset_name:
+        from IPython import embed; embed(using=False)
+        return raw_datasets.ShareOasstCustom(output_path, seed, local_rank, "share-oasst", dataset_name)
     else:
         raise RuntimeError(
             f"We do not have configs for dataset {dataset_name}, but you can add it by yourself in raw_datasets.py."
