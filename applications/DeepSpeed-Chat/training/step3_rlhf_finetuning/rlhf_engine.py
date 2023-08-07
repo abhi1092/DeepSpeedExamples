@@ -206,7 +206,7 @@ class DeepSpeedRLHFEngine():
         # Model
         critic_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
-            tokenizer=self.tokenizer,
+            tokenizer=self.reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
             rlhf_training=False,
@@ -268,7 +268,7 @@ class DeepSpeedRLHFEngine():
         # Model
         reward_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
-            tokenizer=self.tokenizer,
+            tokenizer=self.reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
             rlhf_training=False)

@@ -109,7 +109,7 @@ class DeepSpeedPPOTrainer():
             )
 
         out_seq = []
-        for i in range(batch_size): #TODO: also skip reward_in when the answer is wrong.
+        for i in range(batch_size): #TODO: also skip reward_in when the answer is invalid.
             if valid_ans_len[
                     i] <= 1:  # if the answer is shorter than 1 token, drop it
                 continue
@@ -120,6 +120,7 @@ class DeepSpeedPPOTrainer():
         return out_seq, rm_input #and return another one.
 
     def generate_experience(self, prompts, mask, step):
+        #TODO: I need to use both the prompts and the formatted prompts.
         self.eval()
         seq, rm_input = self._generate_sequence(prompts, mask, step)
         self.train()
