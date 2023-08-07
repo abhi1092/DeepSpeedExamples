@@ -13,6 +13,7 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from utils.utils import print_rank_0
+from utils.consts import OASST_PROMPT
 
 
 def print_all_ranks(tag, value, rank):
@@ -51,7 +52,9 @@ class DeepSpeedPPOTrainer():
         self.critic_model = self.rlhf_engine.critic
         self.ref_model = self.rlhf_engine.ref
         self.reward_model = self.rlhf_engine.reward
+        self.reward_tokenizer = self.rlhf_engine.reward_tokenizer
         self.tokenizer = self.rlhf_engine.tokenizer
+        #TODO: load a reward tokenizer
         self.args = args
         self.max_answer_seq_len = args.max_answer_seq_len
         self.end_of_conversation_token_id = self.tokenizer(
@@ -85,7 +88,19 @@ class DeepSpeedPPOTrainer():
         self.prompt_length = prompt_length
         ans = seq[:, prompt_length:]
         valid_ans_len = (ans != self.tokenizer.pad_token_id).sum(dim=-1)
-
+        
+        
+        #TODO: if reward model is oasst:
+        prompts_str = self.tokenizer.batch_decode(prompts)
+        ans_str = self.tokenizer.batch_decode(ans)
+        rm_input = [OASST_PROMPT.format(instruction=p, response=a) for p,a in zip(prompts_str, ans_str)]
+        print(rm_input)
+        rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt")
+        print(rm_input.keys())
+        from IPython import embed; embed()
+        #else
+        #reward_in = seq
+        
         if self.args.print_answers:
             print(
                 f"--- prompt --> step={step}, rank={torch.distributed.get_rank()}, {self.tokenizer.batch_decode(prompts, skip_special_tokens=True)}"
@@ -95,7 +110,7 @@ class DeepSpeedPPOTrainer():
             )
 
         out_seq = []
-        for i in range(batch_size):
+        for i in range(batch_size): #TODO: also skip reward_in when the answer is wrong.
             if valid_ans_len[
                     i] <= 1:  # if the answer is shorter than 1 token, drop it
                 continue
@@ -103,24 +118,26 @@ class DeepSpeedPPOTrainer():
                 out_seq.append(seq[i:i + 1])
         out_seq = torch.cat(out_seq, dim=0)  # concate output in the batch dim
 
-        return out_seq
+        return out_seq, reward_in #and return another one.
 
     def generate_experience(self, prompts, mask, step):
         self.eval()
-        seq = self._generate_sequence(prompts, mask, step)
+        seq, rm_input = self._generate_sequence(prompts, mask, step)
         self.train()
 
         pad_token_id = self.tokenizer.pad_token_id
-        attention_mask = seq.not_equal(pad_token_id).long()
+        attention_mask = seq.not_equal(pad_token_id).long() #TODO: should I do something about the attention mask.
         with torch.no_grad():
             output = self.actor_model(seq, attention_mask=attention_mask)
             output_ref = self.ref_model(seq, attention_mask=attention_mask)
+            #TODO: make sure that seq for reward and critic follow oasst format.
+            from IPython import embed; embed()
             reward_score = self.reward_model.forward_value(
-                seq, attention_mask,
+                **rm_input,
                 prompt_length=self.prompt_length)['chosen_end_scores'].detach(
                 )
             values = self.critic_model.forward_value(
-                seq, attention_mask, return_value_only=True).detach()[:, :-1]
+                **rm_input, return_value_only=True).detach()[:, :-1]
 
         logits = output.logits
         logits_ref = output_ref.logits
