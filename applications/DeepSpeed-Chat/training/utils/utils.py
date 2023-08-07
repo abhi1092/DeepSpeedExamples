@@ -191,3 +191,12 @@ def save_zero_three_model(model_ema, global_rank, save_dir, zero_stage=0):
         if global_rank == 0:
             torch.save(output_state_dict, output_model_file)
         del output_state_dict
+        
+        
+import inspect
+#returns the calling file and line number in a string
+def get_caller():
+    frame = inspect.currentframe().f_back
+    file_name = frame.f_code.co_filename
+    line_number = frame.f_lineno
+    return f"In {file_name}, line {line_number}"

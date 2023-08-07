@@ -13,6 +13,7 @@ from huggingface_hub import snapshot_download
 from transformers.deepspeed import HfDeepSpeedConfig
 
 from .reward_model import RewardModel
+from ..utils.utils import get_caller
 
 
 def create_hf_model(model_class,
@@ -21,6 +22,8 @@ def create_hf_model(model_class,
                     ds_config=None,
                     rlhf_training=False,
                     disable_dropout=False):
+    #embed an ipython and print the file and line number when doing so
+    from IPython import embed; embed(using=False, header=get_caller())
     model_config = AutoConfig.from_pretrained(model_name_or_path)
     if disable_dropout:
         model_config.dropout = 0.0
