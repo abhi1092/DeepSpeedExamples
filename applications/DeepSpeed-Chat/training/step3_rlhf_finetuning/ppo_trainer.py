@@ -12,7 +12,7 @@ from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from utils.utils import print_rank_0
+from utils.utils import print_rank_0, get_caller
 from utils.consts import OASST_PROMPT
 
 
@@ -91,13 +91,12 @@ class DeepSpeedPPOTrainer():
         
         
         #TODO: if reward model is oasst:
-        prompts_str = self.tokenizer.batch_decode(prompts)
+        prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
         ans_str = self.tokenizer.batch_decode(ans)
-        rm_input = [OASST_PROMPT.format(instruction=p, response=a) for p,a in zip(prompts_str, ans_str)]
-        print(rm_input)
+        rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
+                                        response=a.replace("<|endoftext|>","")) 
+                    for p,a in zip(prompts_str, ans_str)]
         rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt")
-        print(rm_input.keys())
-        from IPython import embed; embed()
         #else
         #reward_in = seq
         
@@ -131,7 +130,7 @@ class DeepSpeedPPOTrainer():
             output = self.actor_model(seq, attention_mask=attention_mask)
             output_ref = self.ref_model(seq, attention_mask=attention_mask)
             #TODO: make sure that seq for reward and critic follow oasst format.
-            from IPython import embed; embed()
+            from IPython import embed; embed(header=get_caller())
             reward_score = self.reward_model.forward_value(
                 **rm_input,
                 prompt_length=self.prompt_length)['chosen_end_scores'].detach(
@@ -169,6 +168,7 @@ class DeepSpeedPPOTrainer():
         return rewards
 
     def train_rlhf(self, inputs):
+        from IPython import embed; embed(header=get_caller())
         # train the rlhf mode here
         ### process the old outputs
         prompts = inputs['prompts']
