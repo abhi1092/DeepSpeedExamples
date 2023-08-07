@@ -13,7 +13,7 @@ from huggingface_hub import snapshot_download
 from transformers.deepspeed import HfDeepSpeedConfig
 
 from .reward_model import RewardModel
-from ..utils.utils import get_caller
+from ..utils import get_caller
 
 
 def create_hf_model(model_class,
