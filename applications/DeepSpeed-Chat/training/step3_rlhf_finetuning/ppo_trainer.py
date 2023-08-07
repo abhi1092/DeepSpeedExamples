@@ -109,6 +109,8 @@ class DeepSpeedPPOTrainer():
             )
 
         out_seq = []
+        out_rm_input = []
+        from IPython import embed; embed(header=get_caller())
         for i in range(batch_size): #TODO: also skip reward_in when the answer is invalid.
             if valid_ans_len[
                     i] <= 1:  # if the answer is shorter than 1 token, drop it
@@ -175,7 +177,7 @@ class DeepSpeedPPOTrainer():
         prompts = inputs['prompts']
         log_probs = inputs['logprobs']
         ref_log_probs = inputs['ref_logprobs']
-        reward_score = inputs['rewards']
+        reward_score = inputs['rewards'] #so what's up with the reward score???.
         values = inputs['value']
         attention_mask = inputs['attention_mask']
         seq = inputs['input_ids']
