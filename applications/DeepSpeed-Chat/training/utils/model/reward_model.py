@@ -21,6 +21,9 @@ class RewardModel(nn.Module):
             self.v_head = nn.Linear(self.config.word_embed_proj_dim,
                                     1,
                                     bias=False)
+        elif "oasst" in self.config._name_or_path:
+            #make an identity v_head
+            self.v_head = nn.Identity()
         else:
             # `gpt-neo(x)` models use `hidden_size` attribute names instead of `n_embd``
             self.config.n_embd = self.config.hidden_size if hasattr(
@@ -130,8 +133,8 @@ class RewardModel(nn.Module):
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
             use_cache=use_cache)
+        
         hidden_states = transformer_outputs[0]
-        from IPython import embed; embed(header=get_caller())
         values = self.v_head(hidden_states).squeeze(-1)
         if return_value_only:
             return values
