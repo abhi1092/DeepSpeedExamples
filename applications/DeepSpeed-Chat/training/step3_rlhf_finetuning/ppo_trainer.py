@@ -117,7 +117,7 @@ class DeepSpeedPPOTrainer():
                 out_seq.append(seq[i:i + 1])
         out_seq = torch.cat(out_seq, dim=0)  # concate output in the batch dim
 
-        return out_seq, reward_in #and return another one.
+        return out_seq, rm_input #and return another one.
 
     def generate_experience(self, prompts, mask, step):
         self.eval()
