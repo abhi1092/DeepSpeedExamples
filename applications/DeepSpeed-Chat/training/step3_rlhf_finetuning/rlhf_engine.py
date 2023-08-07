@@ -203,10 +203,12 @@ class DeepSpeedRLHFEngine():
         #TODO(jeff): it means we never create the critic w. zero.init context if we are using ZeRO-3
         ds_eval_config = get_eval_ds_config(offload=False, stage=0)
 
+        reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
+
         # Model
         critic_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
-            tokenizer=self.reward_tokenizer,
+            tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
             rlhf_training=False,
@@ -265,15 +267,15 @@ class DeepSpeedRLHFEngine():
         #TODO(jeff): it means we never create the critic w. zero.init context if we are using ZeRO-3
         ds_eval_config = get_eval_ds_config(offload=False, stage=0)
 
+        reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
+        
         # Model
         reward_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
-            tokenizer=self.reward_tokenizer,
+            tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
             rlhf_training=False)
-        
-        reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
 
         reward_engine, *_ = deepspeed.initialize(model=reward_model,
                                                  config=ds_config)
