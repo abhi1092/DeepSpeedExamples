@@ -96,7 +96,7 @@ class DeepSpeedPPOTrainer():
         rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
                                         response=a.replace("<|endoftext|>","")) 
                     for p,a in zip(prompts_str, ans_str)]
-        rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt")
+        rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt").to("cuda")
         #else
         #reward_in = seq
         
