@@ -22,9 +22,9 @@ def create_hf_model(model_class,
                     ds_config=None,
                     rlhf_training=False,
                     disable_dropout=False):
-    #embed an ipython and print the file and line number when doing so
+    from IPython import embed; embed(using=False)
     if "oasst" in model_name_or_path: #this is necessary to load the oasst model
-        import model_training.models.reward_model
+        import oasst_reward_model
     model_config = AutoConfig.from_pretrained(model_name_or_path)
     if disable_dropout:
         model_config.dropout = 0.0
