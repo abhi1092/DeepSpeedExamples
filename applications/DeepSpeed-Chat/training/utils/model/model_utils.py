@@ -24,6 +24,8 @@ def create_hf_model(model_class,
                     disable_dropout=False):
     #embed an ipython and print the file and line number when doing so
     from IPython import embed; embed(using=False, header=get_caller())
+    if "oasst" in model_name_or_path:
+        import model_training.models.reward_model
     model_config = AutoConfig.from_pretrained(model_name_or_path)
     if disable_dropout:
         model_config.dropout = 0.0
