@@ -8,6 +8,7 @@ import torch
 from transformers import (
     AutoConfig,
     AutoModel,
+    AutoModelForSequenceClassification,
 )
 from huggingface_hub import snapshot_download
 from transformers.deepspeed import HfDeepSpeedConfig
@@ -22,9 +23,9 @@ def create_hf_model(model_class,
                     ds_config=None,
                     rlhf_training=False,
                     disable_dropout=False):
-    from IPython import embed; embed(using=False)
     if "oasst" in model_name_or_path: #this is necessary to load the oasst model
-        import oasst_reward_model
+        from utils.model import oasst_reward_model
+        model_class = AutoModelForSequenceClassification
     model_config = AutoConfig.from_pretrained(model_name_or_path)
     if disable_dropout:
         model_config.dropout = 0.0
