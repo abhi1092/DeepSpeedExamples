@@ -4,6 +4,7 @@
 # DeepSpeed Team
 import torch
 from torch import nn
+from utils.utils import get_caller
 
 
 ## Note that the following code is modified from
@@ -130,6 +131,7 @@ class RewardModel(nn.Module):
             inputs_embeds=inputs_embeds,
             use_cache=use_cache)
         hidden_states = transformer_outputs[0]
+        from IPython import embed; embed(header=get_caller())
         values = self.v_head(hidden_states).squeeze(-1)
         if return_value_only:
             return values
