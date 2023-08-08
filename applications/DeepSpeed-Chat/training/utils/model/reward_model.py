@@ -14,7 +14,7 @@ class RewardModel(nn.Module):
     def __init__(self, base_model, tokenizer, num_padding_at_beginning=0):
         super().__init__()
         self.config = base_model.config
-        self.num_padding_at_beginning = num_padding_at_beginning
+        self.num_padding_at_beginning = num_padding_at_beginning #apparently this removes the first token!.
         if hasattr(self.config, "word_embed_proj_dim"):
             # `OPT` models use word_embed_proj_dim as final output
             # https://github.com/huggingface/transformers/blob/main/src/transformers/models/opt/modeling_opt.py#L497
@@ -143,9 +143,9 @@ class RewardModel(nn.Module):
             # [prompt, answer, 0, 0, 0, 0] this is normal
             assert prompt_length > 1, "prompt_length must be greater than 1 to help select the end score"
             bs = values.size(0)
-            # seq_len = input_ids.shape[1]
+            seq_len = input_ids.shape[1]
             from IPython import embed; embed(header=get_caller()) #check that seqlen is same as input ids or 1 at least
-            seq_len = values.size(1)
+            # seq_len = values.size(1)
             chosen_end_scores = [
             ]  # we use this name for consistency with the original forward function
             for i in range(bs):

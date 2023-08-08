@@ -130,18 +130,17 @@ class DeepSpeedPPOTrainer():
         self.train()
 
         pad_token_id = self.tokenizer.pad_token_id
-        attention_mask = seq.not_equal(pad_token_id).long() #TODO: should I do something about the attention mask.
+        attention_mask = seq.not_equal(pad_token_id).long()
         with torch.no_grad():
             output = self.actor_model(seq, attention_mask=attention_mask)
             output_ref = self.ref_model(seq, attention_mask=attention_mask)
-            #TODO: make sure that seq for reward and critic follow oasst format.
             from IPython import embed; embed(header=get_caller())
             reward_score = self.reward_model.forward_value(
                 **rm_input,
                 prompt_length=self.prompt_length)['chosen_end_scores'].detach(
                 )
             values = self.critic_model.forward_value(
-                **rm_input, return_value_only=True).detach()[:, :-1]
+                **rm_input, return_value_only=True).detach()[:, :-1] #TODO: why the :-1?
 
         logits = output.logits
         logits_ref = output_ref.logits
@@ -170,7 +169,7 @@ class DeepSpeedPPOTrainer():
                                   self.clip_reward_value)
         batch_size = log_probs.shape[0]
         for j in range(batch_size):
-            rewards[j, start:ends[j]][-1] += reward_clip[j]
+            rewards[j, start:ends[j]][-1] += reward_clip[j] #reward is being put only at the end of the sequence!!!!
 
         return rewards
 
@@ -264,6 +263,7 @@ class DeepSpeedPPOTrainer():
         return pg_loss
 
     def critic_loss_fn(self, values, old_values, returns, mask):
+        from IPython import embed; embed(header=get_caller())
         ## value loss
         values_clipped = torch.clamp(
             values,
@@ -278,6 +278,7 @@ class DeepSpeedPPOTrainer():
 
     def get_advantages_and_returns(self, values, rewards, start):
         # Adopted from https://github.com/CarperAI/trlx/blob/main/trlx/models/modeling_ppo.py#L134
+        from IPython import embed; embed(header=get_caller())
         lastgaelam = 0
         advantages_reversed = []
         length = rewards.size()[-1]
