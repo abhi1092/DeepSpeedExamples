@@ -69,7 +69,7 @@ def create_critic_model(model_name_or_path,
         num_padding_at_beginning=num_padding_at_beginning)
 
     if rlhf_training:
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         if not os.path.isdir(model_name_or_path):
             model_name_or_path = snapshot_download(model_name_or_path)
         # critic model needs to load the weight here

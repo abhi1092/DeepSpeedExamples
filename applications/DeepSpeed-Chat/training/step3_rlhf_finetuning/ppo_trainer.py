@@ -133,7 +133,7 @@ class DeepSpeedPPOTrainer():
         with torch.no_grad():
             output = self.actor_model(seq, attention_mask=attention_mask)
             output_ref = self.ref_model(seq, attention_mask=attention_mask)
-            from IPython import embed; embed(header=get_caller())
+            # from IPython import embed; embed(header=get_caller())
             reward_score = self.reward_model.forward_value(
                 **rm_input,
                 prompt_length=self.prompt_length)['chosen_end_scores'].detach(
@@ -159,7 +159,7 @@ class DeepSpeedPPOTrainer():
     def compute_rewards(self, prompts, log_probs, ref_log_probs, reward_score,
                         action_mask):
         #TODO: so the rewards end up being the same length as the actions and then we add a reward to those (which make sense)
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         kl_divergence_estimate = -self.kl_ctl * (log_probs - ref_log_probs)
         rewards = kl_divergence_estimate
         start = prompts.shape[1] - 1
@@ -173,7 +173,7 @@ class DeepSpeedPPOTrainer():
         return rewards
 
     def train_rlhf(self, inputs):
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         # train the rlhf mode here
         ### process the old outputs
         prompts = inputs['prompts']
@@ -262,7 +262,7 @@ class DeepSpeedPPOTrainer():
         return pg_loss
 
     def critic_loss_fn(self, values, old_values, returns, mask):
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         ## value loss
         values_clipped = torch.clamp(
             values,
@@ -277,7 +277,7 @@ class DeepSpeedPPOTrainer():
 
     def get_advantages_and_returns(self, values, rewards, start):
         # Adopted from https://github.com/CarperAI/trlx/blob/main/trlx/models/modeling_ppo.py#L134
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         lastgaelam = 0
         advantages_reversed = []
         length = rewards.size()[-1]
