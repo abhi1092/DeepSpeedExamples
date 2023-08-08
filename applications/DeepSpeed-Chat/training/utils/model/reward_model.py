@@ -22,7 +22,6 @@ class RewardModel(nn.Module):
                                     1,
                                     bias=False)
         elif "oasst" in self.config._name_or_path:
-            #make an identity v_head
             self.v_head = nn.Identity()
         else:
             # `gpt-neo(x)` models use `hidden_size` attribute names instead of `n_embd``
@@ -135,6 +134,7 @@ class RewardModel(nn.Module):
             use_cache=use_cache)
         
         hidden_states = transformer_outputs[0]
+        from IPython import embed; embed(header=get_caller()) #Check if values with facebook/opt are the size of the actions.
         values = self.v_head(hidden_states).squeeze(-1)
         if return_value_only:
             return values
@@ -143,7 +143,9 @@ class RewardModel(nn.Module):
             # [prompt, answer, 0, 0, 0, 0] this is normal
             assert prompt_length > 1, "prompt_length must be greater than 1 to help select the end score"
             bs = values.size(0)
-            seq_len = input_ids.shape[1]
+            # seq_len = input_ids.shape[1]
+            from IPython import embed; embed(header=get_caller()) #check that seqlen is same as input ids or 1 at least
+            seq_len = values.size(1)
             chosen_end_scores = [
             ]  # we use this name for consistency with the original forward function
             for i in range(bs):

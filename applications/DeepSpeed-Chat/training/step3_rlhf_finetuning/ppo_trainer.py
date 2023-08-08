@@ -90,15 +90,15 @@ class DeepSpeedPPOTrainer():
         valid_ans_len = (ans != self.tokenizer.pad_token_id).sum(dim=-1)
         
         
-        #TODO: if reward model is oasst:
-        prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
-        ans_str = self.tokenizer.batch_decode(ans)
-        rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
-                                        response=a.replace("<|endoftext|>","")) 
-                    for p,a in zip(prompts_str, ans_str)]
-        rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt").to("cuda")
-        #else
-        #reward_in = seq
+        if "oasst" in self.reward_model.config._name_or_path:
+            prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
+            ans_str = self.tokenizer.batch_decode(ans)
+            rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
+                                            response=a.replace("<|endoftext|>","")) 
+                        for p,a in zip(prompts_str, ans_str)]
+            rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt").to("cuda")
+        else:
+            rm_input = {"input_ids": seq, "attention_mask": mask}
         
         if self.args.print_answers:
             print(
@@ -109,7 +109,7 @@ class DeepSpeedPPOTrainer():
             )
 
         out_seq = []
-        out_rm_input = []
+        rm_input_ids, rm_attn_mask = [], []
         from IPython import embed; embed(header=get_caller())
         for i in range(batch_size): #TODO: also skip reward_in when the answer is invalid.
             if valid_ans_len[
@@ -117,6 +117,9 @@ class DeepSpeedPPOTrainer():
                 continue
             else:
                 out_seq.append(seq[i:i + 1])
+                rm_input_ids.append(rm_input["input_ids"][i:i + 1])
+                rm_attn_mask.append(rm_input["attention_mask"][i:i + 1])
+                
         out_seq = torch.cat(out_seq, dim=0)  # concate output in the batch dim
 
         return out_seq, rm_input #and return another one.
@@ -147,17 +150,19 @@ class DeepSpeedPPOTrainer():
         return {
             'prompts': prompts,
             'logprobs': gather_log_probs(logits[:, :-1, :], seq[:, 1:]),
-            'ref_logprobs': gather_log_probs(logits_ref[:, :-1, :], seq[:,
-                                                                        1:]),
+            'ref_logprobs': gather_log_probs(logits_ref[:, :-1, :], seq[:,1:]),
             'value': values,
             'rewards': reward_score,
             'input_ids': seq,
-            "attention_mask": attention_mask
+            "attention_mask": attention_mask,
+            'rm_input_ids': rm_input["input_ids"],
+            'rm_attention_mask': rm_input["attention_mask"],
         }
 
     def compute_rewards(self, prompts, log_probs, ref_log_probs, reward_score,
                         action_mask):
-
+        #TODO: so the rewards end up being the same length as the actions and then we add a reward to those (which make sense)
+        from IPython import embed; embed(header=get_caller())
         kl_divergence_estimate = -self.kl_ctl * (log_probs - ref_log_probs)
         rewards = kl_divergence_estimate
         start = prompts.shape[1] - 1
@@ -181,6 +186,8 @@ class DeepSpeedPPOTrainer():
         values = inputs['value']
         attention_mask = inputs['attention_mask']
         seq = inputs['input_ids']
+        rm_seq = inputs['rm_input_ids']
+        rm_mask = inputs['rm_attention_mask']
 
         start = prompts.size()[-1] - 1
         action_mask = attention_mask[:, 1:]
@@ -211,10 +218,11 @@ class DeepSpeedPPOTrainer():
         if not self.args.align_overflow:
             self.actor_model.step()
 
-        value = self.critic_model.forward_value(**batch,
+        value = self.critic_model.forward_value(input_ids=rm_seq,
+                                                attention_mask=rm_mask,
                                                 return_value_only=True,
                                                 use_cache=False)[:, :-1]
-        critic_loss = self.critic_loss_fn(value[:, start:], old_values[:,
+        critic_loss = self.critic_loss_fn(value[:, start:], old_values[:, 
                                                                        start:],
                                           returns, action_mask[:, start:])
         self.critic_model.backward(critic_loss)
