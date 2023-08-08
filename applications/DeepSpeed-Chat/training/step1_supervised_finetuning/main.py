@@ -326,8 +326,6 @@ def main():
                 )
             model.backward(loss)
             model.step()
-            if step > 50:
-                break
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
