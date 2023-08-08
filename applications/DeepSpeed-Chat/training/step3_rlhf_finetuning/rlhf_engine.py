@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, get_scheduler
 from utils.ds_utils import get_train_ds_config, get_eval_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, only_optimize_lora_parameters, make_model_gradient_checkpointing_compatible
 from utils.model.model_utils import create_hf_model, create_critic_model
-from utils.utils import get_optimizer_grouped_parameters, load_hf_tokenizer
+from utils.utils import get_optimizer_grouped_parameters, load_hf_tokenizer, print_rank_0, Fore
 """
 TODOs:
   * support HF models for critic (for debugging), must be a previously saved ckpt from step-2
@@ -215,12 +215,14 @@ class DeepSpeedRLHFEngine():
         reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
 
         # Model
+        print_rank_0("go back to true rlhf_training!!!", color=Fore.RED)
         critic_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
             tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=True,
+            # rlhf_training=True,
+            rlhf_training=False,
             disable_dropout=self.args.disable_critic_dropout)
 
         # LoRA
@@ -288,12 +290,13 @@ class DeepSpeedRLHFEngine():
         reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
         
         # Model
+        print_rank_0("go back to true rlhf_training!!!", color=Fore.RED)
         reward_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
             tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=True)
+            rlhf_training=False)
 
         reward_engine, *_ = deepspeed.initialize(model=reward_model,
                                                  config=ds_config)
