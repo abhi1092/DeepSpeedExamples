@@ -220,7 +220,7 @@ class DeepSpeedRLHFEngine():
             tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=False,
+            rlhf_training=True,
             disable_dropout=self.args.disable_critic_dropout)
 
         # LoRA
@@ -293,7 +293,7 @@ class DeepSpeedRLHFEngine():
             tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=False)
+            rlhf_training=True)
 
         reward_engine, *_ = deepspeed.initialize(model=reward_model,
                                                  config=ds_config)

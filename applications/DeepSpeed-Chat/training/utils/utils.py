@@ -10,10 +10,13 @@ from transformers import set_seed, AutoTokenizer
 import json
 import deepspeed
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
+from colorama import Fore, Style
 
 
-def print_rank_0(msg, rank=0):
+def print_rank_0(msg, rank=0, color=None):
     if rank <= 0:
+        if color is not None:
+            msg = color + msg + Style.RESET_ALL
         print(msg)
 
 
@@ -73,6 +76,7 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
                 tokenizer = AutoTokenizer.from_pretrained(
                     model_name, fast_tokenizer=fast_tokenizer)
             except HFValidationError:
+                print_rank_0("tokenizer failed based on model name (expected for granite)", color=Fore.RED)
                 tokenizer = AutoTokenizer.from_pretrained(
                     model_name_or_path, fast_tokenizer=fast_tokenizer)
     else:
