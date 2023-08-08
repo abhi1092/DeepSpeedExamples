@@ -89,7 +89,7 @@ class DeepSpeedPPOTrainer():
         ans = seq[:, prompt_length:]
         valid_ans_len = (ans != self.tokenizer.pad_token_id).sum(dim=-1)
         
-        
+        from IPython import embed; embed(header=get_caller())
         if "oasst" in self.reward_model.config._name_or_path:
             prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
             ans_str = self.tokenizer.batch_decode(ans)
