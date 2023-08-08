@@ -98,7 +98,7 @@ class DeepSpeedPPOTrainer():
                         for p,a in zip(prompts_str, ans_str)]
             rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt").to("cuda")
         else:
-            rm_input = {"input_ids": seq, "attention_mask": mask}
+            rm_input = {"input_ids": seq, "attention_mask": seq.not_equal(self.tokenizer.pad_token_id).long()}
         
         if self.args.print_answers:
             print(
@@ -110,8 +110,7 @@ class DeepSpeedPPOTrainer():
 
         out_seq = []
         rm_input_ids, rm_attn_mask = [], []
-        from IPython import embed; embed(header=get_caller())
-        for i in range(batch_size): #TODO: also skip reward_in when the answer is invalid.
+        for i in range(batch_size):
             if valid_ans_len[
                     i] <= 1:  # if the answer is shorter than 1 token, drop it
                 continue
