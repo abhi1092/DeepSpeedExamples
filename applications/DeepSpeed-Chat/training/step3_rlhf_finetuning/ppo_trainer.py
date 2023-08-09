@@ -181,13 +181,22 @@ class DeepSpeedPPOTrainer():
                         action_mask):
         #TODO: so the rewards end up being the same length as the actions and then we add a reward to those (which make sense)
         # from IPython import embed; embed(header=get_caller())
+        #print logprobs
+        print_rank_0(f"log_probs: {log_probs.shape}", self.args.local_rank, color=Fore.GREEN)
+        #print ref_log_probs
+        print_rank_0(f"ref_log_probs: {ref_log_probs.shape}", self.args.local_rank, color=Fore.GREEN)
         kl_divergence_estimate = -self.kl_ctl * (log_probs - ref_log_probs)
+        #print kl_divergence_estimate
+        print_rank_0(f"kl_divergence_estimate: {kl_divergence_estimate.shape}", self.args.local_rank, color=Fore.GREEN)
+        
         rewards = kl_divergence_estimate
         start = prompts.shape[1] - 1
-        print_rank_0(f"rm_action_mask: {action_mask}", self.args.local_rank, color=Fore.GREEN)
+        print_rank_0(f"rm_action_mask: {action_mask.shape, action_mask.sum(1)}", self.args.local_rank, color=Fore.GREEN)
         ends = start + action_mask[:, start:].sum(1) + 1
         reward_clip = torch.clamp(reward_score, -self.clip_reward_value,
                                   self.clip_reward_value)
+        #print reward clip value and shape
+        print_rank_0(f"reward_clip: {reward_clip}", self.args.local_rank, color=Fore.GREEN)
         batch_size = log_probs.shape[0]
         for j in range(batch_size):
             rewards[j, start:ends[j]][-1] += reward_clip[j] #reward is being put only at the end of the sequence!!!!
