@@ -307,7 +307,7 @@ def parse_args():
                         action='store_true',
                         help='Print prompt and answers during training')
     
-    parser.add_argument('--rlhf_traning',
+    parser.add_argument('--rlhf_training',
                         action='store_true',
                         help='create the critic and reward models with this flag so it looks for a checkpoint on disk.')
 
