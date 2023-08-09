@@ -184,6 +184,7 @@ class DeepSpeedPPOTrainer():
         kl_divergence_estimate = -self.kl_ctl * (log_probs - ref_log_probs)
         rewards = kl_divergence_estimate
         start = prompts.shape[1] - 1
+        print_rank_0(f"rm_action_mask: {action_mask}", self.args.local_rank, color=Fore.GREEN)
         ends = start + action_mask[:, start:].sum(1) + 1
         reward_clip = torch.clamp(reward_score, -self.clip_reward_value,
                                   self.clip_reward_value)
@@ -210,13 +211,14 @@ class DeepSpeedPPOTrainer():
         # from IPython import embed; embed(header=get_caller())
         start = prompts.size()[-1] - 1
         action_mask = attention_mask[:, 1:]
+        rm_action_mask = rm_mask[:, 1:]
 
         # from IPython import embed; embed(header=get_caller())
         old_values = values
         with torch.no_grad():
             old_rewards = self.compute_rewards(rm_prompts, log_probs,
                                                ref_log_probs, reward_score,
-                                               action_mask)
+                                               rm_action_mask)
             ends = start + action_mask[:, start:].sum(1) + 1
             # we need to zero out the reward and value after the end of the conversation
             # otherwise the advantage/return will be wrong
@@ -304,6 +306,9 @@ class DeepSpeedPPOTrainer():
         lastgaelam = 0
         advantages_reversed = []
         length = rewards.size()[-1]
+        print_rank_0(f"rewards shape: {rewards.shape}", self.args.local_rank, color=Fore.GREEN)
+        print_rank_0(f"start: {start}", self.args.local_rank, color=Fore.GREEN)
+        print_rank_0(f"length: {length}", self.args.local_rank, color=Fore.GREEN)        
         for t in reversed(range(start, length)):
             nextvalues = values[:, t + 1] if t < length - 1 else 0.0
             delta = rewards[:, t] + self.gamma * nextvalues - values[:, t]
