@@ -78,8 +78,7 @@ class DeepSpeedPPOTrainer():
                 attention_mask=mask,
                 max_length=max_min_length,
                 pad_token_id=self.tokenizer.pad_token_id,
-                synced_gpus=self.z3_enabled,
-                )
+                synced_gpus=self.z3_enabled)
         #print seq.shape
         print_rank_0(f"seq: {seq.shape}", self.args.local_rank, color=Fore.GREEN)
         # Filter out seq with no answers (or very short). This happens when users directly use the pre-training ckpt without supervised finetuning
