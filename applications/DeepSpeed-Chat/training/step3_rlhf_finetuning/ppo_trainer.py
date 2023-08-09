@@ -87,7 +87,7 @@ class DeepSpeedPPOTrainer():
         self.prompt_length = prompt_length
         ans = seq[:, prompt_length:]
         valid_ans_len = (ans != self.tokenizer.pad_token_id).sum(dim=-1)
-        
+        from IPython import embed; embed(header=get_caller())
         if type(self.rlhf_engine.reward_tokenizer) != type(self.rlhf_engine.tokenizer):
             print_rank_0("ppo_trainer.py:93 it's not enough to simply check if the tokenizers are different, because granite requires a treatment that is not the same for everyone else.", color=Fore.RED)
             prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
@@ -160,7 +160,7 @@ class DeepSpeedPPOTrainer():
 
         logits = output.logits
         logits_ref = output_ref.logits
-
+        from IPython import embed; embed(header=get_caller())
         return {
             'prompts': prompts,
             'rm_prompts': rm_prompts,
@@ -208,6 +208,7 @@ class DeepSpeedPPOTrainer():
         start = prompts.size()[-1] - 1
         action_mask = attention_mask[:, 1:]
 
+        from IPython import embed; embed(header=get_caller())
         old_values = values
         with torch.no_grad():
             old_rewards = self.compute_rewards(rm_prompts, log_probs,
