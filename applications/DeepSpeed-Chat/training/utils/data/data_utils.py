@@ -75,7 +75,7 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
             )
         return raw_datasets.LocalJsonFileDataset(output_path, seed, local_rank,
                                                  dataset_name, chat_path)
-    elif "rlhf_oasst_share_en" in dataset_name:
+    elif "rlhf_oasst" in dataset_name:
         return raw_datasets.ShareOasstCustom(output_path, seed, local_rank, "share-oasst", dataset_name)
     else:
         raise RuntimeError(

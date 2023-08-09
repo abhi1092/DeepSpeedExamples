@@ -80,7 +80,12 @@ class DeepSpeedPPOTrainer():
                 min_length=max_min_length,
                 pad_token_id=self.tokenizer.pad_token_id,
                 synced_gpus=self.z3_enabled,
-                repetition_penalty=1.2,)
+                repetition_penalty=1.2,
+                temperature=.7,
+                do_sample=True,
+                top_p=.9,
+                top_k=50,
+                )
         #print seq.shape
         print_rank_0(f"seq: {seq.shape}", self.args.local_rank, color=Fore.GREEN)
         # Filter out seq with no answers (or very short). This happens when users directly use the pre-training ckpt without supervised finetuning
@@ -116,7 +121,6 @@ class DeepSpeedPPOTrainer():
             # rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
             #                                 response=a.replace("<|endoftext|>","")) 
             #             for p,a in zip(prompts_str, ans_str)]
-            print_rank_0("ppo_trainer.py:110: truncation side?", color=Fore.RED)
             rm_input = self.reward_tokenizer([p + a for p,a in zip(prompts_str, ans_str)], max_length=self.args.max_prompt_seq_len + self.args.max_answer_seq_len,
                                                                                             padding="max_length",
                                                                                             truncation=True,
