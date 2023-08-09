@@ -96,6 +96,7 @@ class DeepSpeedPPOTrainer():
             prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
             rm_prompts = self.reward_tokenizer(prompts_str, max_length=self.args.max_prompt_seq_len,
                                                             padding="max_length",
+                                                            padding_side="left",
                                                             truncation=True,
                                                             return_tensors="pt")['input_ids'].to("cuda")
             print_rank_0(f"rm_prompts {rm_prompts.shape}", color=Fore.GREEN, rank=torch.distributed.get_rank())
