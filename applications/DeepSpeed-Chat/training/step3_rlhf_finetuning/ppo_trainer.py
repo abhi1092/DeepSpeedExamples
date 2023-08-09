@@ -211,7 +211,7 @@ class DeepSpeedPPOTrainer():
         start = prompts.size()[-1] - 1
         action_mask = attention_mask[:, 1:]
 
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         old_values = values
         with torch.no_grad():
             old_rewards = self.compute_rewards(rm_prompts, log_probs,
