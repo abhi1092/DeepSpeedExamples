@@ -79,7 +79,8 @@ class DeepSpeedPPOTrainer():
                 max_length=max_min_length,
                 min_length=max_min_length,
                 pad_token_id=self.tokenizer.pad_token_id,
-                synced_gpus=self.z3_enabled)
+                synced_gpus=self.z3_enabled,
+                repetition_penalty=1.2,)
         #print seq.shape
         print_rank_0(f"seq: {seq.shape}", self.args.local_rank, color=Fore.GREEN)
         # Filter out seq with no answers (or very short). This happens when users directly use the pre-training ckpt without supervised finetuning
@@ -102,6 +103,8 @@ class DeepSpeedPPOTrainer():
             print_rank_0(f"rm_prompts {rm_prompts.shape}", color=Fore.GREEN, rank=torch.distributed.get_rank())
             ans_str = self.tokenizer.batch_decode(ans)
             
+            #print if ans_str has END_KEY
+            print_rank_0(f"END_KEY in ans {END_KEY in ans_str}", color=Fore.GREEN, rank=torch.distributed.get_rank())
             #find index of END_KEY
             end_idx = [a.find(END_KEY) for a in ans_str]
             end_idx = [e if e != -1 else len(a) for e,a in zip(end_idx, ans_str)]
@@ -289,6 +292,7 @@ class DeepSpeedPPOTrainer():
 
     def actor_loss_fn(self, logprobs, old_logprobs, advantages, mask):
         ## policy gradient loss
+        # TODO: entropy regularization
         log_ratio = (logprobs - old_logprobs) * mask
         ratio = torch.exp(log_ratio)
         pg_loss1 = -advantages * ratio
