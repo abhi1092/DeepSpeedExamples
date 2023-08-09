@@ -29,6 +29,7 @@ Actor_Lr=9.65e-6
 Critic_Lr=5e-6
 
 deepspeed --master_port 12346 main.py \
+   --print_answers \
    --enable_tensorboard \
    --offload_reference_model \
    --tensorboard_path $OUTPUT/tensorboard13b/ \
@@ -55,6 +56,7 @@ deepspeed --master_port 12346 main.py \
    --actor_zero_stage $ACTOR_ZERO_STAGE \
    --critic_zero_stage $CRITIC_ZERO_STAGE \
    --disable_actor_dropout \
+   --rlhf_training \
    --output_dir $OUTPUT \
     &> $OUTPUT/training.log
 
