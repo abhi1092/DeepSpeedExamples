@@ -114,7 +114,7 @@ class DeepSpeedPPOTrainer():
                                                                                             padding="max_length",
                                                                                             truncation=True,
                                                                                             return_tensors="pt").to("cuda")
-            print_rank_0(f"rm_input {rm_prompts['input_ids'].shape}", color=Fore.GREEN)            
+            print_rank_0(f"rm_input {rm_input['input_ids'].shape}", color=Fore.GREEN)            
         else:
             rm_input = {"input_ids": seq, "attention_mask": seq.not_equal(self.tokenizer.pad_token_id).long()}
             rm_prompts = prompts
