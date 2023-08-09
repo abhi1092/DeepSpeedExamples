@@ -97,7 +97,7 @@ class DeepSpeedPPOTrainer():
                                                             padding="max_length",
                                                             truncation=True,
                                                             return_tensors="pt")['input_ids'].to("cuda")
-            print_rank_0(f"rm_prompts {rm_prompts.shape}", color=Fore.GREEN)
+            print_rank_0(f"rm_prompts {rm_prompts.shape}", color=Fore.GREEN, rank=torch.distributed.get_rank())
             ans_str = self.tokenizer.batch_decode(ans)
             
             #find index of END_KEY
