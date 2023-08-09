@@ -15,10 +15,12 @@ import os
 import hashlib
 from itertools import chain
 from . import raw_datasets
+from utils.utils import print_rank_0, Fore
 
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank):
 
+    print_rank_0(f"Loading dataset {dataset_name} ...", color=Fore.GREEN, rank=local_rank)
     if "Dahoas/rm-static" in dataset_name:
         return raw_datasets.DahoasRmstaticDataset(output_path, seed,
                                                   local_rank, dataset_name)

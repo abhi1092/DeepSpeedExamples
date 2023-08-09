@@ -782,4 +782,7 @@ class ShareOasstCustom(LocalJsonFileDataset):
                                              "eval":
                                              dataset_path,
                                          })
+        
+    def get_prompt(self, sample):
+        sample['formatted_input']
     
