@@ -87,15 +87,17 @@ class DeepSpeedPPOTrainer():
         self.prompt_length = prompt_length
         ans = seq[:, prompt_length:]
         valid_ans_len = (ans != self.tokenizer.pad_token_id).sum(dim=-1)
-        from IPython import embed; embed(header=get_caller())
+        
         if type(self.rlhf_engine.reward_tokenizer) != type(self.rlhf_engine.tokenizer):
             print_rank_0("ppo_trainer.py:93 it's not enough to simply check if the tokenizers are different, because granite requires a treatment that is not the same for everyone else.", color=Fore.RED)
+            print_rank_0(f"prompts {prompts.shape}", color=Fore.GREEN)
+            
             prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
             rm_prompts = self.reward_tokenizer(prompts_str, max_length=self.args.max_prompt_seq_len,
                                                             padding="max_length",
                                                             truncation=True,
                                                             return_tensors="pt")['input_ids'].to("cuda")
-            
+            print_rank_0(f"rm_prompts {rm_prompts.shape}", color=Fore.GREEN)
             ans_str = self.tokenizer.batch_decode(ans)
             
             #find index of END_KEY
@@ -112,6 +114,7 @@ class DeepSpeedPPOTrainer():
                                                                                             padding="max_length",
                                                                                             truncation=True,
                                                                                             return_tensors="pt").to("cuda")
+            print_rank_0(f"rm_input {rm_prompts['input_ids'].shape}", color=Fore.GREEN)            
         else:
             rm_input = {"input_ids": seq, "attention_mask": seq.not_equal(self.tokenizer.pad_token_id).long()}
             rm_prompts = prompts
@@ -160,7 +163,7 @@ class DeepSpeedPPOTrainer():
 
         logits = output.logits
         logits_ref = output_ref.logits
-        from IPython import embed; embed(header=get_caller())
+    
         return {
             'prompts': prompts,
             'rm_prompts': rm_prompts,
