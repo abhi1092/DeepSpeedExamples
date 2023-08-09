@@ -5,7 +5,7 @@
 from datasets import load_dataset
 from torch.utils.data import Subset
 import re
-from utils.utils import get_caller
+from utils.utils import get_caller, print_rank_0, Fore
 
 
 # The template prompt dataset class that all new dataset porting needs to
@@ -783,7 +783,6 @@ class ShareOasstCustom(LocalJsonFileDataset):
                                              "eval":
                                              dataset_path,
                                          })
-        from IPython import embed; embed(header=get_caller())
     def get_prompt(self, sample):
-        sample['formatted_input']
+        return sample['formatted_input']
     

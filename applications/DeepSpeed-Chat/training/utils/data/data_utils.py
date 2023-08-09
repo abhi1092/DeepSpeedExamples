@@ -273,6 +273,7 @@ def create_prompt_dataset(local_rank,
     """
     Creates the prompt dataset
     """
+    print_rank_0(f"Creating prompt dataset {data_path} ...", color=Fore.GREEN, rank=0)
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
