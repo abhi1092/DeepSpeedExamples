@@ -40,7 +40,7 @@ import sys
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from utils.data.data_utils import create_prompt_dataset, MiniDataset, DataCollatorRLHF, get_unsupervised_data
-from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, moving_average, save_zero_three_model, load_hf_tokenizer
+from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, moving_average, save_zero_three_model, load_hf_tokenizer, Fore, get_caller
 from utils.module.lora import convert_lora_to_linear_layer
 
 writer = None
@@ -417,6 +417,7 @@ def main():
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
     tokenizer = load_hf_tokenizer(args.actor_model_name_or_path,
                                   fast_tokenizer=True)
+    from IPython import embed; embed(header=get_caller())
     prompt_train_dataloader, unsupervised_train_dataloader, num_total_iters = create_datasets(
         args=args, tokenizer=tokenizer, train_phase=3)
 
@@ -460,7 +461,7 @@ def main():
             # if length > args.max_prompt_seq_len:
             #     prompts = prompts[:, length - args.max_prompt_seq_len:]
             #     raise ValueError("Prompt length is too long")
-
+            print_rank_0("****** generating experience *************", args.global_rank, color=Fore.GREEN)
             out = trainer.generate_experience(batch_prompt['prompt'],
                                               batch_prompt['prompt_att_mask'],
                                               step)
