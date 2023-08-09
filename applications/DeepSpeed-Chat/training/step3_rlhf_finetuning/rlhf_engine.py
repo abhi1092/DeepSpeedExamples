@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, get_scheduler
 from utils.ds_utils import get_train_ds_config, get_eval_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, only_optimize_lora_parameters, make_model_gradient_checkpointing_compatible
 from utils.model.model_utils import create_hf_model, create_critic_model
-from utils.utils import get_optimizer_grouped_parameters, load_hf_tokenizer, print_rank_0, Fore
+from utils.utils import get_optimizer_grouped_parameters, load_hf_tokenizer, print_rank_0, Fore, get_caller
 """
 TODOs:
   * support HF models for critic (for debugging), must be a previously saved ckpt from step-2
@@ -125,7 +125,7 @@ class DeepSpeedRLHFEngine():
                                                 optimizer=optim,
                                                 lr_scheduler=lr_scheduler,
                                                 config=ds_config)
-
+        from IPython import embed; embed(header=get_caller())
         log_init("Actor", stime=stime)
 
         return actor_engine
