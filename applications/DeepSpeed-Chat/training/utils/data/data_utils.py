@@ -16,6 +16,7 @@ import hashlib
 from itertools import chain
 from . import raw_datasets
 from utils.utils import print_rank_0, Fore
+import torch
 
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank):

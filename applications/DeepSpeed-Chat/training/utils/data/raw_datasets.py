@@ -6,6 +6,7 @@ from datasets import load_dataset
 from torch.utils.data import Subset
 import re
 from utils.utils import get_caller, print_rank_0, Fore
+import torch
 
 
 # The template prompt dataset class that all new dataset porting needs to
