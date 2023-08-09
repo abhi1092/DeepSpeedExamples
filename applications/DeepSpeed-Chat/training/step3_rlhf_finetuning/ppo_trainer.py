@@ -12,8 +12,8 @@ from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from utils.utils import print_rank_0, get_caller
-from utils.consts import OASST_PROMPT
+from utils.utils import print_rank_0, get_caller, Fore
+from utils.consts import OASST_PROMPT, END_KEY
 
 
 def print_all_ranks(tag, value, rank):
@@ -88,16 +88,33 @@ class DeepSpeedPPOTrainer():
         ans = seq[:, prompt_length:]
         valid_ans_len = (ans != self.tokenizer.pad_token_id).sum(dim=-1)
         
-        from IPython import embed; embed(header=get_caller())
-        if "oasst" in self.rlhf_engine.reward_tokenizer.name_or_path:
+        if type(self.rlhf_engine.reward_tokenizer) != type(self.rlhf_engine.tokenizer):
+            print_rank_0("ppo_trainer.py:93 it's not enough to simply check if the tokenizers are different, because granite requires a treatment that is not the same for everyone else.", color=Fore.RED)
             prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
+            rm_prompts = self.reward_tokenizer(prompts_str, max_length=self.args.max_prompt_length,
+                                                            padding="max_length",
+                                                            truncation=True,
+                                                            return_tensors="pt")['input_ids'].to("cuda")
+            
             ans_str = self.tokenizer.batch_decode(ans)
-            rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
-                                            response=a.replace("<|endoftext|>","")) 
-                        for p,a in zip(prompts_str, ans_str)]
-            rm_input = self.reward_tokenizer(rm_input, padding=True, truncation=True, return_tensors="pt").to("cuda")
+            
+            #find index of END_KEY
+            end_idx = [a.find(END_KEY) for a in ans_str]
+            end_idx = [e if e != -1 else len(a) for e,a in zip(end_idx, ans_str)]
+                                         
+            #remove everything after the end key and add the end of text token.
+            ans_str = [a[:e] + "<|endoftext|>" for a,e in zip(ans_str, end_idx)]
+            # rm_input = [OASST_PROMPT.format(instruction=p.replace("<|endoftext|>", ""), 
+            #                                 response=a.replace("<|endoftext|>","")) 
+            #             for p,a in zip(prompts_str, ans_str)]
+            print_rank_0("ppo_trainer.py:110: truncation side?", color=Fore.RED)
+            rm_input = self.reward_tokenizer([p + a for p,a in zip(prompts_str, ans_str)], max_length=self.args.max_prompt_length + self.args.max_answer_seq_len,
+                                                                                            padding="max_length",
+                                                                                            truncation=True,
+                                                                                            return_tensors="pt").to("cuda")
         else:
             rm_input = {"input_ids": seq, "attention_mask": seq.not_equal(self.tokenizer.pad_token_id).long()}
+            rm_prompts = prompts
         
         if self.args.print_answers:
             print(
@@ -120,12 +137,12 @@ class DeepSpeedPPOTrainer():
                 
         out_seq = torch.cat(out_seq, dim=0)  # concate output in the batch dim
 
-        return out_seq, rm_input #and return another one.
+        return out_seq, rm_input, rm_prompts #and return another one.
 
     def generate_experience(self, prompts, mask, step):
         #TODO: I need to use both the prompts and the formatted prompts.
         self.eval()
-        seq, rm_input = self._generate_sequence(prompts, mask, step)
+        seq, rm_input, rm_prompts = self._generate_sequence(prompts, mask, step)
         self.train()
 
         pad_token_id = self.tokenizer.pad_token_id
@@ -146,6 +163,7 @@ class DeepSpeedPPOTrainer():
 
         return {
             'prompts': prompts,
+            'rm_prompts': rm_prompts,
             'logprobs': gather_log_probs(logits[:, :-1, :], seq[:, 1:]),
             'ref_logprobs': gather_log_probs(logits_ref[:, :-1, :], seq[:,1:]),
             'value': values,
@@ -177,6 +195,7 @@ class DeepSpeedPPOTrainer():
         # train the rlhf mode here
         ### process the old outputs
         prompts = inputs['prompts']
+        rm_prompts = inputs['rm_prompts']
         log_probs = inputs['logprobs']
         ref_log_probs = inputs['ref_logprobs']
         reward_score = inputs['rewards'] #so what's up with the reward score???.
@@ -185,13 +204,14 @@ class DeepSpeedPPOTrainer():
         seq = inputs['input_ids']
         rm_seq = inputs['rm_input_ids']
         rm_mask = inputs['rm_attention_mask']
-
+        from IPython import embed; embed(header=get_caller())
         start = prompts.size()[-1] - 1
+        rm_start = rm_prompts.size()[-1] - 1
         action_mask = attention_mask[:, 1:]
 
         old_values = values
         with torch.no_grad():
-            old_rewards = self.compute_rewards(prompts, log_probs,
+            old_rewards = self.compute_rewards(rm_prompts, log_probs,
                                                ref_log_probs, reward_score,
                                                action_mask)
             ends = start + action_mask[:, start:].sum(1) + 1
