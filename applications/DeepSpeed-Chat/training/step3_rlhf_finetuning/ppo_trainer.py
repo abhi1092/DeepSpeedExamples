@@ -121,7 +121,7 @@ class DeepSpeedPPOTrainer():
             rm_input = {"input_ids": seq, "attention_mask": seq.not_equal(self.tokenizer.pad_token_id).long()}
             rm_prompts = prompts
         
-        if self.args.print_answers:
+        if self.args.print_answers and torch.distributed.get_rank() == 0:
             print(
                 f"--- prompt --> step={step}, rank={torch.distributed.get_rank()}, {self.tokenizer.batch_decode(prompts, skip_special_tokens=True)}"
             )

@@ -27,9 +27,9 @@ def get_train_ds_config(offload,
         "offload_optimizer": {
             "device": device
         },
-        "stage3_param_persistence_threshold": "auto",
-        "stage3_max_live_parameters": "auto",
-        "stage3_prefetch_bucket_size": "auto",
+        "stage3_param_persistence_threshold": 1e9,
+        "stage3_max_live_parameters": 1e9,
+        "stage3_prefetch_bucket_size": 5e7,
         "memory_efficient_linear": False
         # "stage3_param_persistence_threshold": 1e4,
         # "stage3_max_live_parameters": 3e7,
@@ -53,7 +53,7 @@ def get_train_ds_config(offload,
         },
         "gradient_clipping": 1.0,
         "prescale_gradients": False,
-        "wall_clock_breakdown": False,
+        "wall_clock_breakdown": True,
         "hybrid_engine": {
             "enabled": enable_hybrid_engine,
             "max_out_tokens": max_out_tokens,
