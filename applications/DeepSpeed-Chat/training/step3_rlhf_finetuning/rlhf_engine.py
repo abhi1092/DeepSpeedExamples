@@ -215,13 +215,14 @@ class DeepSpeedRLHFEngine():
         reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
 
         # Model
-        # print_rank_0("go back to true rlhf_training!!!", color=Fore.RED)
+        if not self.args.rlhf_training:
+            print_rank_0("go back to true rlhf_training!!!", color=Fore.RED)
         critic_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
             tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,
-            rlhf_training=True,
+            rlhf_training=self.args.rlhf_training,
             # rlhf_training=False,
             disable_dropout=self.args.disable_critic_dropout)
 
@@ -290,13 +291,14 @@ class DeepSpeedRLHFEngine():
         reward_tokenizer = load_hf_tokenizer(critic_model_name_or_path)
         
         # Model
-        # print_rank_0("go back to true rlhf_training!!!", color=Fore.RED)
+        if not self.args.rlhf_training:
+            print_rank_0("go back to true rlhf_training!!!", color=Fore.RED)
         reward_model = create_critic_model(
             model_name_or_path=critic_model_name_or_path,
             tokenizer=reward_tokenizer,
             ds_config=ds_eval_config,
             num_padding_at_beginning=self.args.num_padding_at_beginning,\
-            rlhf_training=True,
+            rlhf_training=self.args.rlhf_training,
             # rlhf_training=False,
             )
 

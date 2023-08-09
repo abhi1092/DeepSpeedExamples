@@ -306,6 +306,10 @@ def parse_args():
     parser.add_argument('--print_answers',
                         action='store_true',
                         help='Print prompt and answers during training')
+    
+    parser.add_argument('--rlhf_traning',
+                        action='store_true',
+                        help='create the critic and reward models with this flag so it looks for a checkpoint on disk.')
 
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
