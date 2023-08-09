@@ -104,7 +104,9 @@ class DeepSpeedPPOTrainer():
             ans_str = self.tokenizer.batch_decode(ans)
             
             #print if ans_str has END_KEY
-            print_rank_0(f"END_KEY in ans {END_KEY in ans_str}", color=Fore.GREEN, rank=torch.distributed.get_rank())
+            print_rank_0(f"END_KEY in ans {[(END_KEY in a) for in ans_str]}", color=Fore.GREEN, rank=torch.distributed.get_rank())
+            #print ans_str
+            print_rank_0(f"ans_str {ans_str}", color=Fore.GREEN, rank=torch.distributed.get_rank())
             #find index of END_KEY
             end_idx = [a.find(END_KEY) for a in ans_str]
             end_idx = [e if e != -1 else len(a) for e,a in zip(end_idx, ans_str)]
