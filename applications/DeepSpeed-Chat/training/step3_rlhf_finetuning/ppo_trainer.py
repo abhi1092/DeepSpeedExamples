@@ -77,6 +77,7 @@ class DeepSpeedPPOTrainer():
                 prompts,
                 attention_mask=mask,
                 max_length=max_min_length,
+                min_length=max_min_length,
                 pad_token_id=self.tokenizer.pad_token_id,
                 synced_gpus=self.z3_enabled)
         #print seq.shape
