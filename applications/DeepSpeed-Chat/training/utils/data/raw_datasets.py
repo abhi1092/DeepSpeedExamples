@@ -784,5 +784,6 @@ class ShareOasstCustom(LocalJsonFileDataset):
                                              dataset_path,
                                          })
     def get_prompt(self, sample):
+        print_rank_0(f"sample: {sample['formatted_input']}", rank=torch.distributed.get_rank(), color=Fore.GREEN)
         return sample['formatted_input']
     
