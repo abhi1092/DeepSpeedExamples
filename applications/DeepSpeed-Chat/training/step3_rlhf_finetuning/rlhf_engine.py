@@ -125,7 +125,9 @@ class DeepSpeedRLHFEngine():
                                                 optimizer=optim,
                                                 lr_scheduler=lr_scheduler,
                                                 config=ds_config)
-        from IPython import embed; embed(header=get_caller())
+        
+        actor_engine._total_batch_size = ds_config['train_batch_size'] * torch.distributed.get_world_size()
+        print_rank_0(f"Actor engine total batch size: {actor_engine._total_batch_size}", color=Fore.GREEN, rank=torch.distributed.get_rank())
         log_init("Actor", stime=stime)
 
         return actor_engine
