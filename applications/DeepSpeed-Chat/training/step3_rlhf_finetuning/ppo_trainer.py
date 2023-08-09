@@ -91,7 +91,7 @@ class DeepSpeedPPOTrainer():
         if type(self.rlhf_engine.reward_tokenizer) != type(self.rlhf_engine.tokenizer):
             print_rank_0("ppo_trainer.py:93 it's not enough to simply check if the tokenizers are different, because granite requires a treatment that is not the same for everyone else.", color=Fore.RED)
             prompts_str = self.tokenizer.batch_decode(prompts, skip_special_tokens=True)
-            rm_prompts = self.reward_tokenizer(prompts_str, max_length=self.args.max_prompt_seq_length,
+            rm_prompts = self.reward_tokenizer(prompts_str, max_length=self.args.max_prompt_seq_len,
                                                             padding="max_length",
                                                             truncation=True,
                                                             return_tensors="pt")['input_ids'].to("cuda")
@@ -108,7 +108,7 @@ class DeepSpeedPPOTrainer():
             #                                 response=a.replace("<|endoftext|>","")) 
             #             for p,a in zip(prompts_str, ans_str)]
             print_rank_0("ppo_trainer.py:110: truncation side?", color=Fore.RED)
-            rm_input = self.reward_tokenizer([p + a for p,a in zip(prompts_str, ans_str)], max_length=self.args.max_prompt_seq_length + self.args.max_answer_seq_len,
+            rm_input = self.reward_tokenizer([p + a for p,a in zip(prompts_str, ans_str)], max_length=self.args.max_prompt_seq_len + self.args.max_answer_seq_len,
                                                                                             padding="max_length",
                                                                                             truncation=True,
                                                                                             return_tensors="pt").to("cuda")
