@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: Apache-2.0
 
-#run_13b.sh /new_data/rl-4-llm/experiment_alignment/granite13b_800bn/cft_100k_e2_tullu_hp_beta_1e-6/checkpoint-3000 /new_data/trained_models/opt-1.3-reward-dsc 3 3 /newdata/rlhf_out_4.28pm/
+#run_13b.sh /new_data/delivery/granite13b/ckpt-800bn/sft600k/cft100k/checkpoint-3000/ /new_data/trained_models/opt-1.3-reward-dsc 3 3 /new_data/rlhf_out_8.17pm/
 
 # DeepSpeed Team
 ACTOR_MODEL_PATH=$1
@@ -30,6 +30,7 @@ Critic_Lr=5e-6
 
 deepspeed --master_port 12346 main.py \
    --enable_tensorboard \
+   --offload_reference_model \
    --tensorboard_path $OUTPUT/tensorboard13b/ \
    --data_path Dahoas/rm-static \
    --data_split 2,4,4 \

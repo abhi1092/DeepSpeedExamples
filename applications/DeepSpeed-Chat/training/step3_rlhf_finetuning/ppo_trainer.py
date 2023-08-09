@@ -204,9 +204,8 @@ class DeepSpeedPPOTrainer():
         seq = inputs['input_ids']
         rm_seq = inputs['rm_input_ids']
         rm_mask = inputs['rm_attention_mask']
-        from IPython import embed; embed(header=get_caller())
+        # from IPython import embed; embed(header=get_caller())
         start = prompts.size()[-1] - 1
-        rm_start = rm_prompts.size()[-1] - 1
         action_mask = attention_mask[:, 1:]
 
         old_values = values
