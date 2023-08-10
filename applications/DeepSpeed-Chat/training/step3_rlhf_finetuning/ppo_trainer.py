@@ -13,7 +13,7 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from utils.utils import print_rank_0, get_caller, Fore
-from utils.consts import OASST_PROMPT, END_KEY
+from utils.consts import OASST_PROMPT, STOP_KEYS
 
 
 def print_all_ranks(tag, value, rank):
@@ -108,13 +108,11 @@ class DeepSpeedPPOTrainer():
             print_rank_0(f"rm_prompts {rm_prompts.shape}", color=Fore.GREEN, rank=torch.distributed.get_rank())
             ans_str = self.tokenizer.batch_decode(ans)
             
-            #print if ans_str has END_KEY
-            print_rank_0(f"END_KEY in ans {[(END_KEY in a) for a in ans_str]}", color=Fore.GREEN, rank=torch.distributed.get_rank())
-            #print ans_str
-            print_rank_0(f"ans_str {ans_str}", color=Fore.GREEN, rank=torch.distributed.get_rank())
-            #find index of END_KEY
-            end_idx = [a.find(END_KEY) for a in ans_str]
-            end_idx = [e if e != -1 else len(a) for e,a in zip(end_idx, ans_str)]
+            #check if any of the stop keys are in ans_str
+            print_rank_0(f"STOP_KEYS in ans {[any(s in a for s in STOP_KEYS) for a in ans_str]}", color=Fore.GREEN, rank=torch.distributed.get_rank())
+            
+            #find first index of any stop key
+            end_idx = [next((a.index(s) for s in STOP_KEYS if s in ans_str), -1) for a in ans_str]
                                          
             #remove everything after the end key and add the end of text token.
             ans_str = [a[:e] + "<|endoftext|>" for a,e in zip(ans_str, end_idx)]
