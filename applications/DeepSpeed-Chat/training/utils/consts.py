@@ -1,2 +1,2 @@
 OASST_PROMPT = "<|prompter|>{instruction}<|endoftext|><|assistant|>{response}<|endoftext|>"
-END_KEY = "\n\nEND_KEY"
+STOP_KEYS = ["\n\nEND_KEY","Human:", "human:", "Assistant:", "assistant:"]
