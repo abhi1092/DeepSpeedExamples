@@ -397,6 +397,34 @@ class LocalJsonFileDataset(PromptRawDataset):
         if sample['prompt'] is not None and sample['rejected'] is not None:
             return " " + sample['prompt'] + " " + sample['rejected']
         return None
+    
+class RedditTLDR(LocalJsonFileDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
+        # super().__init__(output_path, seed, local_rank, dataset_name)
+        self.dataset_name = "local/reddit_tldr"
+        self.dataset_name_clean = "reddit_tldr"
+        from pathlib import Path
+        # get the directory of the dataset
+        d_path = Path(dataset_path)
+        # string of d_path
+        
+        self.raw_datasets = load_dataset('json',
+                                         data_files={
+                                             "train":
+                                             str(d_path.parent / 'tldr_sft_train_117k.jsonl'),
+                                             "eval":
+                                             str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
+                                         })
+    
+    def get_prompt(self, sample):
+        return sample['formatted_input']
+    
+    def get_chosen(self, sample):
+        return sample['summary']
+    
+    def get_prompt_and_chosen(self, sample):
+        return sample['formatted_input'] + sample['summary']
+    
 
 
 # Chinese dataset
