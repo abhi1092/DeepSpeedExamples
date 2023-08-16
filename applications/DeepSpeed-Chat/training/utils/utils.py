@@ -11,9 +11,12 @@ import json
 import deepspeed
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 from colorama import Fore, Style
+from torch.distributed import get_rank
 
 
-def print_rank_0(msg, rank=0, color=None):
+def print_rank_0(msg, rank=None, color=None):
+    if rank is None:
+        rank = get_rank()
     if rank <= 0:
         if color is not None:
             msg = color + msg + Style.RESET_ALL
