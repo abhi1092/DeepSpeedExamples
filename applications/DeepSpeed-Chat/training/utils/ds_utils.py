@@ -19,6 +19,7 @@ def get_train_ds_config(offload,
                         tb_name=""):
 
     device = "cpu" if offload else "none"
+    print_rank_0("remember to get ds_utils stage 3 to manual", rank=torch.)
     zero_opt_dict = {
         "stage": stage,
         "offload_param": {
@@ -30,13 +31,13 @@ def get_train_ds_config(offload,
         # "stage3_param_persistence_threshold": 1e9,
         # "stage3_max_live_parameters": 14e9,
         # "stage3_prefetch_bucket_size": 1e8,
-        "stage3_param_persistence_threshold": "auto",
-        "stage3_max_live_parameters": "auto",
-        "stage3_prefetch_bucket_size": "auto",
+        # "stage3_param_persistence_threshold": "auto",
+        # "stage3_max_live_parameters": "auto",
+        # "stage3_prefetch_bucket_size": "auto",
         # "memory_efficient_linear": False,
-        # "stage3_param_persistence_threshold": 1e4,
-        # "stage3_max_live_parameters": 3e7,
-        # "stage3_prefetch_bucket_size": 3e7,
+        "stage3_param_persistence_threshold": 1e6,
+        "stage3_max_live_parameters": 1e9,
+        "stage3_prefetch_bucket_size": 5e8,
     }
     # "fp16": {
     #     "enabled": True,
