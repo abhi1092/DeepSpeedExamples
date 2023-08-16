@@ -77,8 +77,8 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
                     model_name, fast_tokenizer=fast_tokenizer)
             except (HFValidationError, KeyError) as e:
                 print_rank_0(f"tokenizer failed based on model name (expected for granite) with exception {e}", color=Fore.RED)
-                tokenizer = AutoTokenizer.from_pretrained(
-                    model_name_or_path, fast_tokenizer=fast_tokenizer)
+                tokenizer = get_tokenizer(model_name_or_path,
+                                          fast_tokenizer=fast_tokenizer)
     else:
         tokenizer = get_tokenizer(model_name_or_path,
                                   fast_tokenizer=fast_tokenizer)
