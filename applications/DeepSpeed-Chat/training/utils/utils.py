@@ -70,14 +70,13 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
         # Locally tokenizer loading has some issue, so we need to force download
         model_json = os.path.join(model_name_or_path, "config.json")
         if os.path.exists(model_json):
-            from IPython import embed; embed(using=False)
             model_json_file = json.load(open(model_json))
-            model_name = model_json_file["_name_or_path"]
             try:
+                model_name = model_json_file["_name_or_path"]
                 tokenizer = AutoTokenizer.from_pretrained(
                     model_name, fast_tokenizer=fast_tokenizer)
-            except HFValidationError:
-                print_rank_0("tokenizer failed based on model name (expected for granite)", color=Fore.RED)
+            except (HFValidationError, KeyError) as e:
+                print_rank_0(f"tokenizer failed based on model name (expected for granite) with exception {e}", color=Fore.RED)
                 tokenizer = AutoTokenizer.from_pretrained(
                     model_name_or_path, fast_tokenizer=fast_tokenizer)
     else:
