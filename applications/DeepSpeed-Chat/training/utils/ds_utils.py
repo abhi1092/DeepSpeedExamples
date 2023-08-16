@@ -44,7 +44,7 @@ def get_train_ds_config(offload,
         "allgather_bucket_size": "1e9",
         "overlap_comm": False,
         "reduce_scatter": True,
-        "reduce_bucket_size": "5e8",
+        "reduce_bucket_size": "auto",
         "contiguous_gradients": False
     }
     # "fp16": {
