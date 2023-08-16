@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: Apache-2.0
-
+from utils.utils import print_rank_0, Fore
 # DeepSpeed Team
 GLOBAL_BATCH_SIZE = 32
 MICRO_BATCH_SIZE = 4
@@ -19,7 +19,7 @@ def get_train_ds_config(offload,
                         tb_name=""):
 
     device = "cpu" if offload else "none"
-    print_rank_0("remember to get ds_utils stage 3 to manual", rank=torch.)
+    print_rank_0("remember to get ds_utils stage 3 to manual", color=Fore.GREEN)
     zero_opt_dict = {
         "stage": stage,
         "offload_param": {
