@@ -70,6 +70,7 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
         # Locally tokenizer loading has some issue, so we need to force download
         model_json = os.path.join(model_name_or_path, "config.json")
         if os.path.exists(model_json):
+            from IPython import embed; embed(using=False)
             model_json_file = json.load(open(model_json))
             model_name = model_json_file["_name_or_path"]
             try:
