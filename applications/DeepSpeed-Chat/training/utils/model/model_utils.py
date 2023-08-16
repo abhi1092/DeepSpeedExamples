@@ -55,7 +55,7 @@ def create_hf_model(model_class,
     return model
 
 
-def create_critic_model(model_name_or_path,
+def create_critic_model(rank, model_name_or_path,
                         tokenizer,
                         ds_config,
                         num_padding_at_beginning=0,
