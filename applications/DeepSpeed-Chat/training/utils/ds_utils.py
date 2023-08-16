@@ -23,10 +23,12 @@ def get_train_ds_config(offload,
     zero_opt_dict = {
         "stage": stage,
         "offload_param": {
-            "device": device
+            "device": device,
+            "pin_memory": True
         },
         "offload_optimizer": {
-            "device": device
+            "device": device,
+            "pin_memory": True
         },
         # "stage3_param_persistence_threshold": 1e9,
         # "stage3_max_live_parameters": 14e9,
@@ -39,10 +41,10 @@ def get_train_ds_config(offload,
         # "stage3_max_live_parameters": 1e9,
         # "stage3_prefetch_bucket_size": 5e8,
           "allgather_partitions": True,
-        "allgather_bucket_size": 5e8,
+        "allgather_bucket_size": "auto",
         "overlap_comm": False,
         "reduce_scatter": True,
-        "reduce_bucket_size": 5e8,
+        "reduce_bucket_size": "auto",
         "contiguous_gradients": False
     }
     # "fp16": {
