@@ -29,7 +29,7 @@ from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed
 from utils.ds_utils import get_train_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, convert_lora_to_linear_layer, only_optimize_lora_parameters
 from utils.model.model_utils import create_hf_model
-
+from utils.model.cft_model import CftModel
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -223,7 +223,7 @@ def main():
                             tokenizer,
                             ds_config,
                             disable_dropout=args.disable_dropout, load_from_local_file=True)
-
+    model = CftModel(model, tokenizer)
     if args.lora_dim > 0:
         model = convert_linear_layer_to_lora(model, args.lora_module_name,
                                              args.lora_dim)
@@ -258,10 +258,6 @@ def main():
                                  collate_fn=data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-    for step, batch in enumerate(train_dataloader):
-        print(batch["use_negative_data"])
-        exit()
-    exit()
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
@@ -329,7 +325,8 @@ def main():
         for step, batch in enumerate(train_dataloader):
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
-            loss = outputs.loss
+            exit()
+            loss = outputs["loss"]
             if args.print_loss:
                 print(
                     f"Epoch: {epoch}, Step: {step}, Rank: {torch.distributed.get_rank()}, loss = {loss}"
