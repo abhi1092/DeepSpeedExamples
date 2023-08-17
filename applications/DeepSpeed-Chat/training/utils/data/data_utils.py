@@ -181,7 +181,7 @@ def create_label(tokens, tokenizer, raw_dataset):
     assert response_token_ids_start_idx is not None, "Could not find response key"
     print(response_token_ids_start_idx)
     print(tokens["labels"].shape)
-    tokens["labels"][:response_token_ids_start_idx] = -100
+    tokens["labels"][0][:response_token_ids_start_idx] = -100
     print(f"{response_token_ids_start_idx=}")
     print("=================")
     print(tokens["labels"])
