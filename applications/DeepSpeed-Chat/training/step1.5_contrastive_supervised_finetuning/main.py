@@ -218,7 +218,7 @@ def main():
     tokenizer.pad_token = tokenizer.eos_token
     # make sure tokenizer is right pad in our logic
     tokenizer.padding_side = 'right'
-    model = create_hf_model(args.global_rank, AutoModelForCausalLM,
+    model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
                             ds_config,
