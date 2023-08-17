@@ -66,7 +66,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=3 --rdzv_id=107 --rdzv_endpoi
     main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
-   --model_name_or_path $granite_path \
+   --model_name_or_path facebook/opt-2.7b \
    --per_device_train_batch_size 1 \
    --per_device_eval_batch_size 1 \
    --max_seq_len 512 \
