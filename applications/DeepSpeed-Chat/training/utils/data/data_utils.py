@@ -176,6 +176,7 @@ def create_label(tokens, tokenizer, raw_dataset):
     tokens["labels"] = tokens["input_ids"].clone()
     response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
     assert len(response_token_ids) == 1, "Tokenizer does not have special token"
+    print(tokens["input_ids"].shape)
     for i in range(tokens["input_ids"].shape[1]):
         response_token_ids_start_idx = None
         for idx in np.where(tokens["labels"][i] == response_token_ids[0])[0]:
