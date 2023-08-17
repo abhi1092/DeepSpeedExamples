@@ -172,22 +172,24 @@ class PromptDataset(Dataset):
 
 
 def create_label(tokens, tokenizer, raw_dataset):
+
     tokens["labels"] = tokens["input_ids"].clone()
     response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
     assert len(response_token_ids) == 1, "Tokenizer does not have special token"
-    response_token_ids_start_idx = None
-    for idx in np.where(tokens["labels"][0] == response_token_ids[0])[0]:
-        response_token_ids_start_idx = idx
-    assert response_token_ids_start_idx is not None, "Could not find response key"
-    print(response_token_ids_start_idx)
-    print(tokens["labels"].shape)
-    tokens["labels"][0][:response_token_ids_start_idx] = -100
-    print(f"{response_token_ids_start_idx=}")
-    print("=================")
-    print(tokens["labels"])
-    print("+++++++++=")
-    print(tokens["input_ids"])
-    exit()
+    for i in range(tokens["input_ids"].shape[1]):
+        response_token_ids_start_idx = None
+        for idx in np.where(tokens["labels"][i] == response_token_ids[0])[0]:
+            response_token_ids_start_idx = idx
+        assert response_token_ids_start_idx is not None, "Could not find response key"
+        print(response_token_ids_start_idx)
+        print(tokens["labels"].shape)
+        tokens["labels"][i][:response_token_ids_start_idx] = -100
+        print(f"{response_token_ids_start_idx=}")
+        print("=================")
+        print(tokens["labels"])
+        print("+++++++++=")
+        print(tokens["input_ids"])
+        exit()
     return tokens
 
 
