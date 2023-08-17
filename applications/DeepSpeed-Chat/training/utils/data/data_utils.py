@@ -414,14 +414,13 @@ class DataCollatorCft:
 
     def __call__(self, data):
         batch = {}
-        print(f"{len(data)=}")
-        print(data)
         batch["input_ids"] = torch.cat([f[0]
                                         for f in data] + [f[2] for f in data],
                                        dim=0)
         batch["attention_mask"] = torch.cat([f[1] for f in data] +
                                             [f[3] for f in data],
                                             dim=0)
+        print(data[0][-1])
         batch["use_negative_data"] =  torch.cat([f[-1] for f in data])
         return batch
 
