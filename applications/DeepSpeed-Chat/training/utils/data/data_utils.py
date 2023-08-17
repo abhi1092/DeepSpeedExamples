@@ -155,6 +155,9 @@ class PromptDataset(Dataset):
                 "attention_mask": self.chosen_dataset[idx]["attention_mask"],
                 "labels": self.chosen_dataset[idx]["input_ids"]
             }
+        elif self.train_phase == 1.5:
+            return self.chosen_dataset[idx]["input_ids"], self.chosen_dataset[idx]["attention_mask"], \
+                self.reject_dataset[idx]["input_ids"], self.reject_dataset[idx]["attention_mask"], self.reject_dataset[idx]["use_negative_data"]
         elif self.train_phase == 2:
             return self.chosen_dataset[idx]["input_ids"], self.chosen_dataset[idx]["attention_mask"], \
                 self.reject_dataset[idx]["input_ids"], self.reject_dataset[idx]["attention_mask"]
@@ -185,6 +188,37 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_token["attention_mask"] = chosen_token[
                     "attention_mask"].squeeze(0)
                 chosen_dataset.append(chosen_token)
+
+    elif train_phase == 1.5:
+        for i, tmp_data in enumerate(current_dataset):
+            # tokenize the text
+            chosen_sentence = raw_dataset.get_prompt_and_chosen(
+                tmp_data)  # the accept response
+            reject_sentence = raw_dataset.get_prompt_and_rejected(
+                tmp_data)  # the accept response
+            if chosen_sentence is not None and reject_sentence is not None:
+                chosen_sentence += end_of_conversation_token  # the accept response
+                reject_sentence += end_of_conversation_token
+                chosen_token = tokenizer(chosen_sentence,
+                                         max_length=max_seq_len,
+                                         padding="max_length",
+                                         truncation=True,
+                                         return_tensors="pt")
+                reject_token = tokenizer(reject_sentence,
+                                         max_length=max_seq_len,
+                                         padding="max_length",
+                                         truncation=True,
+                                         return_tensors="pt")
+                chosen_token["input_ids"] = chosen_token["input_ids"]
+                chosen_token["attention_mask"] = chosen_token["attention_mask"]
+                chosen_dataset.append(chosen_token)
+
+                reject_token["input_ids"] = reject_token["input_ids"]
+                reject_token["attention_mask"] = reject_token["attention_mask"]
+                reject_token["use_negative_data"] = tmp_data["use_negative_data"]
+                print(tmp_data)
+                exit()
+                reject_dataset.append(reject_token)
 
     elif train_phase == 2:
         for i, tmp_data in enumerate(current_dataset):
@@ -378,7 +412,7 @@ class DataCollatorCft:
     def __call__(self, data):
         batch = {}
         print(f"{len(data)=}")
-        print(data[0][0])
+        print(data)
         batch["input_ids"] = torch.cat([f[0]
                                         for f in data] + [f[2] for f in data],
                                        dim=0)
