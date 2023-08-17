@@ -19,8 +19,7 @@ def print_rank_0(msg, rank=None, color=None):
         rank = get_rank()
     if rank <= 0:
         if color is not None:
-            if type(color) == str:
-                color = getattr(Fore, color)
+            color = getattr(Fore, color.upper(), Fore.WHITE)
             msg = color + msg + Style.RESET_ALL
         print(msg)
 
