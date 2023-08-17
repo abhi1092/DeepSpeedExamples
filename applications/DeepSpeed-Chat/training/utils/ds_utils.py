@@ -30,22 +30,35 @@ def get_train_ds_config(offload,
             "device": device,
             "pin_memory": True
         },
-        "stage3_param_persistence_threshold": 1e9,
+            "stage": 3,
+        "allgather_partitions": True,
+        "allgather_bucket_size": 1e9,
+        "overlap_comm": True,
+        "reduce_scatter": True,
+        "reduce_bucket_size": 1e9,
+        "contiguous_gradients": True,
         "stage3_max_live_parameters": 14e9,
-        "stage3_prefetch_bucket_size": 1e8,
+        "stage3_max_reuse_distance": 1e9,
+        "stage3_prefetch_bucket_size": 1e9,
+        "stage3_param_persistence_threshold": 1e6,
+        "stage3_gather_16bit_weights_on_model_save": False,
+        "sub_group_size": 1e12,
+        # "stage3_param_persistence_threshold": 1e9,
+        # "stage3_max_live_parameters": 14e9,
+        # "stage3_prefetch_bucket_size": 1e8,
         # "stage3_param_persistence_threshold": "auto",
         # "stage3_max_live_parameters": "auto",
         # "stage3_prefetch_bucket_size": "auto",
-        # "memory_efficient_linear": False,
+        "memory_efficient_linear": True,
         # "stage3_param_persistence_threshold": 1e6,
         # "stage3_max_live_parameters": 1e9,
         # "stage3_prefetch_bucket_size": 5e8,
-          "allgather_partitions": True,
-        "allgather_bucket_size": 5e8,
-        "overlap_comm": False,
-        "reduce_scatter": True,
-        "reduce_bucket_size": 5e8,
-        "contiguous_gradients": False
+        #   "allgather_partitions": True,
+        # "allgather_bucket_size": 1e9,
+        # "overlap_comm": False,
+        # "reduce_scatter": True,
+        # "reduce_bucket_size": 1e8,
+        # "contiguous_gradients": False
     }
     # "fp16": {
     #     "enabled": True,
@@ -56,13 +69,13 @@ def get_train_ds_config(offload,
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
         "steps_per_print": 10,
         "zero_optimization": zero_opt_dict,
-        # "bf16": {
-        #     "enabled": True
-        # },
-        "fp16": {
-            "enabled": True,
-            "loss_scale_window": 100
+        "bf16": {
+            "enabled": True
         },
+        # "fp16": {
+        #     "enabled": True,
+        #     "loss_scale_window": 100
+        # },
         "gradient_clipping": 1.0,
         "prescale_gradients": False,
         "wall_clock_breakdown": True,
