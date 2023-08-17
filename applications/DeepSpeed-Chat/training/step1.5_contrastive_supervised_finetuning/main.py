@@ -214,7 +214,7 @@ def main():
     torch.distributed.all_reduce(tensor)
     print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
     torch.distributed.barrier()
-    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True, load_from_local_file=True)
     tokenizer.pad_token = tokenizer.eos_token
     # make sure tokenizer is right pad in our logic
     tokenizer.padding_side = 'right'
@@ -222,7 +222,7 @@ def main():
                             args.model_name_or_path,
                             tokenizer,
                             ds_config,
-                            disable_dropout=args.disable_dropout)
+                            disable_dropout=args.disable_dropout, load_from_local_file=True)
 
     if args.lora_dim > 0:
         model = convert_linear_layer_to_lora(model, args.lora_module_name,
