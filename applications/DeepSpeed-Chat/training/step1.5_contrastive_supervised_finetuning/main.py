@@ -24,7 +24,7 @@ from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from utils.data.data_utils import create_prompt_dataset
+from utils.data.data_utils import create_prompt_dataset, DataCollatorCft
 from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, get_optimizer_grouped_parameters, save_zero_three_model, load_hf_tokenizer
 from utils.ds_utils import get_train_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, convert_lora_to_linear_layer, only_optimize_lora_parameters
@@ -242,8 +242,6 @@ def main():
         tokenizer,
         args.max_seq_len,
         sft_only_data_path=args.sft_only_data_path)
-    print(train_dataset)
-    return
     # DataLoaders creation:
     if args.local_rank == -1:
         train_sampler = RandomSampler(train_dataset)
@@ -251,15 +249,19 @@ def main():
     else:
         train_sampler = DistributedSampler(train_dataset)
         eval_sampler = DistributedSampler(eval_dataset)
+    data_collator = DataCollatorCft()
     train_dataloader = DataLoader(train_dataset,
-                                  collate_fn=default_data_collator,
+                                  collate_fn=data_collator,
                                   sampler=train_sampler,
                                   batch_size=args.per_device_train_batch_size)
     eval_dataloader = DataLoader(eval_dataset,
-                                 collate_fn=default_data_collator,
+                                 collate_fn=data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-
+    for step, batch in enumerate(train_dataloader):
+        print(batch.keys())
+        exit()
+    exit()
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
