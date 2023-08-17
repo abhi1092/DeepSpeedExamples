@@ -108,8 +108,13 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
     # reindex each time when using local jsonfile since it's more likely to get modified
     if (not os.path.isfile(index_file_name)) or (dataset_name == 'jsonfile'):
         splits = [float(s) for s in data_split.split(',')]
+        print(f"{data_split=}")
+        print(f"{splits=}")
         splits_sum = sum(splits)
+        print(splits_sum)
         splits = [split / splits_sum for split in splits]
+        print(splits)
+        exit()
         splits_index = [0]
         for index, split in enumerate(splits):
             splits_index.append(splits_index[index] +
