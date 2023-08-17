@@ -192,7 +192,7 @@ def main():
     args = parse_args()
     
     #pretty print the args
-    print_rank_0(args, args.global_rank, color='GREEN')
+    
     
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
@@ -205,6 +205,8 @@ def main():
         # torch.distributed.init_process_group(backend='nccl')
         deepspeed.init_distributed()
     args.global_rank = torch.distributed.get_rank()
+    
+    print_rank_0(args, args.global_rank, color='GREEN')
 
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
