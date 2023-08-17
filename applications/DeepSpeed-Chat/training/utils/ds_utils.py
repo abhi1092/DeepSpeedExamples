@@ -41,10 +41,10 @@ def get_train_ds_config(offload,
         # "stage3_max_live_parameters": 1e9,
         # "stage3_prefetch_bucket_size": 5e8,
           "allgather_partitions": True,
-        "allgather_bucket_size": "auto",
+        "allgather_bucket_size": 1e9,
         "overlap_comm": False,
         "reduce_scatter": True,
-        "reduce_bucket_size": "auto",
+        "reduce_bucket_size": 1e9,
         "contiguous_gradients": False
     }
     # "fp16": {
