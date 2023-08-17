@@ -443,6 +443,8 @@ class DataCollatorCft:
 
     def __call__(self, data):
         batch = {}
+        print(len(data))
+        exit()
         batch["input_ids"] = torch.cat([f[0]
                                         for f in data] + [f[2] for f in data],
                                        dim=0)
