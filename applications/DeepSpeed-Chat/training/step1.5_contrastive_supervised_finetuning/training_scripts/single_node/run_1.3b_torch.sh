@@ -62,11 +62,11 @@ NEW_PORT=23457
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
 granite_path="/new_data/rl-4-llm/granite_models/instruction_tuned/granite-13b-sft-mix700k/ckpt-1000bn-base"
-torchrun --nnodes=1 --node_rank=0 --nproc_per_node=3 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
+torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
-   --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
+   --data_path cft_pro_lima_summ_mix7k \
    --data_split 2,4,4 \
-   --model_name_or_path facebook/opt-2.7b \
+   --model_name_or_path facebook/opt-1.3b \
    --per_device_train_batch_size 1 \
    --per_device_eval_batch_size 1 \
    --max_seq_len 512 \

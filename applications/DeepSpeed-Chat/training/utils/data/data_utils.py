@@ -67,6 +67,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
     elif "lmqg/qag_jaquad" in dataset_name:
         return raw_datasets.LmqgQagjaquadDataset(output_path, seed, local_rank,
                                                  dataset_name)
+    elif "cft_pro_lima_summ_mix7k" in dataset_name:
+        return raw_datasets.CftProLimaSummDataset(output_path, seed, local_rank,
+                                                 "local/jsonfile")
     elif "local/jsonfile" in dataset_name:
         chat_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.path.pardir,
@@ -366,6 +369,21 @@ class DataCollatorReward:
         batch["attention_mask"] = torch.cat([f[1] for f in data] +
                                             [f[3] for f in data],
                                             dim=0)
+        return batch
+
+
+
+class DataCollatorCft:
+
+    def __call__(self, data):
+        batch = {}
+        batch["input_ids"] = torch.cat([f[0]
+                                        for f in data] + [f[2] for f in data],
+                                       dim=0)
+        batch["attention_mask"] = torch.cat([f[1] for f in data] +
+                                            [f[3] for f in data],
+                                            dim=0)
+        batch["use_negative_data"] =  torch.cat([f[-1] for f in data])
         return batch
 
 

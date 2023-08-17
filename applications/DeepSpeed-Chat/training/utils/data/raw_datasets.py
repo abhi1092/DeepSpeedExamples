@@ -46,6 +46,105 @@ class PromptRawDataset(object):
         return
 
 
+# CFT dataset
+class CftProLimaSummDataset(PromptRawDataset):
+    HUMAN_KEY = "\n\nHuman: "
+    ASSISTANT_KEY = "\n\nAssistant: "
+    ASSISTANT_INT_THOUGHTS_KEY = "\n\nAssistant (internal thoughts): "
+    CONTEXT_KEY = "\n\nContext: "
+    DEFAULT_EOS_TOKEN = "<|endoftext|>"
+    END_KEY = "\n\nEND_KEY"
+    HHH_INTRO = "Below are a series of dialogues between various people and an AI assistant. The AI tries to be helpful, polite, honest, sophisticated, emotionally aware, and humble-but-knowledgeable. The assistant is happy to help with almost anything, and will do its best to understand exactly what is needed. It also tries to avoid giving false or misleading information, and it caveats when it isn't entirely sure about the right answer. Moreover, the assistant prioritizes caution over usefulness, refusing to answer questions that it considers unsafe, immoral, unethical or dangerous."
+    ALIGNMENT_PROMPT_WITH_CONTEXT = """{intro}{context_key}{context}{human_key}{instruction}{assistant_key}{response}{end_key}""".format(
+        intro="{intro}",
+        context_key="{context_key}",
+        context="{context}",
+        human_key="{human_key}",
+        instruction="{instruction}",
+        assistant_key="{assistant_key}",
+        response="{response}",
+        end_key=END_KEY,
+    )
+    ALIGNMENT_PROMPT_NO_CONTEXT = """{intro}{human_key}{instruction}{assistant_key}{response}{end_key}""".format(
+        intro="{intro}",
+        human_key="{human_key}",
+        instruction="{instruction}",
+        assistant_key="{assistant_key}",
+        response="{response}",
+        end_key=END_KEY,
+    )
+    ALIGNMENT_PROMPT_GENERATION_WITH_CONTEXT = """{intro}{context_key}{context}{human_key}{instruction}{assistant_key}""".format(
+        intro="{intro}",
+        human_key="{human_key}",
+        context_key="{context_key}",
+        context="{context}",
+        instruction="{instruction}",
+        assistant_key="{assistant_key}",
+    )
+
+    ALIGNMENT_PROMPT_GENERATION_NO_CONTEXT = """{intro}{human_key}{instruction}{assistant_key}""".format(
+        intro="{intro}",
+        human_key="{human_key}",
+        instruction="{instruction}",
+        assistant_key="{assistant_key}",
+    )
+
+    def __init__(self, output_path, seed, local_rank, dataset_name):
+        super().__init__(output_path, seed, local_rank, dataset_name)
+        self.raw_datasets = load_dataset("json", data_files=output_path, split="train")
+        self.raw_datasets = self.raw_datasets.train_test_split(test_size=0.1, seed=seed)
+        self.dataset_name = "cft_pro_lima_summ_mix7k"
+        self.dataset_name_clean = "CftProLimaSummMix7k"
+
+    def get_train_data(self):
+        return self.raw_datasets["train"]
+
+    def get_eval_data(self):
+        return self.raw_datasets["test"]
+
+    def prompt_sample(self, sample, response=None):
+        context = sample["context"]
+        instruction = sample['instruction']
+        intro_blurb = self.HHH_INTRO
+        if response:
+            if context:
+                output = self.ALIGNMENT_PROMPT_WITH_CONTEXT.format(context_key=self.CONTEXT_KEY, context=context,
+                                                                   human_key=self.HUMAN_KEY, instruction=instruction,
+                                                                   assistant_key=self.ASSISTANT_KEY,response=response,
+                                                                   intro=intro_blurb)
+            else:
+                output = self.ALIGNMENT_PROMPT_NO_CONTEXT.format(human_key=self.HUMAN_KEY, instruction=instruction,
+                                                                 assistant_key=self.ASSISTANT_KEY,response=response,
+                                                                 intro=intro_blurb)
+        else:
+            if context:
+                output = self.ALIGNMENT_PROMPT_GENERATION_WITH_CONTEXT.format(context_key=self.CONTEXT_KEY, context=context,
+                                                                   human_key=self.HUMAN_KEY, instruction=instruction,
+                                                                   assistant_key=self.ASSISTANT_KEY,
+                                                                   intro=intro_blurb)
+            else:
+                output = self.ALIGNMENT_PROMPT_GENERATION_NO_CONTEXT.format(human_key=self.HUMAN_KEY, instruction=instruction,
+                                                                 assistant_key=self.ASSISTANT_KEY,
+                                                                 intro=intro_blurb)
+
+        return output
+
+    def get_prompt(self, sample):
+        return self.prompt_sample(sample)
+
+    def get_chosen(self, sample):
+        return sample['response']
+
+    def get_rejected(self, sample):
+        return sample['generated_response']
+
+    def get_prompt_and_chosen(self, sample):
+        return self.prompt_sample(sample, response=sample['response'])
+
+    def get_prompt_and_rejected(self, sample):
+        return self.prompt_sample(sample, response=sample['generated_response'])
+
+
 # English dataset
 class DahoasRmstaticDataset(PromptRawDataset):
 
