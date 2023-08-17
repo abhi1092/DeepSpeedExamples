@@ -108,13 +108,8 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
     # reindex each time when using local jsonfile since it's more likely to get modified
     if (not os.path.isfile(index_file_name)) or (dataset_name == 'jsonfile'):
         splits = [float(s) for s in data_split.split(',')]
-        print(f"{data_split=}")
-        print(f"{splits=}")
         splits_sum = sum(splits)
-        print(splits_sum)
         splits = [split / splits_sum for split in splits]
-        print(splits)
-        exit()
         splits_index = [0]
         for index, split in enumerate(splits):
             splits_index.append(splits_index[index] +
@@ -127,6 +122,7 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
         shuffle_idx = get_shuffle_idx(seed, data_size)
         for split_i in range(len(splits)):
             shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_i}.npy"
+            print(shuffle_idx_split_file_name)
             shuffle_idx_split = shuffle_idx[
                 splits_index[split_i]:splits_index[split_i + 1]]
             np.save(shuffle_idx_split_file_name,
