@@ -69,6 +69,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoi
    --model_name_or_path facebook/opt-1.3b \
    --per_device_train_batch_size 1 \
    --per_device_eval_batch_size 1 \
+   --data_output_path ./data
    --max_seq_len 512 \
    --learning_rate 1e-4 \
    --weight_decay 0.1 \
