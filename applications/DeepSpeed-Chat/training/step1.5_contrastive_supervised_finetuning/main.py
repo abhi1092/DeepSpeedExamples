@@ -323,6 +323,8 @@ def main():
             args.global_rank)
         model.train()
         for step, batch in enumerate(train_dataloader):
+            print(batch.keys())
+            exit()
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
             exit()

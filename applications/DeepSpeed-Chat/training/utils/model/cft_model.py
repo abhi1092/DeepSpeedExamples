@@ -55,6 +55,7 @@ class CftModel(nn.Module):
             use_cache=use_cache)
 
         lm_logits = output.logits
+        print(f"{lm_logits.shape=}")
         # rewards = self.v_head(hidden_states).squeeze(-1)
         # chosen_mean_scores = []
         # rejected_mean_scores = []
@@ -67,10 +68,12 @@ class CftModel(nn.Module):
 
         # chosen_ids = input_ids[:bs]  # bs x seq x 1
         # rejected_ids = input_ids[bs:]
+        print(f"{bs=}")
         chosen_lm_logits = lm_logits[:bs]
         rejected_lm_logits = lm_logits[bs:]
         chosen_labels = labels[:bs]
         rejected_labels = labels[bs:]
+        print(labels.shape)
 
         pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
         neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)

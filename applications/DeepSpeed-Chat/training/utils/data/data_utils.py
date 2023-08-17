@@ -171,6 +171,21 @@ class PromptDataset(Dataset):
                 self.pad_token_id
 
 
+def create_label(tokens, tokenizer, raw_dataset):
+    tokens["labels"] = tokens["input_ids"]
+    response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
+    response_token_ids_start_idx = None
+    for idx in np.where(tokens["labels"] == response_token_ids[0])[0]:
+        response_token_ids_start_idx = idx
+    assert response_token_ids_start_idx is not None, "Could not find response key"
+    tokens["labels"][:response_token_ids_start_idx] = -100
+    print(tokens["labels"])
+    print(tokens["input_ids"])
+    exit()
+    return tokens
+
+
+
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len):
     prompt_dataset = []
@@ -216,9 +231,11 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          return_tensors="pt")
                 chosen_token["input_ids"] = chosen_token["input_ids"]
                 chosen_token["attention_mask"] = chosen_token["attention_mask"]
+                chosen_token = create_label(chosen_token, tokenizer, raw_dataset)
                 chosen_dataset.append(chosen_token)
 
                 reject_token["input_ids"] = reject_token["input_ids"]
+                reject_token["labels"] = reject_token["input_ids"].clone()
                 reject_token["attention_mask"] = reject_token["attention_mask"]
                 reject_token["use_negative_data"] = torch.tensor([tmp_data["use_negative_data"]])
                 # print(reject_token["use_negative_data"].shape)
