@@ -175,6 +175,8 @@ def create_label(tokens, tokenizer, raw_dataset):
     tokens["labels"] = tokens["input_ids"]
     response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
     response_token_ids_start_idx = None
+    print(response_token_ids)
+    print(tokens["labels"])
     for idx in np.where(tokens["labels"] == response_token_ids[0])[0]:
         response_token_ids_start_idx = idx
     assert response_token_ids_start_idx is None, "Could not find response key"
