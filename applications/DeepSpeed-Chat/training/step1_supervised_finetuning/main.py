@@ -326,7 +326,7 @@ def main():
     # perplexity = evaluation(model, eval_dataloader)
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
         
-    chkpts_saving_steps = math.ceil((len(train_dataloader) - args.start_saving_checkpoint_step)/ args.save_n_checkpoints)
+    chkpts_saving_steps = math.ceil((len(train_dataloader) - args.start_saving_checkpoint_step)/ (args.save_n_checkpoints+1))
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
