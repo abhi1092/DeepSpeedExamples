@@ -121,11 +121,12 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
 
         shuffle_idx = get_shuffle_idx(seed, data_size)
         all_splits = [e for e in range(len(splits))]
-        if len(splits) == 4: # There is cft phase in there
-            all_splits[1] = 0.5
         print(f"{all_splits=}")
         for split_i in all_splits:
-            shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_i}.npy"
+            if len(splits) == 4 and split_i == 1: # There is cft phase in there
+                shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{0.5}.npy"
+            else:
+                shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_i}.npy"
             print(shuffle_idx_split_file_name)
             shuffle_idx_split = shuffle_idx[
                 splits_index[split_i]:splits_index[split_i + 1]]
