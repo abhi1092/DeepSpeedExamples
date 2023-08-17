@@ -178,9 +178,9 @@ def create_label(tokens, tokenizer, raw_dataset):
     response_token_ids_start_idx = None
     print(response_token_ids)
     print(tokens["labels"][0])
-    print(np.where(tokens["labels"][0] == response_token_ids[0]))
     for idx in np.where(tokens["labels"][0] == response_token_ids[0])[0]:
         response_token_ids_start_idx = idx
+    print(response_token_ids_start_idx)
     assert response_token_ids_start_idx is None, "Could not find response key"
     tokens["labels"][:response_token_ids_start_idx] = -100
     print(f"{response_token_ids_start_idx=}")
