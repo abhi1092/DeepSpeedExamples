@@ -231,7 +231,7 @@ def main():
             model = only_optimize_lora_parameters(model)
 
     # Prepare the data
-    train_phase = 2
+    train_phase = 1.5
     train_dataset, eval_dataset = create_prompt_dataset(
         args.local_rank,
         args.data_path,
