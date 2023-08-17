@@ -401,8 +401,8 @@ class LocalJsonFileDataset(PromptRawDataset):
 class RedditTLDR(LocalJsonFileDataset):
     def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
         # super().__init__(output_path, seed, local_rank, dataset_name)
-        self.dataset_name = "local/reddit_tldr"
-        self.dataset_name_clean = "reddit_tldr"
+        self.dataset_name = "local/reddit_tldr-2"
+        self.dataset_name_clean = "reddit_tldr-2"
         from pathlib import Path
         # get the directory of the dataset
         d_path = Path(dataset_path)
