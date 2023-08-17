@@ -322,7 +322,7 @@ def main():
     print_rank_0(f"ppl: {perplexity}", args.global_rank)
     
     start = time.time()
-    print_rank_0("remove the saving of the model in the beggining!!!!!", args.global_rank, color=Fore.RED)
+    print_rank_0("remove the saving of the model in the beggining!!!!!", args.global_rank, color='RED')
     if args.output_dir is not None:
         print_rank_0('saving the final model ...', args.global_rank)
         # model_ = convert_lora_to_linear_layer(model)
@@ -336,7 +336,7 @@ def main():
                                     args.global_rank,
                                     args.output_dir,
                                     zero_stage=args.zero_stage)
-        print_rank_0(f"Saving model took {time.time() - start} seconds", args.global_rank, color=Fore.GREEN)
+        print_rank_0(f"Saving model took {time.time() - start} seconds", args.global_rank, color='GREEN')
         
     chkpts_saving_steps = math.ceil((len(train_dataloader) - args.start_saving_checkpoint_step)/ args.save_n_checkpoints)
 
@@ -367,7 +367,7 @@ def main():
             start = time.time()
             print_rank_0(f'saving the model at step {step} ...',
                          args.global_rank,
-                         color=Fore.GREEN)
+                         color='GREEN')
             model = convert_lora_to_linear_layer(model)
 
             if args.global_rank == 0:
@@ -379,7 +379,7 @@ def main():
                                     args.global_rank,
                                     args.output_dir + f"/step_{step}",
                                     zero_stage=args.zero_stage)
-            print_rank_0(f"Saving model took {time.time() - start} seconds", args.global_rank, color=Fore.GREEN)
+            print_rank_0(f"Saving model took {time.time() - start} seconds", args.global_rank, color='GREEN')
 
         
 
