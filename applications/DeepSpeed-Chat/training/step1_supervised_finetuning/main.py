@@ -305,11 +305,26 @@ def main():
 
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
-    # print_rank_0(
-    #     f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
-    #     args.global_rank)
-    # perplexity = evaluation(model, eval_dataloader)
-    # print_rank_0(f"ppl: {perplexity}", args.global_rank)
+    print_rank_0(
+        f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
+        args.global_rank)
+    perplexity = evaluation(model, eval_dataloader)
+    print_rank_0(f"ppl: {perplexity}", args.global_rank)
+    
+    print_rank_0("remove the saving of the model in the beggining!!!!!", args.global_rank, color=Fore.RED)
+    if args.output_dir is not None:
+        print_rank_0('saving the final model ...', args.global_rank)
+        # model_ = convert_lora_to_linear_layer(model)
+
+        if args.global_rank == 0:
+            save_hf_format(model_, tokenizer, args)
+
+        if args.zero_stage == 3:
+            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+            save_zero_three_model(model_,
+                                    args.global_rank,
+                                    args.output_dir,
+                                    zero_stage=args.zero_stage)
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
