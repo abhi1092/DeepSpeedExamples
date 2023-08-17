@@ -217,6 +217,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 reject_token["attention_mask"] = reject_token["attention_mask"]
                 reject_token["use_negative_data"] = tmp_data["use_negative_data"]
                 print(tmp_data)
+                print("==================")
                 exit()
                 reject_dataset.append(reject_token)
 
