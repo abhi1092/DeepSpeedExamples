@@ -127,7 +127,6 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
                 shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{0.5}.npy"
             else:
                 shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_i}.npy"
-            print(shuffle_idx_split_file_name)
             shuffle_idx_split = shuffle_idx[
                 splits_index[split_i]:splits_index[split_i + 1]]
             np.save(shuffle_idx_split_file_name,
@@ -222,9 +221,6 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 reject_token["input_ids"] = reject_token["input_ids"]
                 reject_token["attention_mask"] = reject_token["attention_mask"]
                 reject_token["use_negative_data"] = tmp_data["use_negative_data"]
-                print(tmp_data)
-                print("==================")
-                exit()
                 reject_dataset.append(reject_token)
 
     elif train_phase == 2:
