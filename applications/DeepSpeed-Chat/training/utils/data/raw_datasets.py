@@ -407,12 +407,12 @@ class RedditTLDR(LocalJsonFileDataset):
         # get the directory of the dataset
         d_path = Path(dataset_path)
         # string of d_path
-        print_rank_0("REMEBER TO GO BACK TO NORMAL TRAINING SIZE!", rank=local_rank, color=Fore.RED)
+        # print_rank_0("REMEBER TO GO BACK TO NORMAL TRAINING SIZE!", rank=local_rank, color=Fore.RED)
         self.raw_datasets = load_dataset('json',
                                          data_files={
                                              "train":
-                                            #  str(d_path.parent / 'tldr_sft_train_117k.jsonl'),
-                                             str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
+                                             str(d_path.parent / 'tldr_sft_train_117k.jsonl'),
+                                            #  str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
                                              "eval":
                                              str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
                                          })
