@@ -177,8 +177,7 @@ def create_label(tokens, tokenizer, raw_dataset):
     assert len(response_token_ids) == 1, "Tokenizer does not have special token"
     response_token_ids_start_idx = None
     print(response_token_ids)
-    print(tokens["labels"])
-    for idx in np.where(tokens["labels"] == response_token_ids[0])[0]:
+    for idx in np.where(tokens["labels"][0] == response_token_ids[0])[0]:
         response_token_ids_start_idx = idx
     assert response_token_ids_start_idx is None, "Could not find response key"
     tokens["labels"][:response_token_ids_start_idx] = -100
