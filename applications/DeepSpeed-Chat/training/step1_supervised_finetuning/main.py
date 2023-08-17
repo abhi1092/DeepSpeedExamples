@@ -177,7 +177,7 @@ def parse_args():
                         type=int,
                         default=4,
                         help='Number of checkpoints to save.')
-    parser.add_argument("start_saving_checkpoint_step",
+    parser.add_argument("--start_saving_checkpoint_step",
                         type=int,
                         default=0,
                         help="The step to start saving checkpoints.")
