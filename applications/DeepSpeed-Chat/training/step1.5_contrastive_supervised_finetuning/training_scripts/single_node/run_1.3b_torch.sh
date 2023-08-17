@@ -62,7 +62,7 @@ NEW_PORT=23457
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
 granite_path="/new_data/rl-4-llm/granite_models/instruction_tuned/granite-13b-sft-mix700k/ckpt-1000bn-base"
-torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=102 --rdzv_endpoint="${MASTER_ADDR}:${NEW_PORT}" \
+torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=3 --rdzv_id=102 --rdzv_endpoint="${MASTER_ADDR}:${NEW_PORT}" \
     main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
