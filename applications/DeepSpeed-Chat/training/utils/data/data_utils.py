@@ -176,12 +176,16 @@ def create_label(tokens, tokenizer, raw_dataset):
     tokens["labels"] = tokens["input_ids"].clone()
     response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
     assert len(response_token_ids) == 1, "Tokenizer does not have special token"
-    print(tokens["input_ids"].shape)
     for i in range(tokens["input_ids"].shape[0]):
         response_token_ids_start_idx = None
         for idx in np.where(tokens["labels"][i] == response_token_ids[0])[0]:
             response_token_ids_start_idx = idx
-        assert response_token_ids_start_idx is not None, "Could not find response key"
+        try:
+            assert response_token_ids_start_idx is not None, "Could not find response key"
+        except:
+            print(response_token_ids)
+            print(tokens["labels"][i])
+            exit()
         # print(response_token_ids_start_idx)
         # print(tokens["labels"].shape)
         tokens["labels"][i][:response_token_ids_start_idx] = -100
