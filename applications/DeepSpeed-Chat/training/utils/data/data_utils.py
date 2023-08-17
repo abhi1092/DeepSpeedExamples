@@ -174,6 +174,7 @@ class PromptDataset(Dataset):
 def create_label(tokens, tokenizer, raw_dataset):
     tokens["labels"] = tokens["input_ids"]
     response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
+    assert len(response_token_ids) == 1, "Tokenizer does not have special token"
     response_token_ids_start_idx = None
     print(response_token_ids)
     print(tokens["labels"])
