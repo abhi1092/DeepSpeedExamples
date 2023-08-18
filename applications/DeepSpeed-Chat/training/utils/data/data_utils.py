@@ -245,7 +245,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
-                print(chosen_token["input_ids"][0][-1])
+                print(chosen_token["input_ids"][0][-2:])
                 print(tokenizer.pad_token_id)
                 exit()
                 # Filter anything that does not fit the max_length
