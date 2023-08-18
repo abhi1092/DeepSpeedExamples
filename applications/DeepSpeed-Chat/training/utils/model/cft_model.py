@@ -58,7 +58,6 @@ class CftModel(nn.Module):
             use_cache=use_cache)
 
         lm_logits = output.logits
-        print(f"{lm_logits.shape=}")
         # rewards = self.v_head(hidden_states).squeeze(-1)
         # chosen_mean_scores = []
         # rejected_mean_scores = []
@@ -130,6 +129,7 @@ class CftModel(nn.Module):
         #                                             r_truncated_reward).mean()
 
         loss = loss / bs
+        print(loss)
         return {
             "loss": loss,
         }
