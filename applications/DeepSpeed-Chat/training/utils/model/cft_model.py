@@ -129,7 +129,6 @@ class CftModel(nn.Module):
         #                                             r_truncated_reward).mean()
 
         loss = loss / bs
-        print(loss)
         return {
             "loss": loss,
         }
