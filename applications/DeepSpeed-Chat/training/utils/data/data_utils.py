@@ -255,6 +255,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 reject_token = {"input_ids": reject_token_["input_ids"],
                                 "attention_mask": reject_token_["attention_mask"]}
                 reject_token = create_label(reject_token, tokenizer, raw_dataset)
+                print(reject_token)
+                exit()
                 reject_token["use_negative_data"] = torch.tensor([tmp_data["use_negative_data"]])
                 # print(reject_token["use_negative_data"].shape)
                 # print("========")
