@@ -325,6 +325,7 @@ def main():
         model.train()
         for step, batch in enumerate(train_dataloader):
             print(batch.keys())
+            print(batch)
             exit()
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
