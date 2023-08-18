@@ -92,6 +92,13 @@ def parse_args():
         help=
         "Initial learning rate (after the potential warmup period) to use.",
     )
+    parser.add_argument(
+        "--beta",
+        type=float,
+        default=1e-6,
+        help=
+        "Beta for CFT training.",
+    )
     parser.add_argument("--weight_decay",
                         type=float,
                         default=0.,
@@ -224,7 +231,7 @@ def main():
                             tokenizer,
                             ds_config,
                             disable_dropout=args.disable_dropout, load_from_local_file=True)
-    model = CftModel(model, tokenizer)
+
     if args.lora_dim > 0:
         model = convert_linear_layer_to_lora(model, args.lora_module_name,
                                              args.lora_dim)
@@ -281,6 +288,12 @@ def main():
             pass
         return perplexity
 
+    num_update_steps_per_epoch = math.ceil(
+        len(train_dataloader) / args.gradient_accumulation_steps)
+
+    # Wrap with CFT model
+    model = CftModel(model, tokenizer, total_steps=num_update_steps_per_epoch, beta=args.beta)
+
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
         model, args.weight_decay)
@@ -290,8 +303,7 @@ def main():
                               lr=args.learning_rate,
                               betas=(0.9, 0.95))
 
-    num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader) / args.gradient_accumulation_steps)
+
     print_rank_0("Getting lr scheduler")
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,

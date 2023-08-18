@@ -5,18 +5,20 @@
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
-
+import torch.nn.functional as F
 
 ## Note that the following code is modified from
 ## https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/reward_model.py
 class CftModel(nn.Module):
 
-    def __init__(self, base_model, tokenizer, num_padding_at_beginning=0):
+    def __init__(self, base_model, tokenizer, total_steps, beta=1e-6, num_padding_at_beginning=0):
         super().__init__()
         self.config = base_model.config
         self.num_padding_at_beginning = num_padding_at_beginning
         self.cfttranrsformer = base_model
-        self.beta = 1e-6
+        self.global_step = 0
+        self.beta_initial, self.beta_final, self.beta_step = beta, 0.0, total_steps
+        self.beta_warmup = 100
         self.PAD_ID = tokenizer.pad_token_id
 
     def gradient_checkpointing_enable(self):
@@ -68,7 +70,6 @@ class CftModel(nn.Module):
 
         # chosen_ids = input_ids[:bs]  # bs x seq x 1
         # rejected_ids = input_ids[bs:]
-        print(f"{bs=}")
         chosen_lm_logits = lm_logits[:bs]
         rejected_lm_logits = lm_logits[bs:]
         chosen_labels = labels[:bs]
@@ -77,20 +78,23 @@ class CftModel(nn.Module):
         use_negative_data_rejected = torch.tensor([1, 0])
         rejected_lm_logits = rejected_lm_logits[use_negative_data_rejected == 1, :]
         rejected_labels = rejected_labels[use_negative_data_rejected == 1, :]
-        print(use_negative_data_rejected)
-        print(f"{rejected_lm_logits.shape=}")
-        print(chosen_labels.shape)
-        print(f"{rejected_labels.shape=}")
-
 
         pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
+        if rejected_lm_logits.nelement() != 0:
+            self.global_step += 1
+            rejected_lm_logits = -F.logsigmoid(-rejected_lm_logits)
+            neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
+            if self.no_beta_decay:
+                beta = self.beta_initial
+            else:
+                if self.beta_warmup != -1 and self.global_step < self.beta_warmup:
+                    beta = 0.00  # Use very low beta initially
+                else:
+                    beta = linear_decay(self.beta_initial, self.beta_final, self.beta_step, self.global_step)
+            loss = pos_loss - beta * neg_loss
+        else:
+            loss = pos_loss
 
-        neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
-        print(pos_loss)
-        print(neg_loss)
-        exit()
-        # Compute pairwise loss. Only backprop on the different tokens before padding
-        loss = pos_loss - self.beta * neg_loss
         # for i in range(bs):
         #     chosen_id = chosen_ids[i]
         #     rejected_id = rejected_ids[i]
@@ -172,3 +176,8 @@ class CftModel(nn.Module):
     #             "values": values,
     #             "chosen_end_scores": torch.stack(chosen_end_scores),
     #         }
+
+def linear_decay(initial_value, final_value, decay_steps, current_step):
+    decay_rate = (initial_value - final_value) / decay_steps
+    decayed_value = initial_value - decay_rate * current_step
+    return max(decayed_value, final_value)
