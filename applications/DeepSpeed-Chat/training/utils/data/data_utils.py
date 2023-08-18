@@ -5,6 +5,8 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+import logging
+
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 from torch.nn.utils.rnn import pad_sequence
@@ -223,6 +225,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_dataset.append(chosen_token)
 
     elif train_phase == 1.5:
+        # logging.Logger.info(f"Size of dataset before filtering {current_dataset.num_rows}")
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
@@ -242,9 +245,10 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
-                print(chosen_token["input_ids"])
+                print(chosen_token["input_ids"][0][-1])
                 print(tokenizer.pad_token_id)
                 exit()
+                # Filter anything that does not fit the max_length
                 chosen_token["input_ids"] = chosen_token["input_ids"]
                 chosen_token["attention_mask"] = chosen_token["attention_mask"]
                 chosen_token = create_label(chosen_token, tokenizer, raw_dataset)
