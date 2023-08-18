@@ -224,8 +224,8 @@ def main():
     torch.distributed.all_reduce(tensor)
     print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
     torch.distributed.barrier()
-    # tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True, load_from_local_file=True)
-    tokenizer = load_hf_tokenizer("/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft", fast_tokenizer=True, load_from_local_file=True)
+    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True, load_from_local_file=True)
+    # tokenizer = load_hf_tokenizer("/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft", fast_tokenizer=True, load_from_local_file=True)
     tokenizer.pad_token = tokenizer.eos_token
     # make sure tokenizer is right pad in our logic
     tokenizer.padding_side = 'right'

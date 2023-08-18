@@ -61,7 +61,7 @@ NEW_PORT=23457
 #   --enable_tensorboard \
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
-granite_path="/new_data/rl-4-llm/granite_models/instruction_tuned/granite-13b-sft-mix700k/ckpt-1000bn-base"
+granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
 torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
    --data_path cft_pro_lima_summ_mix7k \
