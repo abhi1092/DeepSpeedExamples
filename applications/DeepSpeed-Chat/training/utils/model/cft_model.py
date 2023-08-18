@@ -81,9 +81,11 @@ class CftModel(nn.Module):
         print(f"{rejected_lm_logits.shape=}")
         print(chosen_labels.shape)
         print(f"{rejected_labels.shape=}")
-        exit()
+
 
         pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
+        print(pos_loss)
+        exit()
         neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
 
         # Compute pairwise loss. Only backprop on the different tokens before padding
