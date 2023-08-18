@@ -80,7 +80,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
    --num_warmup_steps 0 \
    --seed 1234 \
    --gradient_checkpointing \
-   --zero_stage 3 \
+   --zero_stage 2 \
    --offload \
    --deepspeed \
    --output_dir $OUTPUT
