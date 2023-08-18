@@ -251,6 +251,8 @@ def main():
         train_sampler = DistributedSampler(train_dataset)
         eval_sampler = DistributedSampler(eval_dataset)
     data_collator = DataCollatorCft()
+    print(train_dataset)
+    exit()
     train_dataloader = DataLoader(train_dataset,
                                   collate_fn=data_collator,
                                   sampler=train_sampler,
