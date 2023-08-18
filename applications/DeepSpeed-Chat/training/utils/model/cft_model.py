@@ -26,7 +26,7 @@ class CftModel(nn.Module):
         self.cfttranrsformer.gradient_checkpointing_disable()
 
     def get_loss(self, lm_logits, labels):
-        labels = labels.to(lm_logits.device)
+        # labels = labels.to(lm_logits.device)
         # we are doing next-token prediction; shift prediction scores and input ids by one
         shift_logits = lm_logits[:, :-1, :].contiguous()
         labels = labels[:, 1:].contiguous()
@@ -84,10 +84,11 @@ class CftModel(nn.Module):
 
 
         pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
-        print(pos_loss)
-        exit()
-        neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
 
+        neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
+        print(pos_loss)
+        print(neg_loss)
+        exit()
         # Compute pairwise loss. Only backprop on the different tokens before padding
         loss = pos_loss - self.beta * neg_loss
         # for i in range(bs):
