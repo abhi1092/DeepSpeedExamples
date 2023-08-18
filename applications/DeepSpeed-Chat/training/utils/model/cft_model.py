@@ -78,10 +78,9 @@ class CftModel(nn.Module):
         rejected_lm_logits = rejected_lm_logits[use_negative_data_rejected == 1, :]
         rejected_labels = rejected_labels[use_negative_data_rejected == 1, :]
         print(use_negative_data_rejected)
-        print()
-        print(f"{rejected_lm_logits.shape}")
+        print(f"{rejected_lm_logits.shape=}")
         print(chosen_labels.shape)
-        print(f"{rejected_labels=}")
+        print(f"{rejected_labels.shape=}")
         exit()
 
         pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
