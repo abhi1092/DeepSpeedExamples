@@ -11,14 +11,15 @@ import torch.nn.functional as F
 ## https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/reward_model.py
 class CftModel(nn.Module):
 
-    def __init__(self, base_model, tokenizer, total_steps, beta=1e-6, num_padding_at_beginning=0):
+    def __init__(self, base_model, tokenizer, total_steps, beta=1e-6, no_beta_decay=False, num_padding_at_beginning=0):
         super().__init__()
         self.config = base_model.config
         self.num_padding_at_beginning = num_padding_at_beginning
         self.cfttranrsformer = base_model
         self.global_step = 0
+        self.no_beta_decay = no_beta_decay
         self.beta_initial, self.beta_final, self.beta_step = beta, 0.0, total_steps
-        self.beta_warmup = 100
+        self.beta_warmup = 0
         self.PAD_ID = tokenizer.pad_token_id
 
     def gradient_checkpointing_enable(self):

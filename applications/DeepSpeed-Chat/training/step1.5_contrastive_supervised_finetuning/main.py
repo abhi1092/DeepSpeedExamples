@@ -179,6 +179,9 @@ def parse_args():
     parser.add_argument('--print_loss',
                         action='store_true',
                         help='Prints loss at each step.')
+    parser.add_argument('--no_beta_decay',
+                        action='store_true',
+                        help='Turnoff beta decay for CFT')
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
 
@@ -292,7 +295,7 @@ def main():
         len(train_dataloader) / args.gradient_accumulation_steps)
 
     # Wrap with CFT model
-    model = CftModel(model, tokenizer, total_steps=num_update_steps_per_epoch, beta=args.beta)
+    model = CftModel(model, tokenizer, total_steps=num_update_steps_per_epoch, beta=args.beta, no_beta_decay=args.no_beta_decay)
 
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
