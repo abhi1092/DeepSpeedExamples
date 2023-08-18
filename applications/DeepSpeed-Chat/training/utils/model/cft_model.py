@@ -73,11 +73,12 @@ class CftModel(nn.Module):
         rejected_lm_logits = lm_logits[bs:]
         chosen_labels = labels[:bs]
         rejected_labels = labels[bs:]
-        use_negative_data_rejected = use_negative_data[bs:]
+        # use_negative_data_rejected = use_negative_data[bs:]
+        use_negative_data_rejected = torch.tensor([1, 0])
         rejected_lm_logits = rejected_lm_logits[use_negative_data_rejected == 1, :]
         rejected_labels = rejected_labels[use_negative_data_rejected == 1, :]
         print(use_negative_data_rejected)
-        print(torch.tensor([1, 0]))
+        print()
         print(f"{rejected_lm_logits.shape}")
         print(chosen_labels.shape)
         print(f"{rejected_labels=}")
