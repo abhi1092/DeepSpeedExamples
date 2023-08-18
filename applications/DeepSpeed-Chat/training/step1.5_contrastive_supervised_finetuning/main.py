@@ -260,10 +260,6 @@ def main():
                                  collate_fn=data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-    for step, batch in enumerate(train_dataloader):
-        print(batch["labels"].shape)
-        print(batch.keys())
-        exit()
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
@@ -329,10 +325,6 @@ def main():
             args.global_rank)
         model.train()
         for step, batch in enumerate(train_dataloader):
-            print(batch.keys())
-            print(batch)
-            print("Here")
-            exit()
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
             exit()
