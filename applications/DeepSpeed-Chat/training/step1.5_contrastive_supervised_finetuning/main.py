@@ -261,7 +261,7 @@ def main():
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
     for step, batch in enumerate(train_dataloader):
-        print(batch["labels"])
+        print(batch["labels"].shape)
         print(batch.keys())
         exit()
     def evaluation(model, eval_dataloader):
