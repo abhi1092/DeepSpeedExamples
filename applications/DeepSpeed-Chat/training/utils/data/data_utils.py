@@ -454,6 +454,7 @@ class DataCollatorCft:
 
     def __call__(self, data):
         batch = {}
+        print(len(data[0]))
         for e in data[0]:
             print(e)
         exit()
