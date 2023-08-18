@@ -278,7 +278,7 @@ def main():
             with torch.no_grad():
                 outputs = model(**batch)
 
-            loss = outputs.loss
+            loss = outputs["loss"]
             losses += loss.float()
         losses = losses / (step + 1)
         try:
