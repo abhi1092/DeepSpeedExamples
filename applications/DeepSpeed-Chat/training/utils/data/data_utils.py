@@ -225,7 +225,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_dataset.append(chosen_token)
 
     elif train_phase == 1.5:
-        print(f"Size of dataset before filtering {current_dataset.dataset}")
+        print(f"Size of dataset before filtering {current_dataset.dataset.num_rows}")
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
