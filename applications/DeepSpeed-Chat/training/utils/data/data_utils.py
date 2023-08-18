@@ -242,6 +242,9 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
+                print(chosen_token["input_ids"])
+                print(tokenizer.pad_token_id)
+                exit()
                 chosen_token["input_ids"] = chosen_token["input_ids"]
                 chosen_token["attention_mask"] = chosen_token["attention_mask"]
                 chosen_token = create_label(chosen_token, tokenizer, raw_dataset)
