@@ -235,28 +235,26 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
             if chosen_sentence is not None and reject_sentence is not None:
                 chosen_sentence += end_of_conversation_token  # the accept response
                 reject_sentence += end_of_conversation_token
-                chosen_token = tokenizer(chosen_sentence,
+                chosen_token_ = tokenizer(chosen_sentence,
                                          max_length=max_seq_len,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
-                reject_token = tokenizer(reject_sentence,
+                reject_token_ = tokenizer(reject_sentence,
                                          max_length=max_seq_len,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
-                print(chosen_token["input_ids"][0][-2:])
-                print(tokenizer.pad_token_id)
-                exit()
                 # Filter anything that does not fit the max_length
-                chosen_token["input_ids"] = chosen_token["input_ids"]
-                chosen_token["attention_mask"] = chosen_token["attention_mask"]
+                if chosen_token_["input_ids"][0][-1] != tokenizer.pad_token_id and reject_token_["input_ids"][0][-1] != tokenizer.pad_token_id:
+                    continue
+                chosen_token = {"input_ids": chosen_token_["input_ids"],
+                                "attention_mask": chosen_token_["attention_mask"]}
                 chosen_token = create_label(chosen_token, tokenizer, raw_dataset)
                 chosen_dataset.append(chosen_token)
-
-                reject_token["input_ids"] = reject_token["input_ids"]
-                reject_token["labels"] = reject_token["input_ids"].clone()
-                reject_token["attention_mask"] = reject_token["attention_mask"]
+                reject_token = {"input_ids": reject_token_["input_ids"],
+                                "attention_mask": reject_token_["attention_mask"]}
+                reject_token = create_label(reject_token, tokenizer, raw_dataset)
                 reject_token["use_negative_data"] = torch.tensor([tmp_data["use_negative_data"]])
                 # print(reject_token["use_negative_data"].shape)
                 # print("========")
