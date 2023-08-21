@@ -47,13 +47,18 @@ class RewardModel(nn.Module):
                 use_cache=False):
         loss = None
 
+        if self.config.model_type == "llama":
+            kwargs = dict()
+        else:
+            kwargs = dict(head_mask=head_mask)
+
         transformer_outputs = self.rwtranrsformer(
             input_ids,
             past_key_values=past_key_values,
             attention_mask=attention_mask,
-            head_mask=head_mask,
             inputs_embeds=inputs_embeds,
-            use_cache=use_cache)
+            use_cache=use_cache,
+            **kwargs)
 
         hidden_states = transformer_outputs[0]
         rewards = self.v_head(hidden_states).squeeze(-1)
@@ -125,16 +130,19 @@ class RewardModel(nn.Module):
                       prompt_length=0,
                       use_cache=False):
 
+        if self.config.model_type == "llama":
+            kwargs = dict()
+        else:
+            kwargs = dict(head_mask=head_mask)
+
         transformer_outputs = self.rwtranrsformer(
             input_ids,
             past_key_values=past_key_values,
             attention_mask=attention_mask,
-            head_mask=head_mask,
             inputs_embeds=inputs_embeds,
-            use_cache=use_cache)
-        
+            use_cache=use_cache,
+            **kwargs)
         hidden_states = transformer_outputs[0]
-        # from IPython import embed; embed(header=get_caller()) #Check if values with facebook/opt are the size of the actions.
         values = self.v_head(hidden_states).squeeze(-1)
         if return_value_only:
             return values
@@ -144,8 +152,6 @@ class RewardModel(nn.Module):
             assert prompt_length > 1, "prompt_length must be greater than 1 to help select the end score"
             bs = values.size(0)
             seq_len = input_ids.shape[1]
-            # from IPython import embed; embed(header=get_caller()) #check that seqlen is same as input ids or 1 at least
-            # seq_len = values.size(1)
             chosen_end_scores = [
             ]  # we use this name for consistency with the original forward function
             for i in range(bs):

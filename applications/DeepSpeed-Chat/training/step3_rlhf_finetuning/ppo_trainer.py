@@ -71,13 +71,28 @@ class DeepSpeedPPOTrainer():
     def _generate_sequence(self, prompts, mask, step):
 
         max_min_length = self.max_answer_seq_len + prompts.shape[1]
+        
+        # This has been added due to a probability/nan error that happens after
+        # meta-llama/Llama-2-7b-hf enabled do_sample:
+        # https://huggingface.co/meta-llama/Llama-2-7b-hf/commit/6fdf2e60f86ff2481f2241aaee459f85b5b0bbb9
+        if self.actor_model.model.config.model_type == "llama":
+            kwargs = dict(do_sample=False)
+        else:
+            kwargs = dict()
+
+        # This has been added due to a probability/nan error that happens after
+        # meta-llama/Llama-2-7b-hf enabled do_sample:
+        # https://huggingface.co/meta-llama/Llama-2-7b-hf/commit/6fdf2e60f86ff2481f2241aaee459f85b5b0bbb9
+        if self.actor_model.model.config.model_type == "llama":
+            kwargs = dict(do_sample=False)
+        else:
+            kwargs = dict()
 
         with torch.no_grad():
             seq = self.actor_model.module.generate(
                 prompts,
                 attention_mask=mask,
                 max_length=max_min_length,
-                min_length=max_min_length,
                 pad_token_id=self.tokenizer.pad_token_id,
                 synced_gpus=self.z3_enabled,
                 repetition_penalty=1.2,
@@ -85,6 +100,7 @@ class DeepSpeedPPOTrainer():
                 do_sample=True,
                 top_p=.9,
                 top_k=50,
+                **kwargs,
                 )
         #print seq.shape
         print_rank_0(f"seq: {seq.shape}", self.args.local_rank, color=Fore.GREEN)
@@ -162,7 +178,6 @@ class DeepSpeedPPOTrainer():
         with torch.no_grad():
             output = self.actor_model(seq, attention_mask=attention_mask)
             output_ref = self.ref_model(seq, attention_mask=attention_mask)
-            # from IPython import embed; embed(header=get_caller())
             reward_score = self.reward_model.forward_value(
                 **rm_input,
                 prompt_length=self.prompt_length)['chosen_end_scores'].detach(
@@ -293,6 +308,12 @@ class DeepSpeedPPOTrainer():
         self.critic_model.step()
 
         return actor_loss, critic_loss
+
+    def get_overflow(self):
+        actor_overflow = self.actor_model.optimizer.overflow
+        critic_overflow = self.critic_model.optimizer.overflow
+
+        return actor_overflow, critic_overflow
 
     def actor_loss_fn(self, logprobs, old_logprobs, advantages, mask):
         ## policy gradient loss
