@@ -68,7 +68,7 @@ def create_critic_model(model_name_or_path,
     start = time.time()
     critic_model = create_hf_model(AutoModel, model_name_or_path, tokenizer,
                                    ds_config, rlhf_training, disable_dropout)
-    print_rank_0(f"create critic model takes {time.time() - start} seconds", rank=torch.distributed.get_rank(), color="GREEN")
+    print_rank_0(f"Creating model from_config took {time.time() - start} seconds", rank=torch.distributed.get_rank(), color="GREEN")
     critic_model = RewardModel(
         critic_model,
         tokenizer,
@@ -79,7 +79,6 @@ def create_critic_model(model_name_or_path,
 
         if not os.path.isdir(model_name_or_path):
             model_name_or_path = snapshot_download(model_name_or_path)
-        # critic model needs to load the weight here
         model_ckpt_path = os.path.join(model_name_or_path, 'pytorch_model.bin')
         assert os.path.exists(
             model_ckpt_path

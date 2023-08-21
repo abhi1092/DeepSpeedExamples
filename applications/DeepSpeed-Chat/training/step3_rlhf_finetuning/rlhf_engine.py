@@ -275,9 +275,9 @@ class DeepSpeedRLHFEngine():
         ds_config = get_eval_ds_config(offload=self.args.offload,
                                        stage=zero_stage)
         ds_config[
-            'train_micro_batch_size_per_gpu'] = self.args.per_device_mini_train_batch_size
+            'train_micro_batch_size_per_gpu'] = self.args.per_device_training_batch_size
         ds_config[
-            'train_batch_size'] = self.args.per_device_mini_train_batch_size * torch.distributed.get_world_size(
+            'train_batch_size'] = self.args.per_device_training_batch_size * torch.distributed.get_world_size(
             ) * self.args.gradient_accumulation_steps
         ds_config[
             'train_micro_batch_size_per_gpu'] = self.args.per_device_training_batch_size

@@ -325,21 +325,6 @@ def parse_args():
     parser.add_argument('--print_answers',
                         action='store_true',
                         help='Print prompt and answers during training')
-    
-    ## Testing
-    parser.add_argument(
-        '--enable_test_mode',
-        action='store_true',
-        help=
-        'Enable a testing mode that terminates training based on args.test_stop_step'
-    )
-    parser.add_argument(
-        "--test_stop_step",
-        type=int,
-        default=0,
-        help=
-        "Training non-overflow step at which to terminate training during testing."
-    )
 
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
@@ -474,8 +459,6 @@ def main():
 
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
-    
-    non_overflow_step_count = 0
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
@@ -574,6 +557,17 @@ def main():
         if args.enable_test_mode:
             break
 
+
+            actor_overflow, critic_overflow = trainer.get_overflow()
+
+            if not actor_overflow and not critic_overflow:
+                non_overflow_step_count += 1
+
+            if args.enable_test_mode and non_overflow_step_count == args.test_stop_step:
+                break
+
+        if args.enable_test_mode:
+            break
 
     if args.output_dir is not None:
         print_rank_0('saving model ...')

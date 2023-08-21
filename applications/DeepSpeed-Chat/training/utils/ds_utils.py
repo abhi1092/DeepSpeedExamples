@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from utils.utils import print_rank_0, Fore
 # DeepSpeed Team
+
+import torch
+
 GLOBAL_BATCH_SIZE = 32
 MICRO_BATCH_SIZE = 4
 

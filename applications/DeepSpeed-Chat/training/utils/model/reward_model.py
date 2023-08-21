@@ -56,7 +56,6 @@ class RewardModel(nn.Module):
             input_ids,
             past_key_values=past_key_values,
             attention_mask=attention_mask,
-            head_mask=head_mask,
             inputs_embeds=inputs_embeds,
             use_cache=use_cache,
             **kwargs)
@@ -143,7 +142,6 @@ class RewardModel(nn.Module):
             inputs_embeds=inputs_embeds,
             use_cache=use_cache,
             **kwargs)
-        
         hidden_states = transformer_outputs[0]
         values = self.v_head(hidden_states).squeeze(-1)
         if return_value_only:
