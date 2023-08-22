@@ -157,3 +157,6 @@ def main():
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
     print(out)
+    
+if __name__ == "__main__":
+  main()
