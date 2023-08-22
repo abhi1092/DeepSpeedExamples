@@ -86,3 +86,4 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
    --output_dir $OUTPUT
 
 
+

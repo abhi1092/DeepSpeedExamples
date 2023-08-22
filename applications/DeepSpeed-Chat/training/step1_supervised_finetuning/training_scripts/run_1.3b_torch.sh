@@ -73,7 +73,6 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
    --per_device_eval_batch_size 1 \
    --data_output_path ./data \
    --max_seq_len 2048 \
-   --beta 1e-6 \
    --learning_rate 1e-4 \
    --weight_decay 0.1 \
    --num_train_epochs 1  \
