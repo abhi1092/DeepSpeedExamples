@@ -278,6 +278,7 @@ def main():
     for step, batch in enumerate(train_dataloader):
         print(batch.keys())
         exit()
+    exit()
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
