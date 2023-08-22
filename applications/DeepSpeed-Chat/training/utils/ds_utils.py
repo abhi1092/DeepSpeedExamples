@@ -142,7 +142,7 @@ def get_inference_ds_config(offload, stage=0):
         "memory_efficient_linear": False
     }
     return {
-        "zero_optimization": zero_opt_dict,
+        "zero": zero_opt_dict,
         # "fp16": {
         #     "enabled": True
         # },
@@ -153,5 +153,5 @@ def get_inference_ds_config(offload, stage=0):
             "tp_size": 1,
         },
         "enable_cuda_graph": True,
-        "wall_clock_breakdown": False
+        # "wall_clock_breakdown": False
     }
