@@ -67,7 +67,7 @@ granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wado
 torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
    --data_path dolly_dataset \
-   --data_split 0,1,0,0 \
+   --data_split 1,0,0,0 \
    --model_name_or_path decapoda-research/llama-7b-hf \
    --per_device_train_batch_size 4 \
    --per_device_eval_batch_size 4 \
