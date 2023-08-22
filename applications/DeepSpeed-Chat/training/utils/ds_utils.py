@@ -130,3 +130,28 @@ def get_eval_ds_config(offload, stage=0):
         "prescale_gradients": False,
         "wall_clock_breakdown": False
     }
+    
+def get_inference_ds_config(offload, stage=0):
+    device = "cpu" if offload else "none"
+    zero_opt_dict = {
+        "stage": stage,
+        "stage3_param_persistence_threshold": 1e9,
+        "offload_param": {
+            "device": device
+        },
+        "memory_efficient_linear": False
+    }
+    return {
+        "zero_optimization": zero_opt_dict,
+        # "fp16": {
+        #     "enabled": True
+        # },
+        # "bf16": {
+        #     "enabled": True
+        # },
+        "tensor_parallel": {
+            "tp_size": 1,
+        },
+        "enable_cuda_graph": True,
+        "wall_clock_breakdown": False
+    }
