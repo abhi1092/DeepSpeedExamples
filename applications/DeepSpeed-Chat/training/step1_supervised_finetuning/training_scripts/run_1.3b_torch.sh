@@ -61,25 +61,30 @@ NEW_PORT=23457
 #   --enable_tensorboard \
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
-
-torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
+base_dir="/new_data/rl-4-llm/dpc_alignment"
+experiment_dir="tulu_paper_reproduction/llama-7b-dolly"
+granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
+torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
-   --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
-   --data_split 2,4,4 \
-   --model_name_or_path facebook/opt-1.3b \
-   --per_device_train_batch_size 1 \
+   --data_path dolly_dataset \
+   --data_split 0,1,0,0 \
+   --model_name_or_path decapoda-research/llama-7b-hf \
+   --per_device_train_batch_size 4 \
    --per_device_eval_batch_size 1 \
-   --max_seq_len 512 \
+   --data_output_path ./data \
+   --max_seq_len 2048 \
+   --beta 1e-6 \
    --learning_rate 1e-4 \
    --weight_decay 0.1 \
    --num_train_epochs 1  \
-   --gradient_accumulation_steps 1 \
+   --gradient_accumulation_steps 4 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
    --seed 1234 \
    --gradient_checkpointing \
-   --zero_stage 3 \
+   --zero_stage 2 \
+   --offload \
    --deepspeed \
-   --output_dir $OUTPUT
+   --output_dir $base_dir/$experiment_dir
 
 
