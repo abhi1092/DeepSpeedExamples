@@ -141,6 +141,7 @@ def main():
     args.seed,
     tokenizer,
     args.max_seq_len,
+    reload=True,
     )
   
   # DataLoaders creation:
