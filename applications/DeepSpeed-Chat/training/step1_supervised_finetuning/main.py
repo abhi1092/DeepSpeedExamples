@@ -273,7 +273,9 @@ def main():
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-
+    for step, batch in enumerate(eval_dataloader):
+        print(step)
+    exit()
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
