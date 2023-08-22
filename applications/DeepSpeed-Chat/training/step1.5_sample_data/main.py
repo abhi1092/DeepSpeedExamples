@@ -101,6 +101,10 @@ def parse_args():
   parser.add_argument("--offload",
                       action="store_true",
                       help="Offload model to CPU")
+  parser = deepspeed.add_config_arguments(parser)
+  args = parser.parse_args()
+
+  return args
 
 def main():
   args = parse_args()
