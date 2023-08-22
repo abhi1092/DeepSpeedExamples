@@ -122,6 +122,11 @@ def parse_args():
         "--num_warmup_steps",
         type=int,
         default=0,
+        help="Number of steps for the warmup in the lr scheduler.")#
+    parser.add_argument(
+        "--warmup_percentage",
+        type=float,
+        default=0.,
         help="Number of steps for the warmup in the lr scheduler.")
     parser.add_argument("--output_dir",
                         type=str,
@@ -308,11 +313,13 @@ def main():
     num_update_steps_per_epoch = math.ceil(
         len(train_dataloader) / args.gradient_accumulation_steps)
     print_rank_0("Getting lr scheduler")
+    total_steps = args.num_train_epochs * num_update_steps_per_epoch
+    warmup = args.warmup_percentage
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
-        num_warmup_steps=args.num_warmup_steps,
-        num_training_steps=args.num_train_epochs * num_update_steps_per_epoch,
+        num_warmup_steps=int(warmup*total_steps),
+        num_training_steps=total_steps,
     )
     print_rank_0("Initializing deepspeed model")
     model, optimizer, _, lr_scheduler = deepspeed.initialize(
@@ -342,8 +349,6 @@ def main():
             args.global_rank)
         model.train()
         for step, batch in enumerate(train_dataloader):
-            print(batch.keys())
-            exit()
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
             loss = outputs.loss

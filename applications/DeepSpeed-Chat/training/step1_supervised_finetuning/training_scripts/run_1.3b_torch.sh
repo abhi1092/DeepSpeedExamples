@@ -64,7 +64,7 @@ NEW_PORT=23457
 base_dir="/new_data/rl-4-llm/dpc_alignment"
 experiment_dir="tulu_paper_reproduction/llama-7b-dolly"
 granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
-torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
+torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
    --data_path dolly_dataset \
    --data_split 1,0,0,0 \
@@ -73,12 +73,12 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoi
    --per_device_eval_batch_size 4 \
    --data_output_path ./data \
    --max_seq_len 2048 \
-   --learning_rate 1e-4 \
-   --weight_decay 0.1 \
-   --num_train_epochs 1  \
+   --learning_rate 2e-5 \
+   --weight_decay 0.0 \
+   --num_train_epochs 2  \
    --gradient_accumulation_steps 4 \
-   --lr_scheduler_type cosine \
-   --num_warmup_steps 0 \
+   --lr_scheduler_type linear \
+   --warmup_percentage 0.03 \
    --seed 1234 \
    --gradient_checkpointing \
    --zero_stage 2 \
