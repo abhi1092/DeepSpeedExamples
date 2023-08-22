@@ -1,4 +1,5 @@
 import torch
+import deepspeed
 from torch.utils.data import SequentialSampler, DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
