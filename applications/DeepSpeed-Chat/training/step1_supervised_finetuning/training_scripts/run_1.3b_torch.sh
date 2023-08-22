@@ -70,7 +70,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoi
    --data_split 0,1,0,0 \
    --model_name_or_path decapoda-research/llama-7b-hf \
    --per_device_train_batch_size 4 \
-   --per_device_eval_batch_size 1 \
+   --per_device_eval_batch_size 4 \
    --data_output_path ./data \
    --max_seq_len 2048 \
    --learning_rate 1e-4 \
