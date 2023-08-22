@@ -298,7 +298,6 @@ def main():
         except:
             pass
         return perplexity
-    exit()
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
         model, args.weight_decay, args.lora_learning_rate)
