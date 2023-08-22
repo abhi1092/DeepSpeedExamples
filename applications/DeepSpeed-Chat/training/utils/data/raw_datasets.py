@@ -4,10 +4,13 @@
 # DeepSpeed Team
 from datasets import load_dataset
 from torch.utils.data import Subset
+from .instruction_encode_template import encode_instruction_example
 import re
 from utils.utils import get_caller, print_rank_0, Fore
 import torch
 
+import json
+import os
 
 # The template prompt dataset class that all new dataset porting needs to
 # follow in order to have a unified API and unified data format.
@@ -95,6 +98,7 @@ class CftProLimaSummDataset(PromptRawDataset):
         self.raw_datasets = self.raw_datasets.train_test_split(test_size=0.1, seed=seed)
         self.dataset_name = "cft_pro_lima_summ_mix7k"
         self.dataset_name_clean = "CftProLimaSummMix7k"
+        # self.tokenizer = tokenizer
 
     def get_train_data(self):
         return self.raw_datasets["train"]
@@ -144,6 +148,43 @@ class CftProLimaSummDataset(PromptRawDataset):
     def get_prompt_and_rejected(self, sample):
         return self.prompt_sample(sample, response=sample['generated_response'])
 
+
+class DollyDataset(PromptRawDataset):
+
+    def __init__(self, output_path, seed, local_rank, dataset_name):
+        super().__init__(output_path, seed, local_rank, dataset_name)
+        self.raw_datasets = load_dataset('json',data_files='/new_data/datasets/dolly/dolly15k.jsonl', split="train")
+        self.raw_datasets = self.raw_datasets.train_test_split(test_size=0.1, seed=seed)
+        self.dataset_name = "dolly_dataset"
+        self.dataset_name_clean = "DollyDataset"
+        # self.tokenizer = tokenizer
+
+    def get_train_data(self):
+        return self.raw_datasets["train"]
+
+    def get_eval_data(self):
+        return self.raw_datasets["test"]
+
+    def get_prompt(self, sample):
+        input = sample["context"]
+        instruction = sample['instruction']
+        if input is not None and input.strip() != "":
+            prompt = instruction.strip() + "\n\n" + input.strip() + "\n\n"
+        else:
+            prompt = instruction.strip() + "\n\n"
+        return "<|user|>\n" + prompt.strip() + "\n"
+
+    def get_chosen(self, sample):
+        return "<|assistant|>\n" +  sample['response'].strip() + self.tokenizer.eos_token + "\n"
+
+    def get_rejected(self, sample):
+        return "<|assistant|>\n" + sample['generated_response'].strip() + self.tokenizer.eos_token + "\n"
+
+    def get_prompt_and_chosen(self, sample):
+        return self.get_prompt(sample) + self.get_chosen(sample)
+
+    def get_prompt_and_rejected(self, sample):
+        return self.get_prompt(sample) + self.get_rejected(sample)
 
 # English dataset
 class DahoasRmstaticDataset(PromptRawDataset):

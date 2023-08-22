@@ -72,6 +72,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
     elif "cft_pro_lima_summ_mix7k" in dataset_name:
         return raw_datasets.CftProLimaSummDataset(output_path, seed, local_rank,
                                                  "local/jsonfile")
+    elif "dolly_dataset" in dataset_name:
+        return raw_datasets.DollyDataset(output_path, seed, local_rank,
+                                                 "local/jsonfile")
     elif "local/jsonfile" in dataset_name:
         chat_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.path.pardir,
