@@ -274,7 +274,7 @@ def main():
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
     print("Eval dataset")
-    print(eval_dataset)
+    print(eval_dataset.raw_datasets["test"])
     for step, batch in enumerate(eval_dataloader):
         print(step)
     exit()
