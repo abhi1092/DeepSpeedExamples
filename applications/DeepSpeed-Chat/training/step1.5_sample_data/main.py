@@ -119,6 +119,8 @@ def main():
       # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
       deepspeed.init_distributed()
   
+  args.global_rank = torch.distributed.get_rank()
+  
   set_random_seed(args.seed)
   tensor = torch.ByteTensor([False]).cuda()
   torch.distributed.all_reduce(tensor)
