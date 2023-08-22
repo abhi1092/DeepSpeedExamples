@@ -5,6 +5,8 @@ from torch.utils.data.distributed import DistributedSampler
 from transformers import (
   default_data_collator,
 )
+import argparse
+import sys
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from utils.data.data_utils import create_prompt_dataset
@@ -26,7 +28,6 @@ def parse_args():
   parser.add_argument(
     "--model_name_or_path",
     type=str,
-    default="Dahoas/rm-static",
     help="Path to pre-trained model"
   )
   parser.add_argument(
@@ -54,7 +55,7 @@ def parse_args():
   )
   parser.add_argument("--max_seq_len",
                       type=int,
-                      default=256,
+                      default=512,
                       help="The maximum sequence length.")
   parser.add_argument("--temperature",
                       type=float,
