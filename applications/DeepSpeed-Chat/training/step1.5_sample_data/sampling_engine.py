@@ -13,7 +13,7 @@ class SamplingEngine():
     self.model_name_or_path = model_name_or_path
     self.tokenizer = tokenizer
     self.model = self._init_model(
-     model_name_or_path 
+     model_name_or_path, args.zero_stage
     )
     
   def _init_model(self, model_name_or_path, zero_stage):
