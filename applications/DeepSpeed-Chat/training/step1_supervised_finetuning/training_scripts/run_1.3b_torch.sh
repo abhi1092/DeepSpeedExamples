@@ -64,7 +64,7 @@ NEW_PORT=23457
 base_dir="/new_data/rl-4-llm/dpc_alignment"
 experiment_dir="tulu_paper_reproduction/llama-7b-dolly"
 granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
-torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
+torchrun --nnodes=1 --node_rank=0 --nproc_per_node=1 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
    --data_path dolly_dataset \
    --data_split 0,1,0,0 \

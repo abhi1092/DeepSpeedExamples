@@ -73,6 +73,7 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank, tokenizer=None)
         return raw_datasets.CftProLimaSummDataset(output_path, seed, local_rank,
                                                  "local/jsonfile")
     elif "dolly_dataset" in dataset_name:
+        print("Selecting Dolly dataset")
         return raw_datasets.DollyDataset(output_path, seed, local_rank,
                                                  "local/jsonfile", tokenizer)
     elif "local/jsonfile" in dataset_name:
