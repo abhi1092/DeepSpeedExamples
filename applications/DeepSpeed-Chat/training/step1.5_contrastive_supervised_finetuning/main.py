@@ -295,7 +295,10 @@ def main():
 
     num_update_steps_per_epoch = math.ceil(
         len(train_dataloader) / args.gradient_accumulation_steps)
-
+    for step, batch in enumerate(train_dataloader):
+        print(batch.keys())
+        print(tokenizer.batch_decode(batch["input_ids"]))
+        exit()
     # Wrap with CFT model
     model = CftModel(model, tokenizer, total_steps=num_update_steps_per_epoch, beta=args.beta, no_beta_decay=args.no_beta_decay)
 
