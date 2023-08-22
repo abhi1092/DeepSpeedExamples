@@ -155,6 +155,8 @@ class DollyDataset(PromptRawDataset):
         super().__init__(output_path, seed, local_rank, dataset_name)
         self.raw_datasets = load_dataset('json',data_files='/new_data/datasets/dolly/dolly15k.jsonl', split="train")
         self.raw_datasets = self.raw_datasets.train_test_split(test_size=0.1, seed=seed)
+        print(self.raw_datasets)
+        exit()
         self.dataset_name = "dolly_dataset"
         self.dataset_name_clean = "DollyDataset"
         self.tokenizer = tokenizer
