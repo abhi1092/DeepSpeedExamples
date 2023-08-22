@@ -21,7 +21,7 @@ from utils.utils import print_rank_0, Fore
 import torch
 
 
-def get_raw_dataset(dataset_name, output_path, seed, local_rank):
+def get_raw_dataset(dataset_name, output_path, seed, local_rank, tokenizer=None):
 
     print_rank_0(f"Loading dataset {dataset_name} ...", color=Fore.GREEN, rank=local_rank)
     if "Dahoas/rm-static" in dataset_name:
@@ -74,7 +74,7 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
                                                  "local/jsonfile")
     elif "dolly_dataset" in dataset_name:
         return raw_datasets.DollyDataset(output_path, seed, local_rank,
-                                                 "local/jsonfile")
+                                                 "local/jsonfile", tokenizer)
     elif "local/jsonfile" in dataset_name:
         chat_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.path.pardir,
@@ -319,7 +319,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
                    max_seq_len):
-    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank)
+    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, tokenizer)
     train_dataset = raw_dataset.get_train_data()
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,

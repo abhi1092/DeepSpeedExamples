@@ -230,11 +230,6 @@ def main():
 
     # make sure tokenizer is right pad in our logic
     tokenizer.padding_side = 'right'
-    print(tokenizer.encode("<|assistant|>\n"))
-    print(tokenizer.encode("<|assistant|>"))
-    print(tokenizer.encode("<|user|>\n"))
-    print(tokenizer.encode("<|user|>"))
-    exit()
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
