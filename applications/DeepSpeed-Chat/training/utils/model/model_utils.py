@@ -31,7 +31,9 @@ def create_hf_model(model_class,
         model_config.dropout = 0.0
     # Note: dschf is defined in function scope to avoid global effects
     # https://huggingface.co/docs/transformers/main_classes/deepspeed#nontrainer-deepspeed-integration
-    if ds_config is not None and ds_config["zero_optimization"]["stage"] == 3:
+    stage = ds_config.get("zero_optimization") or ds_config.get("zero")
+    stage = stage.get("stage", None) if stage is not None else None
+    if ds_config is not None and stage == 3:
         dschf = HfDeepSpeedConfig(ds_config)
     else:
         dschf = None
