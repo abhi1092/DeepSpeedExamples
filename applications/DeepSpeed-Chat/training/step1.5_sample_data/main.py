@@ -83,7 +83,7 @@ def parse_args():
   parser.add_argument("--output_dir",
                       type=str,
                       default=None,
-                      help="Where to store the model.")
+                      help="Where to save the generated data")
   parser.add_argument("--seed",
                       type=int,
                       default=None,
