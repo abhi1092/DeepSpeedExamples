@@ -4,7 +4,7 @@
 # DeepSpeed Team
 from datasets import load_dataset
 from torch.utils.data import Subset
-from .instruction_encode_template import encode_instruction_example
+# from .instruction_encode_template import encode_instruction_example
 import re
 from utils.utils import get_caller, print_rank_0, Fore
 import torch
