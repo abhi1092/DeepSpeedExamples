@@ -64,7 +64,7 @@ NEW_PORT=23457
 granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
 torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
-   --data_path cft_pro_lima_summ_mix7k \
+   --data_path dolly_dataset \
    --data_split 0,1,0,0 \
    --model_name_or_path allenai/tulu-7b \
    --per_device_train_batch_size 4 \
