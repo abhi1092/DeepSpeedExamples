@@ -1,3 +1,4 @@
+import time
 import json
 import torch
 import deepspeed
@@ -179,13 +180,20 @@ def main():
   sampling_engine = SamplingEngine(args.model_name_or_path, tokenizer, args)
   
   samples = []
+  start = time.time()
+  last_step = 0
+  #total number of steps given batch size and world size
+  total_steps = len(dataloader) // (args.per_device_batch_size * torch.distributed.get_world_size())
+  print_rank_0(f"Total number of steps: {total_steps}", rank=args.global_rank, color="GREEN")
   for step, batch_prompt in enumerate(dataloader):
     batch_prompt = to_device(batch_prompt, device)
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
     samples+=make_sample(out, tokenizer, args.max_prompt_seq_len)
-    if step > 2:
-      break
+    #rank 0 prints every minute number of steps taken
+    if args.global_rank == 0 and time.time() - start > 60:
+      print_rank_0(f"Step {step} - {step-last_step} steps per minute")
+      start = time.time()
     
   os.makedirs(args.output_dir, exist_ok=True)
   
@@ -208,7 +216,6 @@ def main():
     with open(os.path.join(args.output_dir, f"samples.jsonl"), "w") as f:
       for sample in samples:
         f.write(sample)
-    from pdb import set_trace; set_trace()
   
     
 if __name__ == "__main__":
