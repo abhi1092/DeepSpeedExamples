@@ -131,7 +131,7 @@ def main():
   # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
                                 fast_tokenizer=True)
-  train_phase = 3 #train phase 3 can be used to get only the prompts, data_split should be 0,0,1
+  train_phase = 1 #train phase 3 can be used to get only the prompts, data_split should be 0,0,1
   dataset, _ = create_prompt_dataset(
     args.local_rank,
     args.data_path,
