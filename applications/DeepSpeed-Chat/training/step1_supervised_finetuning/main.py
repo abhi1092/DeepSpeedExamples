@@ -219,18 +219,16 @@ def main():
         deepspeed.init_distributed()
     args.global_rank = torch.distributed.get_rank()
 
-    # ds_config = get_train_ds_config(offload=args.offload,
-    #                                 stage=args.zero_stage,
-    #                                 enable_tensorboard=args.enable_tensorboard,
-    #                                 tb_path=args.tensorboard_path,
-    #                                 tb_name="step1_model")
-    ds_config = get_ds_config()
+    ds_config = get_train_ds_config(offload=args.offload,
+                                    stage=args.zero_stage,
+                                    enable_tensorboard=args.enable_tensorboard,
+                                    tb_path=args.tensorboard_path,
+                                    tb_name="step1_model")
     ds_config[
         'train_micro_batch_size_per_gpu'] = args.per_device_train_batch_size
     ds_config[
         'train_batch_size'] = args.per_device_train_batch_size * torch.distributed.get_world_size(
         ) * args.gradient_accumulation_steps
-    ds_config["gradient_accumulation_steps"] = args.gradient_accumulation_steps
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
     tensor = torch.ByteTensor([False]).cuda()

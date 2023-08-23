@@ -70,7 +70,6 @@ def get_train_ds_config(offload,
         "train_batch_size": GLOBAL_BATCH_SIZE,
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
         "steps_per_print": 10,
-        "gradient_accumulation_steps": "auto",
         "zero_optimization": zero_opt_dict,
         "bf16": {
             "enabled": True
