@@ -111,6 +111,20 @@ def parse_args():
 
   return args
 
+def make_sample(out, tokenizer):
+  prompt_ids=out[::2, :args.max_prompt_seq_len]
+  answers_ids=out[:, args.max_prompt_seq_len:]
+  first_answers_ids = answers_ids[::2]
+  second_answers_ids = answers_ids[1::2] 
+  
+  prompts = tokenizer.batch_decode(prompt_ids, skip_special_tokens=True)
+  first_answers = tokenizer.batch_decode(first_answers_ids, skip_special_tokens=True)
+  second_answers = tokenizer.batch_decode(second_answers_ids, skip_special_tokens=True)
+  
+  assert len(prompts) == len(first_answers) == len(second_answers)
+  return [{"prompt":p, "answer_1":f, "answer_2":s} for p, f, s in zip(prompts, first_answers, second_answers)]
+    
+
 def main():
   args = parse_args()
   args.local_rank = int(os.environ["LOCAL_RANK"])
@@ -163,13 +177,15 @@ def main():
       
   sampling_engine = SamplingEngine(args.model_name_or_path, tokenizer, args)
   
+  samples = []
   for step, batch_prompt in enumerate(dataloader):
     batch_prompt = to_device(batch_prompt, device)
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
-    print(out)
-    from pdb import set_trace; set_trace()
-    break
+    samples+=make_sample(out, tokenizer)
+    if step > 2:
+      break
+  from pdb import set_trace; set_trace()
     
 if __name__ == "__main__":
   main()
