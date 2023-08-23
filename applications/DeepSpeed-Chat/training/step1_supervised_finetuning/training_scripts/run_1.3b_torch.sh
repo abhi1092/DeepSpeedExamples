@@ -61,6 +61,7 @@ NEW_PORT=23457
 #   --enable_tensorboard \
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
+# decapoda-research/llama-7b-hf
 base_dir="/new_data/rl-4-llm/dpc_alignment"
 experiment_dir="tulu_paper_reproduction/llama-7b-dolly"
 granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
@@ -68,7 +69,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
     main.py \
    --data_path dolly_dataset \
    --data_split 1,0,0,0 \
-   --model_name_or_path decapoda-research/llama-7b-hf \
+   --model_name_or_path facebook/opt-1.3b \
    --per_device_train_batch_size 4 \
    --per_device_eval_batch_size 4 \
    --data_output_path ./data \
