@@ -163,12 +163,12 @@ def main():
       
   sampling_engine = SamplingEngine(args.model_name_or_path, tokenizer, args)
   
-  from pdb import set_trace; set_trace()
   for step, batch_prompt in enumerate(dataloader):
     batch_prompt = to_device(batch_prompt, device)
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
     print(out)
+    break
     
 if __name__ == "__main__":
   main()
