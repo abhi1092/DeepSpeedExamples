@@ -330,6 +330,9 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
+    args.output_dir = "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test"
+    if args.global_rank == 0:
+        save_hf_format(model, tokenizer, args)
     save_zero_three_model(model,
                           args.global_rank,
                           "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test",
