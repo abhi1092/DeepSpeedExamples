@@ -186,13 +186,30 @@ def main():
     samples+=make_sample(out, tokenizer, args.max_prompt_seq_len)
     if step > 2:
       break
-  from pdb import set_trace; set_trace()
+    
+  os.makedirs(args.output_dir, exist_ok=True)
   
   #write samples as a jsonl and add the torch global rank to the name
   with open(os.path.join(args.output_dir, f"rank_{args.global_rank}.jsonl"), "w") as f:
     for sample in samples:
       f.write(json.dumps(sample))
       f.write("\n")
+      
+  torch.distributed.barrier()
+  
+  #load all the samples and save them in a single file only from rank 0
+  if args.global_rank == 0:
+    samples = []
+    for rank in range(torch.distributed.get_world_size()):
+      with open(os.path.join(args.output_dir, f"rank_{rank}.jsonl"), "r") as f:
+        samples+=f.readlines()
+      #delete the file
+      os.remove(os.path.join(args.output_dir, f"rank_{rank}.jsonl"))
+    with open(os.path.join(args.output_dir, f"samples.jsonl"), "w") as f:
+      for sample in samples:
+        f.write(sample)
+    from pdb import set_trace; set_trace()
+  
     
 if __name__ == "__main__":
   main()
