@@ -156,3 +156,43 @@ def get_inference_ds_config(offload, stage=0):
         "enable_cuda_graph": True,
         # "wall_clock_breakdown": True
     }
+
+
+def get_ds_config():
+    return {
+     "bf16": {
+            "enabled": True
+        },
+
+    "optimizer": {
+        "type": "AdamW",
+        "params": {
+            "lr": "auto",
+            "betas": "auto",
+            "eps": "auto",
+            "weight_decay": "auto"
+        }
+    },
+
+
+    "zero_optimization": {
+        "stage": 2,
+        "offload_optimizer": {
+            "device": "cpu",
+            "pin_memory": True
+        },
+        "allgather_partitions": True,
+        "allgather_bucket_size": 2e8,
+        "overlap_comm": True,
+        "reduce_scatter": True,
+        "reduce_bucket_size": 2e8,
+        "contiguous_gradients": True
+    },
+
+    "gradient_accumulation_steps": "auto",
+    "gradient_clipping": "auto",
+    "steps_per_print": 2000,
+    "train_batch_size": "auto",
+    "train_micro_batch_size_per_gpu": "auto",
+    "wall_clock_breakdown": False
+}

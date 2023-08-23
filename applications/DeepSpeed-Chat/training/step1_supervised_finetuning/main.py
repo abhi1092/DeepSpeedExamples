@@ -29,6 +29,7 @@ from utils.data.data_utils import create_prompt_dataset
 from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, get_optimizer_grouped_parameters, save_zero_three_model, load_hf_tokenizer
 from utils.ds_utils import get_train_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, convert_lora_to_linear_layer, only_optimize_lora_parameters, make_model_gradient_checkpointing_compatible
+from utils.ds_utils import get_train_ds_config, get_ds_config
 from utils.model.model_utils import create_hf_model
 
 
@@ -218,11 +219,12 @@ def main():
         deepspeed.init_distributed()
     args.global_rank = torch.distributed.get_rank()
 
-    ds_config = get_train_ds_config(offload=args.offload,
-                                    stage=args.zero_stage,
-                                    enable_tensorboard=args.enable_tensorboard,
-                                    tb_path=args.tensorboard_path,
-                                    tb_name="step1_model")
+    # ds_config = get_train_ds_config(offload=args.offload,
+    #                                 stage=args.zero_stage,
+    #                                 enable_tensorboard=args.enable_tensorboard,
+    #                                 tb_path=args.tensorboard_path,
+    #                                 tb_name="step1_model")
+    ds_config = get_ds_config()
     ds_config[
         'train_micro_batch_size_per_gpu'] = args.per_device_train_batch_size
     ds_config[
