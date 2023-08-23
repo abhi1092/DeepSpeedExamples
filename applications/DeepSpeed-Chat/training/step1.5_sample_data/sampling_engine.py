@@ -34,8 +34,7 @@ class SamplingEngine():
         disable_dropout=self.args.disable_dropout)
 
     # initialise Deepspeed ZeRO and store only the engine object
-    from pdb import set_trace; set_trace()
-    ds_engine = deepspeed.init_inference(model=model, config_params=ds_config)
+    ds_engine = deepspeed.init_inference(model=model, config=ds_config)
     ds_engine.module.eval()  # inference
     
     return ds_engine
