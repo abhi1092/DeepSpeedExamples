@@ -8,7 +8,6 @@ import torch
 GLOBAL_BATCH_SIZE = 32
 MICRO_BATCH_SIZE = 4
 
-
 def get_train_ds_config(offload,
                         stage=2,
                         enable_hybrid_engine=False,
