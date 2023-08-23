@@ -67,8 +67,6 @@ def get_train_ds_config(offload,
             "job_name": f"{tb_name}_tensorboard"
         },
     }
-<<<<<<< HEAD
-=======
     if enable_profiler:
         config.update({"flops_profiler": {
             "enabled": True,
@@ -79,7 +77,6 @@ def get_train_ds_config(offload,
             "output_file": None
         }})
     return config
->>>>>>> 25bc5d4 (fix)
 
 
 def get_eval_ds_config(offload, stage=0):
