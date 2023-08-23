@@ -55,10 +55,14 @@ def parse_args():
       help=
       "Batch size (per device) for the dataloader and generation purpose."
   )
-  parser.add_argument("--max_seq_len",
+  parser.add_argument("--max_prompt_seq_len",
                       type=int,
                       default=512,
-                      help="The maximum sequence length.")
+                      help="The maximum length of a prompt")
+  parser.add_argument("--max_seq_len",
+                      type=int,
+                      default=1024,
+                      help="The maximum length of a sequence")
   parser.add_argument("--temperature",
                       type=float,
                       default=0.7,
@@ -131,7 +135,7 @@ def main():
   # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
                                 fast_tokenizer=True)
-  train_phase = 1 #train phase 3 can be used to get only the prompts, data_split should be 0,0,1
+  train_phase = 3 #train phase 3 can be used to get only the prompts, data_split should be 0,0,1
   dataset, _ = create_prompt_dataset(
     args.local_rank,
     args.data_path,
@@ -150,7 +154,10 @@ def main():
   else:
       sampler = DistributedSampler(dataset)
   dataloader = DataLoader(dataset,
-                          collate_fn=default_data_collator,
+                          #they do a double flip in the data generation to have prompts right aligned and left padded
+                          #see: https://github.com/microsoft/DeepSpeedExamples/pull/457 
+                          collate_fn=DataCollatorRLHF(args.max_prompt_seq_len,
+                                                      args.inference_tp_size), 
                           sampler=sampler,
                           batch_size=args.per_device_batch_size)
       
