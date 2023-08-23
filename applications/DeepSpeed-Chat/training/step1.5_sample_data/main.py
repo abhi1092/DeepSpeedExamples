@@ -1,3 +1,4 @@
+import json
 import torch
 import deepspeed
 from torch.utils.data import SequentialSampler, DataLoader
@@ -111,9 +112,9 @@ def parse_args():
 
   return args
 
-def make_sample(out, tokenizer):
-  prompt_ids=out[::2, :args.max_prompt_seq_len]
-  answers_ids=out[:, args.max_prompt_seq_len:]
+def make_sample(out, tokenizer, max_prompt_seq_len):
+  prompt_ids=out[::2, :max_prompt_seq_len]
+  answers_ids=out[:, max_prompt_seq_len:]
   first_answers_ids = answers_ids[::2]
   second_answers_ids = answers_ids[1::2] 
   
@@ -182,10 +183,16 @@ def main():
     batch_prompt = to_device(batch_prompt, device)
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
-    samples+=make_sample(out, tokenizer)
+    samples+=make_sample(out, tokenizer, args.max_prompt_seq_len)
     if step > 2:
       break
   from pdb import set_trace; set_trace()
+  
+  #write samples as a jsonl and add the torch global rank to the name
+  with open(os.path.join(args.output_dir, f"rank_{args.global_rank}.jsonl"), "w") as f:
+    for sample in samples:
+      f.write(json.dumps(sample))
+      f.write("\n")
     
 if __name__ == "__main__":
   main()
