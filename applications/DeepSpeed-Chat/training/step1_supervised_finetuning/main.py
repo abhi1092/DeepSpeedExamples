@@ -244,8 +244,8 @@ def main():
                             tokenizer,
                             ds_config,
                             disable_dropout=args.disable_dropout)
-    print(model)
-    exit()
+    # print(model)
+    # exit()
     if args.lora_dim > 0:
         model = convert_linear_layer_to_lora(model, args.lora_module_name,
                                              args.lora_dim)
@@ -331,12 +331,12 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
-    args.output_dir = "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test-zero3"
+    args.output_dir = "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test-granite-zero3"
     if args.global_rank == 0:
         save_hf_format(model, tokenizer, args)
     save_zero_three_model(model,
                           args.global_rank,
-                          "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test-zero3",
+                          "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test-granite-zero3",
                           zero_stage=args.zero_stage)
     exit()
     if args.gradient_checkpointing:
