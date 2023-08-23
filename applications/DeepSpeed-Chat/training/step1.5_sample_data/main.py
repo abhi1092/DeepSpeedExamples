@@ -157,7 +157,7 @@ def main():
                           #they do a double flip in the data generation to have prompts right aligned and left padded
                           #see: https://github.com/microsoft/DeepSpeedExamples/pull/457 
                           collate_fn=DataCollatorRLHF(args.max_prompt_seq_len,
-                                                      args.inference_tp_size), 
+                                                      -1), 
                           sampler=sampler,
                           batch_size=args.per_device_batch_size)
       
