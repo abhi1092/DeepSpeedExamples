@@ -45,7 +45,7 @@ class SamplingEngine():
       generated_sequences = self.model.module.generate(
           input_ids=prompts,
           attention_mask=mask,
-          max_length=self.args.max_seq_length,
+          max_length=self.args.max_seq_len,
           temperature=self.args.temperature,
           top_k=self.args.top_k,
           top_p=self.args.top_p,
