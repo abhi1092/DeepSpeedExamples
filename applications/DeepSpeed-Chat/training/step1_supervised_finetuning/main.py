@@ -330,7 +330,11 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
-
+    save_zero_three_model(model,
+                          args.global_rank,
+                          "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test",
+                          zero_stage=args.zero_stage)
+    exit()
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
 
