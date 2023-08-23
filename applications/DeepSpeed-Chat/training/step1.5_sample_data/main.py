@@ -11,7 +11,7 @@ import os
 import sys
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from utils.data.data_utils import create_prompt_dataset
+from utils.data.data_utils import create_prompt_dataset, DataCollatorRLHF
 from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, save_zero_three_model, load_hf_tokenizer
 from sampling_engine import SamplingEngine
 
