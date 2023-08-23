@@ -230,7 +230,7 @@ def main():
     ds_config[
         'train_batch_size'] = args.per_device_train_batch_size * torch.distributed.get_world_size(
         ) * args.gradient_accumulation_steps
-
+    ds_config["gradient_accumulation_steps"] = args.gradient_accumulation_steps
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
     tensor = torch.ByteTensor([False]).cuda()
