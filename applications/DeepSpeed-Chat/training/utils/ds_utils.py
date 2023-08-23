@@ -139,7 +139,7 @@ def get_inference_ds_config(offload, stage=0):
         "offload_param": {
             "device": device
         },
-        "memory_efficient_linear": False
+        "memory_efficient_linear": True,
     }
     return {
         "zero": zero_opt_dict,
@@ -153,5 +153,5 @@ def get_inference_ds_config(offload, stage=0):
             "tp_size": 1,
         },
         "enable_cuda_graph": True,
-        "wall_clock_breakdown": True
+        # "wall_clock_breakdown": True
     }
