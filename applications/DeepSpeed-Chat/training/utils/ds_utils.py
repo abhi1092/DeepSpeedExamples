@@ -33,7 +33,7 @@ def get_train_ds_config(offload,
             "device": device
         },
         "stage3_param_persistence_threshold": 1e8,
-        "stage3_max_live_parameters": 3e8,
+        "stage3_max_live_parameters": 1e9,
         "stage3_prefetch_bucket_size": 3e7,
         "memory_efficient_linear": False,
 
