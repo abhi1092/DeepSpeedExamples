@@ -168,6 +168,7 @@ def main():
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
     print(out)
+    from pdb import set_trace; set_trace()
     break
     
 if __name__ == "__main__":
