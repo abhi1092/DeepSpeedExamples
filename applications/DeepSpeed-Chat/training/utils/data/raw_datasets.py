@@ -411,10 +411,10 @@ class RedditTLDR(LocalJsonFileDataset):
         self.raw_datasets = load_dataset('json',
                                          data_files={
                                              "train":
-                                             str(d_path.parent / 'tldr_sft_train_117k.jsonl'),
+                                             str(d_path.parent / 'train.jsonl'),
                                             #  str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
                                              "eval":
-                                             str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
+                                             str(d_path.parent / 'eval.jsonl'),
                                          })
         print_rank_0("tldr dataset has been initialized", rank=local_rank, color=Fore.GREEN)
     
@@ -426,6 +426,26 @@ class RedditTLDR(LocalJsonFileDataset):
     
     def get_prompt_and_chosen(self, sample):
         return sample['formatted_input'] + sample['summary']
+    
+    
+class Stage2Data(LocalJsonFileDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
+        from pathlib import Path
+        d_path = Path(dataset_path)
+        parent = d_path.parent
+        self.dataset_name = f"local/rm-{parent.name}"
+        self.dataset_name_clean = f"rm-{parent.name}"
+        print_rank_0(f"Loading dataset {self.dataset_name}", rank=local_rank, color=Fore.GREEN)
+        
+        self.raw_datasets = load_dataset('json',
+                                            data_files={
+                                                "train":
+                                                str(parent / 'train.jsonl'),
+                                                "eval":
+                                                str(parent / 'eval.jsonl'),
+                                            })
+        
+        
     
 
 
