@@ -22,6 +22,7 @@ from transformers import (
 
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
+from tqdm.auto import tqdm
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -244,8 +245,6 @@ def main():
                             tokenizer,
                             ds_config,
                             disable_dropout=args.disable_dropout)
-    print(model)
-    exit()
     if args.lora_dim > 0:
         model = convert_linear_layer_to_lora(model, args.lora_module_name,
                                              args.lora_dim)
@@ -338,7 +337,6 @@ def main():
                           args.global_rank,
                           "/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly-test-granite-zero3",
                           zero_stage=args.zero_stage)
-    exit()
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
 
@@ -352,6 +350,9 @@ def main():
     chkpts_saving_steps = math.ceil((len(train_dataloader) - args.start_saving_checkpoint_step)/ (args.save_n_checkpoints+1))
         
     print_rank_0(f"chkpts_saving_steps: {chkpts_saving_steps}", args.global_rank, color='GREEN')
+
+    training_bar = tqdm(total=total_steps)
+    global_step = 0
     for epoch in range(args.num_train_epochs):
         print_rank_0(
             f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
@@ -367,7 +368,9 @@ def main():
                 )
             model.backward(loss)
             model.step()
-            
+            global_step += 1
+            if global_step % args.gradient_accumulation_steps == 0:
+                training_bar.update(1)
             if args.output_dir is not None and step % chkpts_saving_steps == 0 and step >= args.start_saving_checkpoint_step:
                 print_rank_0(f'SAVING does NOT work with LORA', args.global_rank, color='RED')
                 start = time.time()
