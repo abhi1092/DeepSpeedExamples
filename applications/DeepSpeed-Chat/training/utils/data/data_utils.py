@@ -82,6 +82,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
         return raw_datasets.ShareOasstCustom(output_path, seed, local_rank, "share-oasst", dataset_name)
     elif "tldr_" in dataset_name:
         return raw_datasets.RedditTLDR(output_path, seed, local_rank, "tldr_reddit", dataset_name)
+    elif "stage2" in dataset_name:
+        print_rank_0(f'stage 2 dataset {dataset_name}', color=Fore.GREEN, rank=local_rank)
+        return raw_datasets.Stage2Data(output_path, seed, local_rank, "stage2_data", dataset_name)
     else:
         raise RuntimeError(
             f"We do not have configs for dataset {dataset_name}, but you can add it by yourself in raw_datasets.py."
