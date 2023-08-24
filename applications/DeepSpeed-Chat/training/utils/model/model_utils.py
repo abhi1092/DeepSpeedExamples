@@ -41,14 +41,10 @@ def create_hf_model(model_class,
         # the weight loading is handled by create critic model
         model = model_class.from_config(model_config)
     else:
-        if load_from_local_file:
-            model = model_class.from_pretrained(
-                model_name_or_path)
-        else:
-            model = model_class.from_pretrained(
-                model_name_or_path,
-                from_tf=bool(".ckpt" in model_name_or_path),
-                config=model_config)
+        model = model_class.from_pretrained(
+            model_name_or_path,
+            from_tf=bool(".ckpt" in model_name_or_path),
+            config=model_config)
 
     model.config.end_token_id = tokenizer.eos_token_id
     model.config.pad_token_id = model.config.eos_token_id
