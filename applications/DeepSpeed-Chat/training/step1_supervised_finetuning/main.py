@@ -18,7 +18,7 @@ from transformers import (
     default_data_collator,
     get_scheduler,
 )
-
+from tqdm.auto import tqdm
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 
@@ -86,6 +86,11 @@ def parse_args():
         default=512,
         help="The maximum sequence length.",
     )
+    parser.add_argument(
+        "--warmup_percentage",
+        type=float,
+        default=0.,
+        help="Number of steps for the warmup in the lr scheduler.")
     parser.add_argument(
         "--learning_rate",
         type=float,
@@ -291,11 +296,13 @@ def main():
 
     num_update_steps_per_epoch = math.ceil(
         len(train_dataloader) / args.gradient_accumulation_steps)
+    total_steps = args.num_train_epochs * num_update_steps_per_epoch
+    warmup = args.warmup_percentage
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
-        num_warmup_steps=args.num_warmup_steps,
-        num_training_steps=args.num_train_epochs * num_update_steps_per_epoch,
+        num_warmup_steps=int(warmup*total_steps),
+        num_training_steps=total_steps,
     )
 
     model, optimizer, _, lr_scheduler = deepspeed.initialize(
@@ -316,7 +323,8 @@ def main():
         args.global_rank)
     perplexity = evaluation(model, eval_dataloader)
     print_rank_0(f"ppl: {perplexity}", args.global_rank)
-
+    training_bar = tqdm(total=total_steps)
+    global_step = 0
     for epoch in range(args.num_train_epochs):
         print_rank_0(
             f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
@@ -334,6 +342,9 @@ def main():
                 )
             model.backward(loss)
             model.step()
+            global_step += 1
+            if global_step % args.gradient_accumulation_steps == 0:
+                training_bar.update(1)
             end = time.time()
             if torch.distributed.get_rank() == 0:
                 print_throughput(model.model, args, end - start,
