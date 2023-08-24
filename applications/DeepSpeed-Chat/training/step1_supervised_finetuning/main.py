@@ -225,6 +225,7 @@ def main():
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+    tokenizer.pad_token = tokenizer.eos_token
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
