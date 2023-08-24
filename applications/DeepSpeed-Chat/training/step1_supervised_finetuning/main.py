@@ -193,7 +193,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    args.local_rank = int(os.environ["LOCAL_RANK"])
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
@@ -218,7 +218,9 @@ def main():
 
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
-
+    tensor = torch.ByteTensor([False]).cuda()
+    torch.distributed.all_reduce(tensor)
+    print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
     torch.distributed.barrier()
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
