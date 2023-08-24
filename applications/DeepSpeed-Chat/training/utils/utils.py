@@ -47,7 +47,7 @@ def get_tokenizer(model_name_or_path, fast_tokenizer=True):
     if "llama" in model_name_or_path:
         from transformers.models.llama import LlamaTokenizer
         tokenizer = LlamaTokenizer.from_pretrained(
-            model_name_or_path, fast_tokenizer=fast_tokenizer)
+            model_name_or_path, fast_tokenizer=fast_tokenizer, legacy=False)
         if tokenizer.pad_token is None:
             # assert tokenizer.eos_token is not None
             # tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
