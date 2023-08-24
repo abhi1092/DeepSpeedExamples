@@ -319,6 +319,16 @@ def main():
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
 
+    if args.global_rank == 0:
+        save_hf_format(model, tokenizer, args)
+
+    if args.zero_stage == 3:
+        # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+        save_zero_three_model(model,
+                              args.global_rank,
+                              args.output_dir,
+                              zero_stage=args.zero_stage)
+    exit()
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
     print_rank_0(
