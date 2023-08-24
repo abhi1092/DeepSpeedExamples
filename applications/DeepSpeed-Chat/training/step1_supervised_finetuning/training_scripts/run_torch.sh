@@ -62,6 +62,7 @@ NEW_PORT=23457
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
 #/new_data/rl-4-llm/dpc_alignment/tulu_paper_reproduction/llama-7b-dolly
+# decapoda-research/llama-7b-hf \
 base_dir="/new_data/rl-4-llm/dpc_alignment"
 experiment_dir="tulu_paper_reproduction/llama-7b-dolly-test"
 granite_path="/new_data/rl-4-llm/experiment_alignment/granite13b_1000bn/cft_wadolly_100k_tulu_e2_beta_1e-6_base_700k_sft"
