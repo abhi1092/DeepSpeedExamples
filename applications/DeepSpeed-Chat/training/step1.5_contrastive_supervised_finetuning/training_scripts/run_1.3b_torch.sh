@@ -61,6 +61,8 @@ NEW_PORT=23457
 #   --enable_tensorboard \
 #   --tensorboard_path $OUTPUT \
 #   --output_dir $OUTPUT
+base_dir="/new_data/rl-4-llm/deepspeedchat"
+experiment_dir="granite_cft_reproduction/granite.1T.sft_300k.cft.100k"
 granite_path="/new_data/rl-4-llm/granite_models/instruction_tuned/granite-13b-sft-mix300k/ckpt-1000bn-base"
 torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoint="${HOSTNAME}:${NEW_PORT}" \
     main.py \
@@ -84,7 +86,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
    --zero_stage 3 \
    --offload \
    --deepspeed \
-   --output_dir $OUTPUT
+   --output_dir $base_dir/$experiment_dir
 
 
 
