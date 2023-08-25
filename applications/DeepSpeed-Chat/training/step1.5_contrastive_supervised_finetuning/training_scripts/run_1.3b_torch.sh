@@ -81,7 +81,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
    --seed 1234 \
    --force_load_from_local_file \
    --gradient_checkpointing \
-   --zero_stage 2 \
+   --zero_stage 3 \
    --offload \
    --deepspeed \
    --output_dir $OUTPUT
