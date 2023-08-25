@@ -854,7 +854,7 @@ class CftProLimaSummDataset(PromptRawDataset):
         super().__init__(output_path, seed, local_rank, dataset_name)
         # self.raw_datasets = load_dataset("json", data_files="/app/rl_4_llm/data/custom/cft_pro_lima_summ_mix7k.jsonl", split="train")
         self.raw_datasets = load_dataset("json", data_files="/new_data/datasets/negative/wadolly/neg_granite13b_1T_neg50k_wadolly_0_v5_hh_prosocial_100k.jsonl", split="train")
-        self.raw_datasets = self.raw_datasets.train_test_split(test_size=0.1, seed=seed)
+        self.raw_datasets = self.raw_datasets.train_test_split(test_size=100, seed=seed)
         self.dataset_name = "cft_pro_lima_summ_mix7k"
         self.dataset_name_clean = "CftProLimaSummMix7k"
         # self.tokenizer = tokenizer
