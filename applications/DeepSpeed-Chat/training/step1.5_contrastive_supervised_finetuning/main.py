@@ -162,6 +162,13 @@ def parse_args():
         type=int,
         default=0,
         help='ZeRO optimization stage for Actor model (and clones).')
+    parser.add_argument(
+        "--lora_learning_rate",
+        type=float,
+        default=5e-4,
+        help=
+        "Initial LoRA learning rate (after the potential warmup period) to use."
+    )
     ## LoRA for efficient training setting
     parser.add_argument("--lora_dim",
                         type=int,
