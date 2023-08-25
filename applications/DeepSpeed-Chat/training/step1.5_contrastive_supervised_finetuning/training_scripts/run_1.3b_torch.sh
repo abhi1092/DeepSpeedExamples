@@ -74,7 +74,7 @@ torchrun --nnodes=1 --node_rank=0 --nproc_per_node=8 --rdzv_id=107 --rdzv_endpoi
    --beta 1e-6 \
    --learning_rate 1e-4 \
    --weight_decay 0.1 \
-   --num_train_epochs 1  \
+   --num_train_epochs 2  \
    --gradient_accumulation_steps 4 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
