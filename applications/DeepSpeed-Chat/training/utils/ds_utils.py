@@ -72,7 +72,7 @@ def get_train_ds_config(offload,
     if enable_profiler:
         config.update({"flops_profiler": {
             "enabled": True,
-            "profile_step": 300,
+            "profile_step": 2,
             "module_depth": -1,
             "top_modules": 1,
             "detailed": True,
