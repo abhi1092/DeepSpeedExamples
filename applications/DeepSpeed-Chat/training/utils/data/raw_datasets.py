@@ -814,7 +814,7 @@ class CftProLimaSummDataset(PromptRawDataset):
     ASSISTANT_INT_THOUGHTS_KEY = "\n\nAssistant (internal thoughts): "
     CONTEXT_KEY = "\n\nContext: "
     DEFAULT_EOS_TOKEN = "<|endoftext|>"
-    END_KEY = "\n\nEND_KEY"
+    END_KEY = DEFAULT_EOS_TOKEN
     HHH_INTRO = "Below are a series of dialogues between various people and an AI assistant. The AI tries to be helpful, polite, honest, sophisticated, emotionally aware, and humble-but-knowledgeable. The assistant is happy to help with almost anything, and will do its best to understand exactly what is needed. It also tries to avoid giving false or misleading information, and it caveats when it isn't entirely sure about the right answer. Moreover, the assistant prioritizes caution over usefulness, refusing to answer questions that it considers unsafe, immoral, unethical or dangerous."
     ALIGNMENT_PROMPT_WITH_CONTEXT = """{intro}{context_key}{context}{human_key}{instruction}{assistant_key}{response}{end_key}""".format(
         intro="{intro}",

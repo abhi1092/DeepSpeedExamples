@@ -232,6 +232,12 @@ def main():
     torch.distributed.barrier()
 
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+    HUMAN_KEY = "\n\nHuman: "
+    ASSISTANT_KEY = "\n\nAssistant: "
+    CONTEXT_KEY = "\n\nContext: "
+    DEFAULT_EOS_TOKEN = "<|endoftext|>"
+    END_KEY = DEFAULT_EOS_TOKEN
+    tokenizer.add_special_tokens({"additional_special_tokens": [CONTEXT_KEY, HUMAN_KEY, ASSISTANT_KEY, END_KEY]})
     # make sure tokenizer is right pad in our logic
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
