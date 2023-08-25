@@ -174,6 +174,9 @@ def parse_args():
     parser.add_argument('--only_optimize_lora',
                         action='store_true',
                         help='Only optimize the LoRA parameters.')
+    parser.add_argument('--force_load_from_local_file',
+                        action='store_true',
+                        help='Load from only local file bypassing deepspeed code')
     ## Tensorboard logging
     parser.add_argument('--enable_tensorboard',
                         action='store_true',
@@ -231,7 +234,7 @@ def main():
     print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
     torch.distributed.barrier()
 
-    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True, force_load_from_local_file=args.force_load_from_local_file)
     HUMAN_KEY = "\n\nHuman: "
     ASSISTANT_KEY = "\n\nAssistant: "
     CONTEXT_KEY = "\n\nContext: "

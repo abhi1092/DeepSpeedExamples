@@ -62,7 +62,10 @@ def get_tokenizer(model_name_or_path, fast_tokenizer=True):
     return tokenizer
 
 
-def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
+def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True, force_load_from_local_file=False):
+    if force_load_from_local_file:
+        return get_tokenizer(model_name_or_path,
+                                  fast_tokenizer=fast_tokenizer)
     if os.path.exists(model_name_or_path):
         # Locally tokenizer loading has some issue, so we need to force download
         model_json = os.path.join(model_name_or_path, "config.json")
