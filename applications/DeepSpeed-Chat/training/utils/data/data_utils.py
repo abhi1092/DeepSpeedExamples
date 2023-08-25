@@ -118,7 +118,10 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
 
         shuffle_idx = get_shuffle_idx(seed, data_size)
         for split_i in range(len(splits)):
-            shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_i}.npy"
+            if len(splits) == 4 and split_i == 1:  # There is cft phase in there
+                shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{0.5}.npy"
+            else:
+                shuffle_idx_split_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_i}.npy"
             shuffle_idx_split = shuffle_idx[
                 splits_index[split_i]:splits_index[split_i + 1]]
             np.save(shuffle_idx_split_file_name,
@@ -152,12 +155,44 @@ class PromptDataset(Dataset):
                 "attention_mask": self.chosen_dataset[idx]["attention_mask"],
                 "labels": self.chosen_dataset[idx]["input_ids"]
             }
+        elif self.train_phase == 1.5:
+            return self.chosen_dataset[idx]["input_ids"], self.chosen_dataset[idx]["attention_mask"], \
+                   self.chosen_dataset[idx]["labels"], self.reject_dataset[idx]["input_ids"], \
+                   self.reject_dataset[idx]["attention_mask"], self.reject_dataset[idx]["labels"], \
+                   self.reject_dataset[idx]["use_negative_data"]
         elif self.train_phase == 2:
             return self.chosen_dataset[idx]["input_ids"], self.chosen_dataset[idx]["attention_mask"], \
                 self.reject_dataset[idx]["input_ids"], self.reject_dataset[idx]["attention_mask"]
         elif self.train_phase == 3:
             return self.prompt_dataset[idx]["input_ids"],self.prompt_dataset[idx]["attention_mask"], \
                 self.pad_token_id
+
+
+def create_label(tokens, tokenizer, raw_dataset):
+
+    tokens["labels"] = tokens["input_ids"].clone()
+    response_token_ids = tokenizer.encode(raw_dataset.ASSISTANT_KEY)
+    assert len(response_token_ids) == 1, "Tokenizer does not have special token"
+    for i in range(tokens["input_ids"].shape[0]):
+        response_token_ids_start_idx = None
+        for idx in np.where(tokens["labels"][i] == response_token_ids[0])[0]:
+            response_token_ids_start_idx = idx
+        try:
+            assert response_token_ids_start_idx is not None, "Could not find response key"
+        except:
+            print(response_token_ids)
+            print(tokens["labels"][i])
+            exit()
+        # print(response_token_ids_start_idx)
+        # print(tokens["labels"].shape)
+        tokens["labels"][i][:response_token_ids_start_idx] = -100
+        # print(f"{response_token_ids_start_idx=}")
+        # print("=================")
+        # print(tokens["labels"])
+        # print("+++++++++=")
+        # print(tokens["input_ids"])
+        # exit()
+    return tokens
 
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
@@ -182,7 +217,44 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_token["attention_mask"] = chosen_token[
                     "attention_mask"].squeeze(0)
                 chosen_dataset.append(chosen_token)
-
+    elif train_phase == 1.5:
+        print(f"Size of dataset before filtering {current_dataset.dataset.num_rows}")
+        for i, tmp_data in enumerate(current_dataset):
+            # tokenize the text
+            chosen_sentence = raw_dataset.get_prompt_and_chosen(
+                tmp_data)  # the accept response
+            reject_sentence = raw_dataset.get_prompt_and_rejected(
+                tmp_data)  # the accept response
+            if chosen_sentence is not None and reject_sentence is not None:
+                chosen_sentence += end_of_conversation_token  # the accept response
+                reject_sentence += end_of_conversation_token
+                chosen_token_ = tokenizer(chosen_sentence,
+                                          max_length=max_seq_len,
+                                          padding="max_length",
+                                          truncation=True,
+                                          return_tensors="pt")
+                reject_token_ = tokenizer(reject_sentence,
+                                          max_length=max_seq_len,
+                                          padding="max_length",
+                                          truncation=True,
+                                          return_tensors="pt")
+                # Filter anything that does not fit the max_length
+                if chosen_token_["input_ids"][0][-1] != tokenizer.pad_token_id and reject_token_["input_ids"][0][
+                    -1] != tokenizer.pad_token_id:
+                    continue
+                chosen_token = {"input_ids": chosen_token_["input_ids"],
+                                "attention_mask": chosen_token_["attention_mask"]}
+                chosen_token = create_label(chosen_token, tokenizer, raw_dataset)
+                chosen_dataset.append(chosen_token)
+                reject_token = {"input_ids": reject_token_["input_ids"],
+                                "attention_mask": reject_token_["attention_mask"]}
+                reject_token = create_label(reject_token, tokenizer, raw_dataset)
+                reject_token["use_negative_data"] = torch.tensor([tmp_data["use_negative_data"]])
+                # print(reject_token["use_negative_data"].shape)
+                # print("========")
+                # exit()
+                reject_dataset.append(reject_token)
+        print(f"Size of dataset after filtering {len(chosen_dataset)}")
     elif train_phase == 2:
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
@@ -365,6 +437,23 @@ class DataCollatorReward:
         batch["attention_mask"] = torch.cat([f[1] for f in data] +
                                             [f[3] for f in data],
                                             dim=0)
+        return batch
+
+
+class DataCollatorCft:
+
+    def __call__(self, data):
+        batch = {}
+        batch["input_ids"] = torch.cat([f[0]
+                                        for f in data] + [f[3] for f in data],
+                                       dim=0)
+        batch["attention_mask"] = torch.cat([f[1] for f in data] +
+                                            [f[4] for f in data],
+                                            dim=0)
+        batch["labels"] = torch.cat([f[2] for f in data] +
+                                            [f[5] for f in data],
+                                            dim=0)
+        batch["use_negative_data"] =  torch.cat([f[6] for f in data] + [f[6] for f in data])
         return batch
 
 
