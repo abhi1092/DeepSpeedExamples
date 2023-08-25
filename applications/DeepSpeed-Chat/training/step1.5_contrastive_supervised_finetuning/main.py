@@ -226,6 +226,7 @@ def main():
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
                                     enable_tensorboard=args.enable_tensorboard,
+                                    enable_profiler=True,
                                     tb_path=args.tensorboard_path,
                                     tb_name="step1_model")
     ds_config[
