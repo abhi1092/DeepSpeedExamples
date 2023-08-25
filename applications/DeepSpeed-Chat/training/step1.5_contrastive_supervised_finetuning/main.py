@@ -382,9 +382,9 @@ def main():
             if global_step % args.gradient_accumulation_steps == 0:
                 training_bar.update(1)
             end = time.time()
-            if torch.distributed.get_rank() == 0:
-                print_throughput(model.model, args, end - start,
-                                 args.global_rank)
+            # if torch.distributed.get_rank() == 0:
+            #     print_throughput(model.model, args, end - start,
+            #                      args.global_rank)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
