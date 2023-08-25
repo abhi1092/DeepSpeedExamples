@@ -19,6 +19,7 @@ def get_train_ds_config(offload,
                         max_out_tokens=512,
                         enable_tensorboard=False,
                         enable_mixed_precision_lora=False,
+                        enable_profiler=False,
                         tb_path="",
                         tb_name=""):
 
@@ -39,10 +40,10 @@ def get_train_ds_config(offload,
     if enable_mixed_precision_lora:
         zero_opt_dict["zero_quantized_nontrainable_weights"] = True
         zero_opt_dict["zero_hpz_partition_size"] = torch.cuda.device_count()
-    return {
+    config =  {
         "train_batch_size": GLOBAL_BATCH_SIZE,
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
-        "steps_per_print": 10,
+        # "steps_per_print": 10,
         "zero_optimization": zero_opt_dict,
         # "fp16": {
         #     "enabled": True,
@@ -68,6 +69,16 @@ def get_train_ds_config(offload,
             "job_name": f"{tb_name}_tensorboard"
         }
     }
+    if enable_profiler:
+        config.update({"flops_profiler": {
+            "enabled": True,
+            "profile_step": 300,
+            "module_depth": -1,
+            "top_modules": 1,
+            "detailed": True,
+            "output_file": None
+        }})
+    return config
 
 
 def get_eval_ds_config(offload, stage=0):
