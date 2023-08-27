@@ -321,11 +321,11 @@ def main():
     torch.distributed.barrier()
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
-    print_rank_0(
-        f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
-        args.global_rank)
-    perplexity = evaluation(model, eval_dataloader)
-    print_rank_0(f"ppl: {perplexity}", args.global_rank)
+    # print_rank_0(
+    #     f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
+    #     args.global_rank)
+    # perplexity = evaluation(model, eval_dataloader)
+    # print_rank_0(f"ppl: {perplexity}", args.global_rank)
     training_bar = tqdm(total=total_steps)
     global_step = 0
     for epoch in range(args.num_train_epochs):
