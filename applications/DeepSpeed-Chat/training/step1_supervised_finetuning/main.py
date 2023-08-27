@@ -209,6 +209,7 @@ def main():
                                     stage=args.zero_stage,
                                     enable_tensorboard=args.enable_tensorboard,
                                     tb_path=args.tensorboard_path,
+                                    enable_profiler=True,
                                     tb_name="step1_model")
     ds_config[
         'train_micro_batch_size_per_gpu'] = args.per_device_train_batch_size

@@ -79,20 +79,21 @@ class CftModel(nn.Module):
         rejected_labels = rejected_labels[use_negative_data_rejected == 1, :]
 
         pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
-        if rejected_lm_logits.nelement() != 0 and self.beta_initial != 0.0:
-            self.global_step += 1
-            rejected_lm_logits = -F.logsigmoid(-rejected_lm_logits)
-            neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
-            if self.no_beta_decay:
-                beta = self.beta_initial
-            else:
-                if self.beta_warmup != -1 and self.global_step < self.beta_warmup:
-                    beta = 0.00  # Use very low beta initially
-                else:
-                    beta = linear_decay(self.beta_initial, self.beta_final, self.beta_step, self.global_step)
-            loss = pos_loss - beta * neg_loss
-        else:
-            loss = pos_loss
+        loss = pos_loss
+        # if rejected_lm_logits.nelement() != 0 and self.beta_initial != 0.0:
+        #     self.global_step += 1
+        #     rejected_lm_logits = -F.logsigmoid(-rejected_lm_logits)
+        #     neg_loss = self.get_loss(rejected_lm_logits, rejected_labels)
+        #     if self.no_beta_decay:
+        #         beta = self.beta_initial
+        #     else:
+        #         if self.beta_warmup != -1 and self.global_step < self.beta_warmup:
+        #             beta = 0.00  # Use very low beta initially
+        #         else:
+        #             beta = linear_decay(self.beta_initial, self.beta_final, self.beta_step, self.global_step)
+        #     loss = pos_loss - beta * neg_loss
+        # else:
+        #     loss = pos_loss
 
         # for i in range(bs):
         #     chosen_id = chosen_ids[i]
