@@ -225,7 +225,7 @@ def main():
     torch.distributed.barrier()
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
-    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True, force_load_from_local_file=True)
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
