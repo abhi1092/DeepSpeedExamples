@@ -337,7 +337,7 @@ def main():
         for step, batch in enumerate(train_dataloader):
             start = time.time()
             batch = to_device(batch, device)
-            print(batch["labels"])
+            print(tokenizer.batch_decode(batch["labels"]))
             exit()
             outputs = model(**batch, use_cache=False)
             loss = outputs.loss
