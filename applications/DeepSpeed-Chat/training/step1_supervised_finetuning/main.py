@@ -337,6 +337,8 @@ def main():
         for step, batch in enumerate(train_dataloader):
             start = time.time()
             batch = to_device(batch, device)
+            print(batch.keys())
+            exit()
             outputs = model(**batch, use_cache=False)
             loss = outputs.loss
             if args.print_loss:
