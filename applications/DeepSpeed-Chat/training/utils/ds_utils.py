@@ -96,18 +96,19 @@ def get_train_ds_config(offload,
         "reduce_scatter": True,
         "reduce_bucket_size": 5e8,
         "contiguous_gradients": True,
-        "stage3_param_persistence_threshold": 1e6,
-        "stage3_max_live_parameters": 14e9,
-        "stage3_prefetch_bucket_size": 1e9,
-        "stage3_max_reuse_distance": 1e9,
+        # "stage3_param_persistence_threshold": 1e6,
+        # "stage3_max_live_parameters": 14e9,
+        # "stage3_prefetch_bucket_size": 1e9,
+        # "stage3_max_reuse_distance": 1e9,
         "stage3_gather_16bit_weights_on_model_save": False,
         "sub_group_size": 1e12,
         # "stage3_param_persistence_threshold": 1e4,
         # "stage3_max_live_parameters": 3e7,
         # "stage3_prefetch_bucket_size": 3e7,
-        # "stage3_param_persistence_threshold": "auto",
-        # "stage3_max_live_parameters": "auto",
-        # "stage3_prefetch_bucket_size": "auto",
+        "stage3_param_persistence_threshold": "auto",
+        "stage3_max_live_parameters": "auto",
+        "stage3_prefetch_bucket_size": "auto",
+        "stage3_max_reuse_size": "auto",
         "memory_efficient_linear": False,
         # "stage3_param_persistence_threshold": 1e6,
         # "stage3_max_live_parameters": 1e9,
@@ -150,14 +151,17 @@ def get_train_ds_config(offload,
             "output_path": f"{tb_path}/ds_tensorboard_logs/",
             "job_name": f"{tb_name}_tensorboard"
         },
-        # "flops_profiler": {
-        #     "enabled": True,
-        #     "profile_step": 0,
-        #     "module_depth": -1,
-        #     "top_modules": 1,
-        #     "detailed": True,
-        #     "output_file": None
-        # }
+        "train_micro_batch_size_per_gpu": "auto",
+        "autotuning": {
+            "enabled": true,
+            "fast": false,
+            "arg_mappings": {
+            "train_micro_batch_size_per_gpu": "--per_device_train_batch_size",
+            "gradient_accumulation_steps ": "--gradient_accumulation_steps"
+            },
+            "results_dir": "outputs/autotuning_results/results",
+            "exps_dir": "outputs/autotuning_results/exps"
+        }
     }
 
 
