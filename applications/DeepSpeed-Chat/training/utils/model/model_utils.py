@@ -26,7 +26,7 @@ def create_hf_model(model_class,
     if "oasst" in model_name_or_path: #this is necessary to load the oasst model
         from utils.model import oasst_reward_model
         model_class = AutoModelForSequenceClassification
-    model_config = AutoConfig.from_pretrained(model_name_or_path)
+    model_config = AutoConfig.from_pretrained(model_name_or_path, trust_remote_code=True)
     if disable_dropout:
         model_config.dropout = 0.0
     # Note: dschf is defined in function scope to avoid global effects
@@ -39,7 +39,7 @@ def create_hf_model(model_class,
         dschf = None
     if rlhf_training:
         # the weight loading is handled by create critic model
-        model = model_class.from_config(model_config)
+        model = model_class.from_config(model_config, trust_remote_code=True)
     else:
         model = model_class.from_pretrained(
             model_name_or_path,
