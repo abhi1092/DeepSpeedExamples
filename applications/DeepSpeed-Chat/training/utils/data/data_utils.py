@@ -87,7 +87,7 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank, prompt_column_n
         return raw_datasets.Stage2Data(output_path, seed, local_rank, "stage2_data", dataset_name)
     elif ".jsonl" in Path(dataset_name).name:
         print_rank_0(f'jsonl dataset {dataset_name}', color=Fore.GREEN, rank=local_rank)
-        return raw_datasets.JsonlDataset(output_path, seed, local_rank, "jsonl", dataset_name, prompt_column_name)
+        return raw_datasets.JsonlDataset(output_path, seed, local_rank, dataset_name, prompt_column_name)
     else:
         raise RuntimeError(
             f"We do not have configs for dataset {dataset_name}, but you can add it by yourself in raw_datasets.py."
