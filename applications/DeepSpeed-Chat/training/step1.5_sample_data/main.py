@@ -122,7 +122,7 @@ def parse_args():
 
   return args
 
-def make_sample(out, tokenizer: transformers.PreTrainedTokenizer, max_prompt_seq_len: int, num_answers_per_prompt: int = 2) -> List[Dict[str, str]]:
+def make_sample(out, tokenizer, max_prompt_seq_len: int, num_answers_per_prompt: int = 2) -> List[Dict[str, str]]:
   '''
   This function takes in a numpy array out containing the encoded prompts and answers, a tokenizer object tokenizer, an integer max_prompt_seq_len specifying the maximum length of the prompt sequence, and an integer num_answers_per_prompt specifying how many answers you want per prompt.
 
