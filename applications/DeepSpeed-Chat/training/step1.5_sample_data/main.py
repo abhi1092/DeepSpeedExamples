@@ -36,6 +36,13 @@ def parse_args():
       help=
       'Name of the column containing the prompt in the dataset. Default: prompt'
   )
+  
+  parser.add_argument(
+    "--num_answers_per_prompt",
+    type=int,
+    default=2,
+    help="Number of answers to generate per prompt"
+  )
   parser.add_argument(
     "--model_name_or_path",
     type=str,
@@ -88,11 +95,6 @@ def parse_args():
                       type=float,
                       default=1.0,
                       help="The parameter for repetition penalty. 1.0 means no penalty")
-  parser.add_argument("--num_return_sequences",
-                      type=int,
-                      default=1,
-                      help="The number of samples to generate per prompt.")
-  
   parser.add_argument("--output_dir",
                       type=str,
                       default=None,
@@ -120,18 +122,28 @@ def parse_args():
 
   return args
 
-def make_sample(out, tokenizer, max_prompt_seq_len):
-  prompt_ids=out[::2, :max_prompt_seq_len]
+def make_sample(out: numpy.ndarray, tokenizer: transformers.PreTrainedTokenizer, max_prompt_seq_len: int, num_answers_per_prompt: int = 2) -> List[Dict[str, str]]:
+  '''
+  This function takes in a numpy array out containing the encoded prompts and answers, a tokenizer object tokenizer, an integer max_prompt_seq_len specifying the maximum length of the prompt sequence, and an integer num_answers_per_prompt specifying how many answers you want per prompt.
+
+  It returns a list of dictionaries, where each dictionary represents a sample with the prompt and num_answers_per_prompt answers. The keys of the dictionary are "prompt" for the prompt and "answer_1", "answer_2", ..., "answer_n" for the answers, where n is the value of num_answers_per_prompt.
+  '''
+  prompt_ids=out[::num_answers_per_prompt, :max_prompt_seq_len]
   answers_ids=out[:, max_prompt_seq_len:]
-  first_answers_ids = answers_ids[::2]
-  second_answers_ids = answers_ids[1::2] 
   
   prompts = tokenizer.batch_decode(prompt_ids, skip_special_tokens=True)
-  first_answers = tokenizer.batch_decode(first_answers_ids, skip_special_tokens=True)
-  second_answers = tokenizer.batch_decode(second_answers_ids, skip_special_tokens=True)
+  answers = tokenizer.batch_decode(answers_ids, skip_special_tokens=True)
   
-  assert len(prompts) == len(first_answers) == len(second_answers)
-  return [{"prompt":p, "answer_1":f, "answer_2":s} for p, f, s in zip(prompts, first_answers, second_answers)]
+  assert len(prompts) * num_answers_per_prompt == len(answers)
+  
+  samples = []
+  for i in range(len(prompts)):
+    sample = {"prompt": prompts[i]}
+    for j in range(num_answers_per_prompt):
+      sample[f"answer_{j+1}"] = answers[i*num_answers_per_prompt+j]
+    samples.append(sample)
+  
+  return samples
     
 
 def main():
@@ -196,7 +208,7 @@ def main():
     batch_prompt = to_device(batch_prompt, device)
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
-    samples+=make_sample(out, tokenizer, args.max_prompt_seq_len)
+    samples+=make_sample(out, tokenizer, args.max_prompt_seq_len, args.num_answers_per_prompt)
     #rank 0 prints every minute number of steps taken
     if args.global_rank == 0 and time.time() - start > 60:
       print_rank_0(f"Step {step} - {step-last_step} steps per minute")

@@ -51,7 +51,7 @@ class SamplingEngine():
           top_p=self.args.top_p,
           repetition_penalty=self.args.repetition_penalty,
           do_sample=True,
-          num_return_sequences=self.args.num_return_sequences,
+          num_return_sequences=self.args.num_answers_per_prompt,
           pad_token_id=self.tokenizer.eos_token_id,
       )
       
