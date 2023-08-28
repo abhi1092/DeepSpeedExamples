@@ -17,9 +17,9 @@ from itertools import chain
 from . import raw_datasets
 from utils.utils import print_rank_0, Fore
 import torch
+from pathlib import Path
 
-
-def get_raw_dataset(dataset_name, output_path, seed, local_rank):
+def get_raw_dataset(dataset_name, output_path, seed, local_rank, prompt_column_name=None):
 
     print_rank_0(f"Loading dataset {dataset_name} ...", color=Fore.GREEN, rank=local_rank)
     if "Dahoas/rm-static" in dataset_name:
@@ -85,6 +85,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
     elif "stage2" in dataset_name:
         print_rank_0(f'stage 2 dataset {dataset_name}', color=Fore.GREEN, rank=local_rank)
         return raw_datasets.Stage2Data(output_path, seed, local_rank, "stage2_data", dataset_name)
+    elif ".jsonl" in Path(dataset_name).name:
+        print_rank_0(f'jsonl dataset {dataset_name}', color=Fore.GREEN, rank=local_rank)
+        return raw_datasets.JsonlDataset(output_path, seed, local_rank, "jsonl", dataset_name, prompt_column_name)
     else:
         raise RuntimeError(
             f"We do not have configs for dataset {dataset_name}, but you can add it by yourself in raw_datasets.py."
@@ -238,8 +241,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
-                   max_seq_len):
-    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank)
+                   max_seq_len, prompt_column_name=None):
+    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, prompt_column_name)
     train_dataset = raw_dataset.get_train_data()
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
@@ -275,7 +278,9 @@ def create_prompt_dataset(local_rank,
                           max_seq_len,
                           end_of_conversation_token="<|endoftext|>", #TODO: need to change the end conversation token?
                           sft_only_data_path=[],
-                          reload=False):
+                          reload=False,
+                          prompt_column_name=None, #added only for sampling
+                          ):
     """
     Creates the prompt dataset
     """

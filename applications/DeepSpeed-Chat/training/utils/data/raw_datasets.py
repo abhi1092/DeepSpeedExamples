@@ -7,6 +7,7 @@ from torch.utils.data import Subset
 import re
 from utils.utils import get_caller, print_rank_0, Fore
 import torch
+from pathlib import Path
 
 
 # The template prompt dataset class that all new dataset porting needs to
@@ -397,6 +398,37 @@ class LocalJsonFileDataset(PromptRawDataset):
         if sample['prompt'] is not None and sample['rejected'] is not None:
             return " " + sample['prompt'] + " " + sample['rejected']
         return None
+    
+class JsonlDataset(LocalJsonFileDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name, prompt_column_name = None):
+        self.dataset_name = dataset_name
+        self.dataset_name_clean = Path(dataset_name).name
+        
+        train_path = self.dataset_name
+        
+        #check if eval path doesn't exist and make it equal to train otherwise
+        if 'train' in train_path:
+            eval_path = train_path.replace('train', 'eval')
+        else:
+            eval_path = train_path
+            print_rank_0(f"Warning: eval path {eval_path} does not exist, using train path instead", rank=local_rank, color=Fore.YELLOW)
+            
+        self.raw_datasets = load_dataset('json',
+                                            data_files={
+                                                "train":
+                                                train_path,
+                                                "eval":
+                                                eval_path,
+                                            })
+        
+        
+        self.prompt_column_name = prompt_column_name if prompt_column_name is not None else 'prompt'
+        
+    def get_prompt(self, sample):
+        return sample[self.prompt_column_name]
+            
+            
+        
     
 class RedditTLDR(LocalJsonFileDataset):
     def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):

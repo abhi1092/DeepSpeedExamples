@@ -30,6 +30,13 @@ def parse_args():
       'Path to the training dataset. Accepted format: 1) a single data path, 2) multiple datasets in the form: dataset1-path dataset2-path ...'
   )
   parser.add_argument(
+      '--prompt_column_name',
+      type=str,
+      default='prompt',
+      help=
+      'Name of the column containing the prompt in the dataset. Default: prompt'
+  )
+  parser.add_argument(
     "--model_name_or_path",
     type=str,
     help="Path to pre-trained model"
@@ -162,6 +169,7 @@ def main():
     tokenizer,
     args.max_seq_len,
     reload=True,
+    prompt_column_name=args.prompt_column_name,
     )
   
   # DataLoaders creation:
