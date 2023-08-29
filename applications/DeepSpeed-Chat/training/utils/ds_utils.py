@@ -126,6 +126,7 @@ def get_train_ds_config(offload,
     return {
         "train_batch_size": GLOBAL_BATCH_SIZE,
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
+        # "train_micro_batch_size_per_gpu": "auto",
         "steps_per_print": 10,
         "zero_optimization": zero_opt_dict,
         # "bf16": {
@@ -206,11 +207,11 @@ def get_inference_ds_config(offload, stage=0):
         # "fp16": {
         #     "enabled": True
         # },
-        # "bf16": {
-        #     "enabled": True
-        # },
+        "bf16": {
+            "enabled": True
+        },
         "tensor_parallel": {
-            "tp_size": 1,
+            "tp_size": 5,
         },
         "enable_cuda_graph": True,
         # "wall_clock_breakdown": True
