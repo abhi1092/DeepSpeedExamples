@@ -205,6 +205,7 @@ def main():
   last_step = 0
   #total number of steps given batch size and world size
   print_rank_0(f"Total number of steps: {len(dataloader)}", rank=args.global_rank, color="GREEN")
+  total_steps = len(dataloader)
   for step, batch_prompt in enumerate(dataloader):
     batch_prompt = to_device(batch_prompt, device)
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
@@ -215,7 +216,7 @@ def main():
       print_rank_0(f"Step {step} samples: {samples[:2]}")
     #rank 0 prints every minute number of steps taken
     if args.global_rank == 0 and time.time() - start > 60:
-      print_rank_0(f"Step {step} - {step-last_step} steps per minute")
+      print_rank_0(f"Step {step} - {step-last_step} steps per minute - will need {((total_steps-step)/(step-last_step))/60:.2f} hours to finish", rank=args.global_rank, color="GREEN}")
       last_step = step
       start = time.time()
     
