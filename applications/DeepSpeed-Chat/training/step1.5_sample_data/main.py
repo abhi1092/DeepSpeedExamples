@@ -210,6 +210,9 @@ def main():
     out = sampling_engine.generate_sequence(batch_prompt['prompt'],
                                             batch_prompt['prompt_att_mask'])
     samples+=make_sample(out, tokenizer, args.max_prompt_seq_len, args.num_answers_per_prompt)
+    #print first two samples in the first two steps
+    if step < 2:
+      print_rank_0(f"Step {step} samples: {samples[:2]}")
     #rank 0 prints every minute number of steps taken
     if args.global_rank == 0 and time.time() - start > 60:
       print_rank_0(f"Step {step} - {step-last_step} steps per minute")
