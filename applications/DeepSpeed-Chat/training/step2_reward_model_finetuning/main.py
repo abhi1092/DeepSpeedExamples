@@ -312,13 +312,13 @@ def main():
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
 
-    # print_rank_0(
-    #     f"***** Evaluating reward, Epoch {0}/{args.num_train_epochs} *****",
-    #     args.global_rank)
-    # reward_score, acc = evaluation_reward(rm_model, eval_dataloader)
-    # print_rank_0(
-    #     f"chosen_last_scores (higher is better) : {reward_score}, acc (higher is better) : {acc}",
-    #     args.global_rank)
+    print_rank_0(
+        f"***** Evaluating reward, Epoch {0}/{args.num_train_epochs} *****",
+        args.global_rank)
+    reward_score, acc = evaluation_reward(rm_model, eval_dataloader)
+    print_rank_0(
+        f"chosen_last_scores (higher is better) : {reward_score}, acc (higher is better) : {acc}",
+        args.global_rank)
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
