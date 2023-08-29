@@ -208,7 +208,7 @@ def get_inference_ds_config(offload, stage=0):
         #     "enabled": True
         # },
         "tensor_parallel": {
-            "tp_size": 5,
+            "tp_size": 4,
         },
         "enable_cuda_graph": True,
         # "wall_clock_breakdown": True
