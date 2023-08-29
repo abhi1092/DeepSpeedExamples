@@ -207,9 +207,6 @@ def get_inference_ds_config(offload, stage=0):
         # "fp16": {
         #     "enabled": True
         # },
-        "bf16": {
-            "enabled": True
-        },
         "tensor_parallel": {
             "tp_size": 5,
         },
