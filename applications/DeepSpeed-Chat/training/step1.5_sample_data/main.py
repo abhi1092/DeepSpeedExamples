@@ -180,7 +180,7 @@ def main():
     train_phase,
     args.seed,
     tokenizer,
-    args.max_seq_len,
+    args.max_prompt_seq_len,
     reload=True,
     prompt_column_name=args.prompt_column_name,
     )
