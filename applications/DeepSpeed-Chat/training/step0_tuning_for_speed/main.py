@@ -103,7 +103,7 @@ def main():
   
   args.global_rank = torch.distributed.get_rank()
   
-  if args.local_rank == 0:
+  if args.local_rank == 0 or args.local_rank == -1:
     from IPython import embed; embed()
 
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
@@ -168,3 +168,6 @@ def main():
       )
       model.backward(loss)
       model.step()
+      
+if __name__ == "__main__":
+  main()
