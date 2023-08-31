@@ -168,6 +168,11 @@ def parse_args():
         help=
         "Initial LoRA learning rate (after the potential warmup period) to use."
     )
+    parser.add_argument(
+        "--rlhf_training",
+        action='store_true',
+        help="set to true so that the model loads properly for evaluation, otherwise keep at false"
+    )
     ## Tensorboard logging
     parser.add_argument('--enable_tensorboard',
                         action='store_true',
@@ -219,7 +224,7 @@ def main():
                                    tokenizer,
                                    ds_config,
                                    args.num_padding_at_beginning,
-                                   rlhf_training=True,
+                                   rlhf_training=args.rlhf_training,
                                    disable_dropout=args.disable_dropout)
 
     if args.lora_dim > 0:
