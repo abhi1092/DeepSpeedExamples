@@ -154,8 +154,8 @@ def get_train_ds_config(offload,
         },
         "train_micro_batch_size_per_gpu": "auto",
         "autotuning": {
-            "enabled": true,
-            "fast": false,
+            "enabled": True,
+            "fast": False,
             "arg_mappings": {
             "train_micro_batch_size_per_gpu": "--per_device_train_batch_size",
             "gradient_accumulation_steps ": "--gradient_accumulation_steps"
