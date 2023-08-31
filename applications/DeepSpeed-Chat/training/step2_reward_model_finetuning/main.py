@@ -219,6 +219,7 @@ def main():
                                    tokenizer,
                                    ds_config,
                                    args.num_padding_at_beginning,
+                                   rlhf_training=True,
                                    disable_dropout=args.disable_dropout)
 
     if args.lora_dim > 0:
