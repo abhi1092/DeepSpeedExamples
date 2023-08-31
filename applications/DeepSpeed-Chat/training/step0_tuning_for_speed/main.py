@@ -11,7 +11,8 @@ from deepspeed.ops.adam import FusedAdam, DeepSpeedCPUAdam
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters, create_hf_model
+from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters
+from utils.model.model_utils import create_hf_model
 
 
 def parse_args():
