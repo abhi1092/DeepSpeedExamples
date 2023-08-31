@@ -3,7 +3,7 @@ CLM_PATH=/app/rl-llm-support-libs/transformers/examples/pytorch/language-modelin
 MODEL_PATH=/new_data/rl-4-llm/granite_models/pretrained/step_225000_ckpt/
 DS_CONFIG_PATH=ds_config_z3.json
 
-deepspeed --autotuning tune --num_nodes=1 --num_gpus=8 $CLMPATH \
+deepspeed --autotuning tune --num_nodes=1 --num_gpus=8 $CLM_PATH \
   --deepspeed $DS_CONFIG_PATH \
   --model_name_or_path $MODEL_PATH \
   --do_train \
