@@ -404,7 +404,8 @@ class JsonlDataset(LocalJsonFileDataset):
         self.dataset_name = dataset_name
         self.dataset_name_clean = Path(dataset_name).name
         
-        train_path = self.dataset_name
+        print_rank_0(f"Loading JsonlDataset {self.dataset_name}", rank=local_rank, color=Fore.GREEN)
+        train_path = dataset_name
         eval_path = train_path
         #check if eval path doesn't exist and make it equal to train otherwise
         if 'train' in train_path:
