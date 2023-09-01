@@ -434,7 +434,7 @@ class JsonlDataset(LocalJsonFileDataset):
     
 class RedditTLDR(JsonlDataset):
     def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
-        super().__init__(output_path, seed, local_rank, dataset_name)
+        super().__init__(output_path, seed, local_rank, dataset_path)
         self.dataset_name = "local/reddit_tldr-2"
         self.dataset_name_clean = "reddit_tldr-2"
         print_rank_0("tldr dataset has been initialized", rank=local_rank, color=Fore.GREEN)
