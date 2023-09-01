@@ -16,8 +16,9 @@ from deepspeed.autotuning import Autotuner
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters
+from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters, to_device
 from utils.model.model_utils import create_hf_model
+from utils.data.data_utils import create_prompt_dataset
 
 
 def parse_args():
@@ -76,6 +77,10 @@ def parse_args():
                       type=float,
                       default=5e-5,
                       help="Learning rate")
+  
+  parser.add_argument("--gradient_checkpointing",
+                      action="store_true",
+                      help="Enable gradient checkpointing")
   parser.add_argument('--weight_decay',
                       type=float,
                       default=0.01,
@@ -178,7 +183,7 @@ def main():
       outputs = model(**batch, use_cache=False)
       loss = outputs.loss
       print(
-          f"Epoch: {epoch}, Step: {step}, Rank: {torch.distributed.get_rank()}, loss = {loss}"
+          f"Step: {step}, Rank: {torch.distributed.get_rank()}, loss = {loss}"
       )
       model.backward(loss)
       model.step()
