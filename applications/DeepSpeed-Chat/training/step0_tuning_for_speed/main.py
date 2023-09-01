@@ -118,6 +118,32 @@ def main():
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
                                 fast_tokenizer=True)
   
+    # Prepare dataset
+  train_phase = 1
+  dataset, _ = create_prompt_dataset(
+    args.local_rank,
+    args.data_path,
+    args.data_split,
+    args.data_output_path,
+    train_phase,
+    args.seed,
+    tokenizer,
+    args.max_seq_len,
+    reload=True,
+    prompt_column_name=args.prompt_column_name,
+    )
+
+  # DataLoaders creation:
+  if args.local_rank == -1:
+      sampler = SequentialSampler(dataset)
+  else:
+      sampler = DistributedSampler(dataset)
+      
+  dataloader = DataLoader(dataset,
+                          collate_fn=default_data_collator,
+                          sampler=sampler,
+                          batch_size=args.per_device_batch_size)
+  
   ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
   
   device = "cpu" if args.offload else "none"
@@ -151,32 +177,6 @@ def main():
   
   if args.gradient_checkpointing:
     model.gradient_checkpointing_enable()
-    
-  # Prepare dataset
-  train_phase = 1
-  dataset, _ = create_prompt_dataset(
-    args.local_rank,
-    args.data_path,
-    args.data_split,
-    args.data_output_path,
-    train_phase,
-    args.seed,
-    tokenizer,
-    args.max_seq_len,
-    reload=True,
-    prompt_column_name=args.prompt_column_name,
-    )
-
-  # DataLoaders creation:
-  if args.local_rank == -1:
-      sampler = SequentialSampler(dataset)
-  else:
-      sampler = DistributedSampler(dataset)
-      
-  dataloader = DataLoader(dataset,
-                          collate_fn=default_data_collator,
-                          sampler=sampler,
-                          batch_size=args.per_device_batch_size)
 
   for step, batch in enumerate(dataloader):
       batch = to_device(batch, device)
