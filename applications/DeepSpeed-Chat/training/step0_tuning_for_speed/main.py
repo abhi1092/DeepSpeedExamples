@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 import sys
 import argparse
@@ -10,6 +12,7 @@ from transformers import default_data_collator, AutoModelForCausalLM
 
 import deepspeed
 from deepspeed.ops.adam import FusedAdam, DeepSpeedCPUAdam
+from deepspeed.autotuning import Autotuner
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -112,6 +115,8 @@ def main():
 
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
                                 fast_tokenizer=True)
+  
+  ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
