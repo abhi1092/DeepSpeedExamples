@@ -31,7 +31,7 @@ def parse_args():
   
   parser.add_argument('--data_path',
                       nargs='*',
-                      default=None,
+                      default=[None],
                       help="list of datasets, if many they are concatenated"
                       )
   
