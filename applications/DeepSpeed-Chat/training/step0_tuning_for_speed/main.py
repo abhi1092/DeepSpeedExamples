@@ -30,9 +30,9 @@ def parse_args():
   )
   
   parser.add_argument('--data_path',
-                      type=str,
+                      nargs='*',
                       default=None,
-                      help="Path for the dataset"
+                      help="list of datasets, if many they are concatenated"
                       )
   
   parser.add_argument('--data_split',
