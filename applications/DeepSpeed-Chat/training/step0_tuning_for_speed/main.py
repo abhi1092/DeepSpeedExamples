@@ -105,6 +105,8 @@ def main():
   
   args.global_rank = torch.distributed.get_rank()
   
+  print(f'************{args}')
+  
   if args.local_rank == 0 or args.local_rank == -1:
     from IPython import embed; embed()
 
