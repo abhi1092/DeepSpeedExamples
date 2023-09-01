@@ -405,15 +405,14 @@ class JsonlDataset(LocalJsonFileDataset):
         self.dataset_name_clean = Path(dataset_name).name
         
         train_path = self.dataset_name
-        
+        eval_path = train_path
         #check if eval path doesn't exist and make it equal to train otherwise
         if 'train' in train_path:
             eval_path = train_path.replace('train', 'eval')
             #if eval doesn't exist try 'val'
-            if not Path(eval_path).exists():
-                eval_path = train_path.replace('train', 'val')
-        if not Path(eval_path).exists():
-            eval_path = train_path
+        elif not Path(eval_path).exists():
+            eval_path = train_path.replace('train', 'val')
+        else:
             print_rank_0(f"Warning: eval path {eval_path} does not exist, using train path instead", rank=local_rank, color=Fore.YELLOW)
             
         self.raw_datasets = load_dataset('json',
