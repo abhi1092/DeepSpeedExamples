@@ -433,24 +433,11 @@ class JsonlDataset(LocalJsonFileDataset):
             
         
     
-class RedditTLDR(LocalJsonFileDataset):
+class RedditTLDR(JsonlDataset):
     def __init__(self, output_path, seed, local_rank, dataset_name, dataset_path):
-        # super().__init__(output_path, seed, local_rank, dataset_name)
+        super().__init__(output_path, seed, local_rank, dataset_name)
         self.dataset_name = "local/reddit_tldr-2"
         self.dataset_name_clean = "reddit_tldr-2"
-        from pathlib import Path
-        # get the directory of the dataset
-        d_path = Path(dataset_path)
-        # string of d_path
-        # print_rank_0("REMEBER TO GO BACK TO NORMAL TRAINING SIZE!", rank=local_rank, color=Fore.RED)
-        self.raw_datasets = load_dataset('json',
-                                         data_files={
-                                             "train":
-                                             str(d_path.parent / 'train.jsonl'),
-                                            #  str(d_path.parent / 'tldr_sft_val_6k.jsonl'),
-                                             "eval":
-                                             str(d_path.parent / 'eval.jsonl'),
-                                         })
         print_rank_0("tldr dataset has been initialized", rank=local_rank, color=Fore.GREEN)
     
     def get_prompt(self, sample):
