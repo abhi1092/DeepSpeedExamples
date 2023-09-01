@@ -118,6 +118,9 @@ def main():
   device = "cpu" if args.offload else "none"
   ds_config['zero_optimization']['offload_param']['device'] = device
   ds_config['zero_optimization']['offload_optimizer']['device'] = device
+  from pprint import pprint
+  if args.local_rank == 0 or args.local_rank == -1:
+    pprint(ds_config)
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
