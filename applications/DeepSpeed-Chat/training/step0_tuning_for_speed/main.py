@@ -121,6 +121,7 @@ def main():
   from pprint import pprint
   if args.local_rank == 0 or args.local_rank == -1:
     pprint(ds_config)
+    pprint(args)
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
