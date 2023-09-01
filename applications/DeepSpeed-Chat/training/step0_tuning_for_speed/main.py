@@ -146,9 +146,9 @@ def main():
   
   ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
   
-  device = "cpu" if args.offload else "none"
-  ds_config['zero_optimization']['offload_param']['device'] = device
-  ds_config['zero_optimization']['offload_optimizer']['device'] = device
+  ds_device = "cpu" if args.offload else "none"
+  ds_config['zero_optimization']['offload_param']['device'] = ds_device
+  ds_config['zero_optimization']['offload_optimizer']['device'] = ds_device
   from pprint import pprint
   if args.local_rank == 0 or args.local_rank == -1:
     pprint(ds_config)
