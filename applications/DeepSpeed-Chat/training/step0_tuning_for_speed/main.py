@@ -109,14 +109,15 @@ def main():
   args.global_rank = torch.distributed.get_rank()
   
   print(f'************{args}')
-  
-  if args.local_rank == 0 or args.local_rank == -1:
-    from IPython import embed; embed()
 
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
                                 fast_tokenizer=True)
   
   ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
+  
+  device = "cpu" if args.offload else "none"
+  ds_config['zero_optimization']['offload_param']['device'] = device
+  ds_config['zero_optimization']['offload_optimizer']['device'] = device
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
