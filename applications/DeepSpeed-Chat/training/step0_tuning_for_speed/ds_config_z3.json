@@ -10,17 +10,17 @@
         "pin_memory": true
     },
     "allgather_partitions": true,
-    "allgather_bucket_size": 5e8,
+    "allgather_bucket_size": "auto",
     "overlap_comm": false,
     "reduce_scatter": true,
-    "reduce_bucket_size": 5e8,
+    "reduce_bucket_size": "auto",
     "contiguous_gradients": false,
-    "stage3_max_live_parameters": 1e9,
-    "stage3_max_reuse_distance": 1e9,
-    "stage3_prefetch_bucket_size": 5e8,
-    "stage3_param_persistence_threshold": 1e6,
+    "stage3_max_live_parameters": "auto",
+    "stage3_max_reuse_distance": "auto",
+    "stage3_prefetch_bucket_size": "auto",
+    "stage3_param_persistence_threshold": "auto",
     "stage3_gather_16bit_weights_on_model_save": false,
-    "sub_group_size": 1e12
+    "sub_group_size": "auto"
   },
   "autotuning": {
     "enabled": true,
