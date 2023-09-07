@@ -182,6 +182,7 @@ def main():
   if args.gradient_checkpointing:
     model.gradient_checkpointing_enable()
 
+  model.train()
   for step, batch in enumerate(dataloader):
       batch = to_device(batch, device)
       outputs = model(**batch, use_cache=False)
