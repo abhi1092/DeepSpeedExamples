@@ -155,6 +155,8 @@ def main():
   if args.local_rank == 0 or args.local_rank == -1:
     pprint(ds_config)
     pprint(args)
+    
+  args.deepspeed_config = ds_config
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
@@ -175,8 +177,7 @@ def main():
       model=model,
       optimizer=optimizer,
       args=args,
-      dist_init_required=True,
-      config=ds_config,)
+      dist_init_required=True)
   
   if args.gradient_checkpointing:
     model.gradient_checkpointing_enable()
