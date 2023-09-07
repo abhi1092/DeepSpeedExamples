@@ -1,0 +1,36 @@
+{
+  "zero_optimization": {
+    "stage": [1,2,3],
+    "offload_param": {
+        "device": "cpu",
+        "pin_memory": true
+    },
+    "offload_optimizer": {
+        "device": "cpu",
+        "pin_memory": true
+    },
+    "stage3_max_live_parameters": 3e7,
+    "stage3_prefetch_bucket_size": 3e7,
+    "stage3_param_persistence_threshold": 1e4,
+    "memory_efficient_linear": false
+  },
+  "autotuning": {
+    "enabled": true,
+    "arg_mappings": {
+        "train_micro_batch_size_per_gpu": "--per_device_batch_size"
+    },
+    "results_dir": "./results",
+    "exps_dir": "./exps",
+    "overwrite": true,
+    "metric": "throughput",
+    "start_profile_step": 3,
+    "end_profile_step": 5,
+    "fast": false,
+    "max_train_batch_size": null,
+    "mp_size": 1,
+    "num_tuning_micro_batch_sizes": 10,
+    "tuner_type": "model_based",
+    "tuner_early_stopping": 5,
+    "tuner_num_trials": 50
+  }
+}
