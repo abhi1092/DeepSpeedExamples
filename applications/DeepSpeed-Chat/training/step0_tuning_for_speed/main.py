@@ -176,7 +176,7 @@ def main():
       optimizer=optimizer,
       args=args,
       dist_init_required=True,
-      ds_config=ds_config,)
+      config=ds_config,)
   
   if args.gradient_checkpointing:
     model.gradient_checkpointing_enable()
