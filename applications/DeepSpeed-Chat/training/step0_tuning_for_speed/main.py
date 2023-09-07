@@ -98,6 +98,8 @@ def set_deepspeed_config(args, ds_config):
   if args.offload:
     ds_config['zero_optimization']['offload_param']= {'device': 'cpu'}
     ds_config['zero_optimization']['offload_optimizer']= {'device': 'cpu'}
+    
+  return ds_config
   
   
 def main():
@@ -148,10 +150,7 @@ def main():
   
   ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
   
-  # ds_device = "cpu" if args.offload else "none"
   ds_config = set_deepspeed_config(args, ds_config)
-  # ds_config['zero_optimization']['offload_param']['device'] = ds_device
-  # ds_config['zero_optimization']['offload_optimizer']['device'] = ds_device
   from pprint import pprint
   if args.local_rank == 0 or args.local_rank == -1:
     pprint(ds_config)
