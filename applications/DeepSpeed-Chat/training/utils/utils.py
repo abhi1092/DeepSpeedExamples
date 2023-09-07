@@ -11,10 +11,17 @@ import json
 import deepspeed
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 import torch.nn as nn
+from colorama import Fore, Style
 
 
-def print_rank_0(msg, rank=0):
+def print_rank_0(msg, rank=None, color=None):
+    if rank is None:
+        rank = get_rank()
     if rank <= 0:
+        if color is not None:
+            if color in ["GREEN", "RED", "BLUE", "YELLOW", "MAGENTA", "CYAN", "WHITE"]:
+                color = getattr(Fore, color)
+            msg = color + msg + Style.RESET_ALL
         print(msg)
 
 
