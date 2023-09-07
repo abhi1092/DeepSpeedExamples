@@ -96,9 +96,14 @@ def parse_args():
   
 def set_deepspeed_config(args, ds_config):
   if args.offload:
-    ds_config['zero_optimization']['offload_param']= {'device': 'cpu'}
-    ds_config['zero_optimization']['offload_optimizer']= {'device': 'cpu'}
-    
+    if 'zero_optimization' not in ds_config:
+      ds_config['zero_optimization'] = {}
+    if 'offload_param' not in ds_config['zero_optimization']:
+      ds_config['zero_optimization']['offload_param']= {'device': 'cpu',
+                                                        'pin_memory': True}
+      ds_config['zero_optimization']['offload_optimizer']= {'device': 'cpu',
+                                                            'pin_memory': True}
+  
   return ds_config
   
   
@@ -156,7 +161,7 @@ def main():
     pprint(ds_config)
     pprint(args)
     
-  args.deepspeed_config = ds_config
+  # args.deepspeed_config = ds_config
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
