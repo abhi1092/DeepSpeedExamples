@@ -162,7 +162,7 @@ def main():
     pprint(ds_config)
     pprint(args)
     
-  # args.deepspeed_config = ds_config
+  args.deepspeed_config = ds_config
   
   model = create_hf_model(AutoModelForCausalLM,
                       args.model_name_or_path,
