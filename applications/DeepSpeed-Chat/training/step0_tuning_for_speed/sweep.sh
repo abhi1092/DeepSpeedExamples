@@ -1,11 +1,25 @@
 #!/bin/bash
-CLM_PATH=/app/rl-llm-support-libs/transformers/examples/pytorch/language-modeling/run_clm.py
-MODEL_PATH=/new_data/rl-4-llm/granite_models/pretrained/step_225000_ckpt/
-DS_CONFIG_PATH=ds_config_z3.json
 
-deepspeed --autotuning tune --num_nodes=1 --num_gpus=8 $CLM_PATH \
-  --deepspeed $DS_CONFIG_PATH \
-  --model_name_or_path $MODEL_PATH \
+git pull && deepspeed --autotuning tune --num_nodes=1 --num_gpus=8 \
+ main.py\
+    --model_name_or_path /new_data/rl-4-llm/granite_models/pretrained/step_225000_ckpt/\
+  --data_path /new_data/datasets/summarization/tldr_sft_train_117k.jsonl \
+  --prompt_column_name formatted_input\
+  --data_split 1,10,10\
+  --data_output_path /app/.local_data/tuning \
+  --max_seq_len 2048\
+  --seed 1234\
+  --per_device_batch_size 1\
+  --learning_rate 5e-5\
+  --weight_decay 0.01\
+  --deepspeed\
+  --deepspeed_config ds_config_z3.json
+
+  --deepspeed_config 
+
+deepspeed --autotuning tune --num_nodes=1 --num_gpus=8  /app/rl-llm-support-libs/transformers/examples/pytorch/language-modeling/run_clm.py\
+  --deepspeed ds_config_z3.json\
+  --model_name_or_path /new_data/rl-4-llm/granite_models/pretrained/step_225000_ckpt/\
   --do_train \
   --do_eval \
   --fp16 \
