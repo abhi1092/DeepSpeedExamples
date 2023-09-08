@@ -169,7 +169,7 @@ def main():
   ds_config = set_deepspeed_config(args, ds_config)
   from pprint import pprint
   if args.local_rank == 0 or args.local_rank == -1:
-    print_rank_0("DeepSpeed Config:")
+    print_rank_0("DeepSpeed Config:", color="GREEN")
     pprint(ds_config)
     pprint(args)
     

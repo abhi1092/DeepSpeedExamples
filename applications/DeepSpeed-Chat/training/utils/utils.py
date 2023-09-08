@@ -71,14 +71,20 @@ def get_tokenizer(model_name_or_path, fast_tokenizer=True):
 
 
 def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
+    from huggingface_hub.utils._validators import HFValidationError
     if os.path.exists(model_name_or_path):
         # Locally tokenizer loading has some issue, so we need to force download
         model_json = os.path.join(model_name_or_path, "config.json")
         if os.path.exists(model_json):
             model_json_file = json.load(open(model_json))
-            model_name = model_json_file["_name_or_path"]
-            tokenizer = get_tokenizer(model_name,
-                                      fast_tokenizer=fast_tokenizer)
+            try:
+                model_name = model_json_file["_name_or_path"]
+                tokenizer = get_tokenizer(model_name,
+                                        fast_tokenizer=fast_tokenizer)
+            except (HFValidationError, KeyError) as e:
+                print_rank_0(f"tokenizer failed based on model name (expected for granite) with exception {e}", color="RED")
+                tokenizer = get_tokenizer(model_name_or_path,
+                                          fast_tokenizer=fast_tokenizer)
     else:
         tokenizer = get_tokenizer(model_name_or_path,
                                   fast_tokenizer=fast_tokenizer)
