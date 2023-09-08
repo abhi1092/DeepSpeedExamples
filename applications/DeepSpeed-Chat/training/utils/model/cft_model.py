@@ -78,7 +78,7 @@ class CftModel(nn.Module):
         rejected_lm_logits = rejected_lm_logits[use_negative_data_rejected == 1, :]
         rejected_labels = rejected_labels[use_negative_data_rejected == 1, :]
 
-        pos_loss = self.get_loss(chosen_lm_logits, chosen_labels)
+        pos_loss = self.get_loss(chosen_lm_logits, chosen_labels) # TOOD: Use Model's
         loss = pos_loss
         # if rejected_lm_logits.nelement() != 0 and self.beta_initial != 0.0:
         #     self.global_step += 1

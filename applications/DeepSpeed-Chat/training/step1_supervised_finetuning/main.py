@@ -21,6 +21,7 @@ from transformers import (
 from tqdm.auto import tqdm
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
