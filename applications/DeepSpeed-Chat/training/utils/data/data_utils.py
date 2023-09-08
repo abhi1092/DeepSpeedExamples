@@ -5,6 +5,7 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+from pathlib import Path
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 from torch.nn.utils.rnn import pad_sequence
@@ -15,9 +16,10 @@ import os
 import hashlib
 from itertools import chain
 from . import raw_datasets
+from utils.utils import print_rank_0
 
 
-def get_raw_dataset(dataset_name, output_path, seed, local_rank):
+def get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names=None):
 
     if "Dahoas/rm-static" in dataset_name:
         return raw_datasets.DahoasRmstaticDataset(output_path, seed,
@@ -75,6 +77,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
             )
         return raw_datasets.LocalJsonFileDataset(output_path, seed, local_rank,
                                                  dataset_name, chat_path)
+    elif ".jsonl" in Path(dataset_name).name:
+        print_rank_0(f'jsonl dataset {dataset_name}', color="GREEN", rank=local_rank)
+        return raw_datasets.JsonlDataset(output_path, seed, local_rank, dataset_name, column_names)
     else:
         raise RuntimeError(
             f"We do not have configs for dataset {dataset_name}, but you can add it by yourself in raw_datasets.py."
@@ -228,8 +233,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
-                   max_seq_len):
-    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank)
+                   max_seq_len, column_names=None):
+    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names)
     train_dataset = raw_dataset.get_train_data()
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
@@ -265,7 +270,9 @@ def create_prompt_dataset(local_rank,
                           max_seq_len,
                           end_of_conversation_token="<|endoftext|>",
                           sft_only_data_path=[],
-                          reload=False):
+                          reload=False,
+                          column_names=None, #added only for sampling
+                          ):
     """
     Creates the prompt dataset
     """
@@ -288,7 +295,7 @@ def create_prompt_dataset(local_rank,
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
-                seed, tokenizer, end_of_conversation_token, max_seq_len)
+                seed, tokenizer, end_of_conversation_token, max_seq_len, column_names)
         else:  # Blending datasets.
             train_datasets = []
             eval_datasets = []
@@ -297,7 +304,7 @@ def create_prompt_dataset(local_rank,
             for d_path in data_path:
                 train_dataset, eval_dataset = create_dataset(
                     local_rank, d_path, data_split, output_path, train_phase,
-                    seed, tokenizer, end_of_conversation_token, max_seq_len)
+                    seed, tokenizer, end_of_conversation_token, max_seq_len, column_names)
                 train_datasets.append(train_dataset)
                 eval_datasets.append(eval_dataset)
                 train_size += len(train_dataset)
@@ -326,6 +333,7 @@ def create_prompt_dataset(local_rank,
                     tokenizer,
                     end_of_conversation_token,
                     max_seq_len,
+                    column_names,
                 )
                 sft_train_datasets.append(sft_train_dataset)
                 sft_eval_datasets.append(sft_eval_dataset)

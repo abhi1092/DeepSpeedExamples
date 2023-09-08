@@ -2,9 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # DeepSpeed Team
+from pathlib import Path
+from types import SimpleNamespace
 from datasets import load_dataset
 from torch.utils.data import Subset
 import re
+
+from utils.utils import print_rank_0
 
 
 # The template prompt dataset class that all new dataset porting needs to
@@ -395,6 +399,45 @@ class LocalJsonFileDataset(PromptRawDataset):
         if sample['prompt'] is not None and sample['rejected'] is not None:
             return " " + sample['prompt'] + " " + sample['rejected']
         return None
+
+class JsonlDataset(LocalJsonFileDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name, column_names = None):
+        self.dataset_name = dataset_name
+        self.dataset_name_clean = Path(dataset_name).name
+        
+        print_rank_0(f"Loading JsonlDataset {self.dataset_name}", rank=local_rank, color="GREEN")
+        train_path = dataset_name
+        eval_path = train_path
+        #check if eval path doesn't exist and make it equal to train otherwise
+        if 'train' in train_path:
+            eval_path = train_path.replace('train', 'eval')
+        else:
+            print_rank_0(f"Warning: eval path {eval_path} does not exist, using train path instead", rank=local_rank, color="YELLOW")
+            
+        self.raw_datasets = load_dataset('json',
+                                            data_files={
+                                                "train":
+                                                train_path,
+                                                "eval":
+                                                eval_path,
+                                            })
+        
+        column_names = column_names if column_names is not None else {'prompt': 'prompt', 'chosen': 'chosen', 'rejected': 'rejected'}
+        
+    def get_prompt(self, sample):
+        return sample[self.columns.prompt]
+    
+    def get_chosen(self, sample):
+        return sample[self.columns.chosen]
+    
+    def get_rejected(self, sample):
+        return sample[self.columns.rejected]
+    
+    def get_prompt_and_chosen(self, sample):
+        return " " + sample[self.columns.prompt] + " " + sample[self.columns.chosen]
+    
+    def get_prompt_and_rejected(self, sample):
+        return " " + sample[self.columns.prompt] + " " + sample[self.columns.rejected]
 
 
 # Chinese dataset

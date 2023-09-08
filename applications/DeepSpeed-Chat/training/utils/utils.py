@@ -12,6 +12,7 @@ import deepspeed
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 import torch.nn as nn
 from colorama import Fore, Style
+from torch.distributed import get_rank
 
 
 def print_rank_0(msg, rank=None, color=None):
@@ -271,3 +272,16 @@ def save_zero_three_model(model_ema, global_rank, save_dir, zero_stage=0):
         if global_rank == 0:
             torch.save(output_state_dict, output_model_file)
         del output_state_dict
+
+def get_column_names(args):
+    if args.prompt is None and args.chosen is None and args.rejected is None:
+        column_names = None
+    else:
+        column_names = {}
+        for k in ['prompt', 'chosen', 'rejected']:
+            if getattr(args, k) is None:
+                column_names[k] = k
+            else:
+                column_names[k] = getattr(args, k)
+    return column_names
+    

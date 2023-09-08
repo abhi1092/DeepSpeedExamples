@@ -16,7 +16,7 @@ from deepspeed.autotuning import Autotuner
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters, print_rank_0, to_device
+from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters, print_rank_0, get_column_names, to_device
 from utils.model.model_utils import create_hf_model
 from utils.data.data_utils import create_prompt_dataset
 
@@ -45,11 +45,21 @@ def parse_args():
                       default="~/data_tmp",
                       help="here to store the data-related files such as shuffle index. This needs to be on a local storage of a node (not on a shared storage)"
   )
-  parser.add_argument('--prompt_column_name',
+  parser.add_argument('--prompt',
                       type=str,
-                      default="prompt",
+                      default=None,
                       help="Name of the column in the dataset that contains the prompt"
   )
+  parser.add_argument('--chosen',
+                      type=str,
+                      default=None,
+                      help="Name of the column in the dataset that contains the chosen answer"
+  )
+  parser.add_argument('--rejected',
+                      type=str,
+                      default=None,
+                      help="Name of the column in the dataset that contains the rejected answer"
+  )  
   parser.add_argument('--max_seq_len',
                       type=int,
                       default=1024,
@@ -111,6 +121,7 @@ def main():
   args = parse_args()
   
   args.local_rank = int(os.environ.get("LOCAL_RANK", args.local_rank))
+  args.column_names = get_column_names(args)
   if args.local_rank == -1:
       device = torch.device("cuda")
   else:
@@ -139,7 +150,7 @@ def main():
     tokenizer,
     args.max_seq_len,
     reload=True,
-    prompt_column_name=args.prompt_column_name,
+    column_names=args.column_names,
     )
 
   # DataLoaders creation:
