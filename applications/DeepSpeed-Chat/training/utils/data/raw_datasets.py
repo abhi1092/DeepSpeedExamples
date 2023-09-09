@@ -423,6 +423,7 @@ class JsonlDataset(LocalJsonFileDataset):
                                             })
         
         column_names = column_names if column_names is not None else {'prompt': 'prompt', 'chosen': 'chosen', 'rejected': 'rejected'}
+        self.columns = SimpleNamespace(**column_names)
         
     def get_prompt(self, sample):
         return sample[self.columns.prompt]
