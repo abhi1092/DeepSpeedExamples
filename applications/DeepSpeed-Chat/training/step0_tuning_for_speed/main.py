@@ -114,7 +114,7 @@ def set_deepspeed_config(args, ds_config):
                                                         'pin_memory': True}
       ds_config['zero_optimization']['offload_optimizer']= {'device': 'cpu',
                                                             'pin_memory': True}
-  
+  ds_config['train_micro_batch_size_per_gpu'] = args.per_device_batch_size
   return ds_config
   
   
