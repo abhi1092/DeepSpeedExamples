@@ -19,6 +19,10 @@
     "memory_efficient_linear": true,
     "sub_group_size": 1e12
   },
+  "fp16": {
+    "enabled": true,
+    "loss_scale_window": 100
+  },
   "autotuning": {
     "enabled": true,
     "arg_mappings": {
