@@ -32,11 +32,18 @@ def get_train_ds_config(offload,
         "offload_optimizer": {
             "device": device
         },
-        "stage3_param_persistence_threshold": 1e4,
-        "stage3_max_live_parameters": 3e7,
-        "stage3_prefetch_bucket_size": 3e7,
-        "memory_efficient_linear": False
-    }
+        "allgather_partitions": True,
+        "allgather_bucket_size": 5e5,
+        "reduce_scatter": True,
+        "reduce_bucket_size": 5e5,
+        "contiguous_gradients": True,
+        "stage3_max_live_parameters": 1e5,
+        "stage3_max_reuse_distance": 1e5,
+        "stage3_prefetch_bucket_size": 1e5,
+        "stage3_param_persistence_threshold": 1e2,
+        "memory_efficient_linear": True,
+        "sub_group_size": 1e12
+        }
     if enable_mixed_precision_lora:
         zero_opt_dict["zero_quantized_nontrainable_weights"] = True
         if dist.get_world_size() != torch.cuda.device_count():
