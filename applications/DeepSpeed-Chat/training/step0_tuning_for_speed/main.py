@@ -135,6 +135,8 @@ def main():
   print_rank_0(f'column_names: {args.column_names}', color="GREEN")
   
   print(f'************{args}')
+  
+  torch.distributed.barrier()
 
   tokenizer = load_hf_tokenizer(args.model_name_or_path,
                                 fast_tokenizer=True)
