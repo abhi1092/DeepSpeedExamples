@@ -216,6 +216,7 @@ def main():
     model.gradient_checkpointing_enable()
 
   model.train()
+  print_rank_0(f'number of batches {len(dataloader)}', color="GREEN")
   for step, batch in enumerate(dataloader):
       batch = to_device(batch, device)
       outputs = model(**batch, use_cache=False)
