@@ -8,16 +8,16 @@
         "device": "cpu"
     },
     "allgather_partitions": true,
-    "allgather_bucket_size": 5e6,
+    "allgather_bucket_size": 5e5,
     "reduce_scatter": true,
-    "reduce_bucket_size": 5e6,
+    "reduce_bucket_size": 5e5,
     "contiguous_gradients": true,
-    "stage3_max_live_parameters": 1e6,
-    "stage3_max_reuse_distance": 1e6,
-    "stage3_prefetch_bucket_size": 1e6,
-    "stage3_param_persistence_threshold": 1e3,
+    "stage3_max_live_parameters": 1e5,
+    "stage3_max_reuse_distance": 1e5,
+    "stage3_prefetch_bucket_size": 1e5,
+    "stage3_param_persistence_threshold": 1e2,
     "memory_efficient_linear": true,
-    "sub_group_size": 1e8
+    "sub_group_size": 1e12
   },
   "autotuning": {
     "enabled": true,
