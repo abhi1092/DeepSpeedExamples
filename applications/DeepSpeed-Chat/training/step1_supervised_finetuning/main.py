@@ -25,7 +25,7 @@ from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from utils.data.data_utils import create_prompt_dataset
-from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, get_optimizer_grouped_parameters, save_zero_three_model, load_hf_tokenizer
+from utils.utils import get_column_names, print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, get_optimizer_grouped_parameters, save_zero_three_model, load_hf_tokenizer
 from utils.ds_utils import get_train_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, convert_lora_to_linear_layer, only_optimize_lora_parameters, make_model_gradient_checkpointing_compatible
 from utils.model.model_utils import create_hf_model
@@ -49,6 +49,21 @@ def parse_args():
                         'phase 1, 2, and 3 data. For example the split `6,2,2`'
                         'will use 60%% of data for phase 1, 20%% for phase 2'
                         'and 20%% for phase 3.')
+    parser.add_argument('--prompt',
+                      type=str,
+                      default=None,
+                      help="Name of the column in the dataset that contains the prompt"
+        )
+    parser.add_argument('--chosen',
+                        type=str,
+                        default=None,
+                        help="Name of the column in the dataset that contains the chosen answer"
+    )
+    parser.add_argument('--rejected',
+                        type=str,
+                        default=None,
+                        help="Name of the column in the dataset that contains the rejected answer"
+    )  
     parser.add_argument(
         '--sft_only_data_path',
         nargs='*',
@@ -188,6 +203,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    args.colmun_names = get_column_names(args)
 
     if args.local_rank == -1:
         device = torch.device("cuda")

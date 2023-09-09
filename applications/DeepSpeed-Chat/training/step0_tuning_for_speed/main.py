@@ -193,7 +193,7 @@ def main():
                             lr=args.learning_rate,
                             betas=(0.9, 0.95))
 
-  model, _, _, _ = deepspeed.initialize(
+  model, optimizer, _, _ = deepspeed.initialize( #should I add the optimizer here?
       model=model,
       optimizer=optimizer,
       args=args,
