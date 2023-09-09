@@ -15,10 +15,12 @@ from colorama import Fore, Style
 from torch.distributed import get_rank
 
 
-def print_rank_0(msg, rank=None, color=None):
+def print_rank_0(msg, rank=None, color=None, include_caller=False):
     if rank is None:
         rank = get_rank()
     if rank <= 0:
+        if include_caller:
+            msg = f"{get_caller(num_frames=2)}: {msg}"
         if color is not None:
             if color in ["GREEN", "RED", "BLUE", "YELLOW", "MAGENTA", "CYAN", "WHITE"]:
                 color = getattr(Fore, color)
@@ -290,4 +292,14 @@ def get_column_names(args):
             else:
                 column_names[k] = getattr(args, k)
     return column_names
+
+import inspect
+#returns the calling file and line number in a string
+def get_caller(num_frames=1):
+    frame = inspect.currentframe().f_back
+    for _ in range(num_frames-1):
+        frame = frame.f_back
+    file_name = frame.f_code.co_filename
+    line_number = frame.f_lineno
+    return f"In {file_name}, line {line_number}"
     
