@@ -19,6 +19,7 @@
     "memory_efficient_linear": true,
     "sub_group_size": 1e12
   },
+  "train_micro_batch_size_per_gpu": 1,
   "bf16": {
     "enabled": true
   },
