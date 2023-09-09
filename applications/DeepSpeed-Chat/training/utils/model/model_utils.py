@@ -11,6 +11,8 @@ from transformers import (
 )
 from huggingface_hub import snapshot_download
 from transformers.deepspeed import HfDeepSpeedConfig
+from megatron_models import GPTMegatronForCausalLM
+
 
 from .reward_model import RewardModel
 from ..utils import load_state_dict_into_model
@@ -29,6 +31,8 @@ def create_hf_model(model_class,
     # https://huggingface.co/docs/transformers/main_classes/deepspeed#nontrainer-deepspeed-integration
     stage = ds_config.get("zero_optimization") or ds_config.get("zero")
     stage = stage.get("stage", None) if stage is not None else None
+    if "granite" in model_name_or_path:
+        model_class = GPTMegatronForCausalLM
     if ds_config is not None and stage == 3:
         dschf = HfDeepSpeedConfig(ds_config)
     else:
