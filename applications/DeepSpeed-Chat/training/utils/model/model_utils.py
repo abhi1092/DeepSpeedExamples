@@ -15,7 +15,7 @@ from megatron_models import GPTMegatronForCausalLM
 
 
 from .reward_model import RewardModel
-from ..utils import load_state_dict_into_model
+from ..utils import load_state_dict_into_model, print_rank_0
 
 
 def create_hf_model(model_class,
@@ -32,6 +32,7 @@ def create_hf_model(model_class,
     stage = ds_config.get("zero_optimization") or ds_config.get("zero")
     stage = stage.get("stage", None) if stage is not None else None
     if "granite" in model_name_or_path:
+        print_rank_0("Using GPTMegatronForCausalLM", color="GREEN")
         model_class = GPTMegatronForCausalLM
     if ds_config is not None and stage == 3:
         dschf = HfDeepSpeedConfig(ds_config)
