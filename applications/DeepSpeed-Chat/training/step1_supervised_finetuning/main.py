@@ -203,7 +203,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    args.colmun_names = get_column_names(args)
+    args.column_names = get_column_names(args)
 
     if args.local_rank == -1:
         device = torch.device("cuda")
