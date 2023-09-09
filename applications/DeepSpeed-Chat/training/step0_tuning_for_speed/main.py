@@ -168,11 +168,19 @@ def main():
                           sampler=sampler,
                           batch_size=args.per_device_batch_size)
   
-  if Path(args.deepspeed_config).is_file():
-    with open(args.deepspeed_config, 'r') as f:
-      ds_config = json.load(f)
-  elif args.deepspeed_config is not None:
-    ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
+  # if Path(args.deepspeed_config).is_file():
+  #   with open(args.deepspeed_config, 'r') as f:
+  #     ds_config = json.load(f)
+  # elif args.deepspeed_config is not None:
+  #   ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
+  if args.deepspeed_config is not None:
+    try:
+      # Try to decode the value as base64
+      ds_config = json.loads(base64.urlsafe_b64decode(args.deepspeed_config).decode('utf-8'))
+    except:
+      # If decoding fails, assume it's a file path
+      with open(args.deepspeed_config, 'r') as f:
+        ds_config = json.load(f)
   
   ds_config = set_deepspeed_config(args, ds_config)
   from pprint import pprint
