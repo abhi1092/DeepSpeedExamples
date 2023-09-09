@@ -1,6 +1,6 @@
 {
   "zero_optimization": {
-    "stage": [1,2,3],
+    "stage": 3,
     "offload_param": {
         "device": "cpu"
     },
