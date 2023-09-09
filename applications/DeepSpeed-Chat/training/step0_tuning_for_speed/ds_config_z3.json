@@ -1,6 +1,6 @@
 {
   "zero_optimization": {
-    "stage": 2,
+    "stage": [1,2,3],
     "offload_param": {
         "device": "none"
     },
@@ -23,7 +23,7 @@
     "enabled": true
   },
   "autotuning": {
-    "enabled": false,
+    "enabled": true,
     "arg_mappings": {
         "train_micro_batch_size_per_gpu": "--per_device_batch_size"
     },
