@@ -221,6 +221,8 @@ def main():
       print_rank_0(f"debugging line", color="GREEN", include_caller=True)
       batch = to_device(batch, device)
       print_rank_0(f"debugging line", color="GREEN", include_caller=True)
+      if torch.distributed.get_rank() == 0:
+        from IPython import embed; embed(header='debugging line 225')
       outputs = model(**batch, use_cache=False)
       print_rank_0(f"debugging line", color="GREEN", include_caller=True)
       loss = outputs.loss
