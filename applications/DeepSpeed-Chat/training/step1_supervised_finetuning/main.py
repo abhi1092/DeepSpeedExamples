@@ -259,7 +259,8 @@ def main():
         tokenizer,
         args.max_seq_len,
         sft_only_data_path=args.sft_only_data_path,
-        column_names=args.column_names)
+        column_names=args.column_names,
+    )
     # DataLoaders creation:
     if args.local_rank == -1:
         train_sampler = RandomSampler(train_dataset)
@@ -331,8 +332,8 @@ def main():
     print_rank_0(
         f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
         args.global_rank)
-    perplexity = evaluation(model, eval_dataloader)
-    print_rank_0(f"ppl: {perplexity}", args.global_rank)
+    # perplexity = evaluation(model, eval_dataloader)
+    # print_rank_0(f"ppl: {perplexity}", args.global_rank)
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
