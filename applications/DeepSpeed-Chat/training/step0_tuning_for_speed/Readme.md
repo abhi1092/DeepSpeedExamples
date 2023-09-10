@@ -40,4 +40,9 @@ The only difference is on searching for errors in `stderr`, the vanilla `DeepSpe
 you also need to install `megatron-models` from IBM that enables the use of `granite` models. [repo](github.ibm.com/ai-models-architectures/megatron-models.git)
 
 
+# learning rate
+
+depending on the number of GPUs that you would be using, make sure to adjust the learning rate. For example, for 8 GPUs, we used 5e-5, but for 16 GPUs the learning rate should be scaled by sqrt(2) to 7.07e-5. This is to keep the variance of the gradients similar to the one in the original setting. details [here](https://github.com/Lightning-AI/lightning/discussions/3706#discussioncomment-900300)
+
+
 
