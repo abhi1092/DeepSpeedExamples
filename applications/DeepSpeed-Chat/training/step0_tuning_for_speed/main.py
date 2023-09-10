@@ -17,7 +17,7 @@ from deepspeed.autotuning import Autotuner
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters, print_rank_0, get_column_names, to_device
+from utils.utils import load_hf_tokenizer, get_optimizer_grouped_parameters, print_rank_0, get_column_names, set_random_seed, to_device
 from utils.model.model_utils import create_hf_model
 from utils.data.data_utils import create_prompt_dataset
 
@@ -136,6 +136,7 @@ def main():
   print_rank_0(f'column_names: {args.column_names}', color="GREEN")
   
   print(f'************{args}')
+  set_random_seed(args.seed)
   
   torch.distributed.barrier()
 
