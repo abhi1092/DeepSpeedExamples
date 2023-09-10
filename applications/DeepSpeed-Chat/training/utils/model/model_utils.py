@@ -31,23 +31,32 @@ def create_hf_model(model_class,
     # https://huggingface.co/docs/transformers/main_classes/deepspeed#nontrainer-deepspeed-integration
     stage = ds_config.get("zero_optimization") or ds_config.get("zero")
     stage = stage.get("stage", None) if stage is not None else None
-    if "granite" in model_name_or_path:
-        print_rank_0("Using GPTMegatronForCausalLM", color="GREEN")
-        model_class = GPTMegatronForCausalLM
     if ds_config is not None and stage == 3:
         dschf = HfDeepSpeedConfig(ds_config)
     else:
         dschf = None
     if rlhf_training:
         # the weight loading is handled by create critic model
-        model = model_class.from_config(model_config)
+        if "granite" in model_name_or_path:
+            print_rank_0("Using GPTMegatronForCausalLM", color="GREEN")
+            model = GPTMegatronForCausalLM._from_config(model_config)
+        else:
+            model = model_class.from_config(model_config)
     else:
-        model = model_class.from_pretrained(
-            model_name_or_path,
-            # from_tf=bool(".ckpt" in model_name_or_path),
-            # config=model_config
+        if "granite" in model_name_or_path:
+            print_rank_0("Using GPTMegatronForCausalLM", color="GREEN")
+            model = GPTMegatronForCausalLM.from_pretrained(
+                model_name_or_path,
+                # from_tf=bool(".ckpt" in model_name_or_path),
+                # config=model_config
+                )
+            model.inject_sdpa()
+        else:
+            model = model_class.from_pretrained(
+                model_name_or_path,
+                from_tf=bool(".ckpt" in model_name_or_path),
+                config=model_config
             )
-        model.inject_sdpa()
 
     model.config.end_token_id = tokenizer.eos_token_id
     model.config.pad_token_id = model.config.eos_token_id
