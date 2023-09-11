@@ -53,19 +53,12 @@ def main():
                                        n_warmup_steps=3
                                        ),
     )
+  # check if the study did not exist before
+  if len(study.trials) == 0:
+    study.enqueue_trial({"learning_rate": 9e-6, "weight_decay": 0.0})
+    study.enqueue_trial({"learning_rate": 5e-6, "weight_decay": 0.0})
   for _ in range(args.n_trials):
     trial = study.ask()
-    
-    if trial.number == 0:
-      lr = trial.suggest_float("learning_rate", 9e-6, 9e-6, log=True)
-      wd = trial.suggest_float("weight_decay", 0.0, 0.0, log=True)
-    elif trial.number == 1:
-      lr = trial.suggest_float("learning_rate", 5e-6, 5e-6, log=True)
-      wd = trial.suggest_float("weight_decay", 0.0, 0.0, log=True)
-    else:
-      lr = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
-      wd = trial.suggest_float("weight_decay", 1e-9, 1e-2, log=True)
-    
     formatted_cmd = cmd.format(learning_rate=lr, 
                                weight_decay=wd,
                                trial_number=trial.number,
