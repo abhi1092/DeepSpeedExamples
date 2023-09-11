@@ -384,15 +384,15 @@ def main():
                 if trial.should_prune():
                     study.tell(trial, state=optuna.trial.TrialState.PRUNED)
                     exit()
-
-        # Check if max_time has passed and perform evaluation
-        elapsed_time = time.time() - optuna_start_time
-        if args.max_time and elapsed_time > args.max_time:
-            final_metric_value = evaluation(model, eval_dataloader)
-            if args.global_rank == 0:
-                study.tell(trial, final_metric_value)
-            print(f"Max time exceeded. Final Metric Value: {final_metric_value}")
-            exit()
+                    
+            # Check if max_time has passed and perform evaluation
+            elapsed_time = time.time() - optuna_start_time
+            if args.max_time and elapsed_time > args.max_time:
+                final_metric_value = evaluation(model, eval_dataloader)
+                if args.global_rank == 0:
+                    study.tell(trial, final_metric_value)
+                print(f"Max time exceeded. Final Metric Value: {final_metric_value}")
+                exit()
 
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
