@@ -376,10 +376,8 @@ def main():
                 # Report final metric
                 final_metric_value = evaluation(model, eval_dataloader)
                 study.tell(trial, final_metric_value)
-            elif args.global_rank == 0:
-                # Report intermediate metric
+            else:
                 trial.report(get_all_reduce_mean(loss).item(), step=step)
-
                 # Pruning based on the loss
                 if trial.should_prune():
                     study.tell(trial, state=optuna.trial.TrialState.PRUNED)
