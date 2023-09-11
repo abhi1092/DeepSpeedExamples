@@ -73,12 +73,12 @@ def main():
                                database_url=args.database_url)
     
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
-    formatted_cmd = formatted_cmd.split()
-    ret_code = subprocess.Popen(formatted_cmd).wait()
-    if ret_code != 0:
-      study.tell(trial, float("nan"))
+    # formatted_cmd = formatted_cmd.split()
+    # ret_code = subprocess.Popen(formatted_cmd).wait()
+    # if ret_code != 0:
+    #   study.tell(trial, float("nan"))
     
-    
-  
+if __name__ == "__main__":
+  main()
 
 
