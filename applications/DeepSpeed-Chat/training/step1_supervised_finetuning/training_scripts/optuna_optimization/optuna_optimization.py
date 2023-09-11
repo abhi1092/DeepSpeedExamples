@@ -64,10 +64,18 @@ def main():
                                database_url=args.database_url)
     
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
-    # formatted_cmd = formatted_cmd.split()
-    # ret_code = subprocess.Popen(formatted_cmd).wait()
-    # if ret_code != 0:
-    #   study.tell(trial, float("nan"))
+    formatted_cmd = formatted_cmd.split()
+    p = subprocess.Popen(formatted_cmd)
+    ret_code = p.wait(timeout=4000)
+    if ret_code != 0:
+      trial_number = None
+      #check the process stdout
+      stdout = p.communicate()[0]
+      for line in stdout.split('\n'):
+        if line.startswith("TRIAL_NUMBER:"):
+            trial_number = int(line[len("TRIAL_NUMBER:"):])
+            break
+      study.tell(trial_number, float("nan"))
     
 if __name__ == "__main__":
   main()
