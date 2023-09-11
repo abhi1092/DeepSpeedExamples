@@ -30,7 +30,7 @@ main.py \
 --deepspeed \
 --optuna_study_name {study_name} \
 --optuna_storage {database_url} \
---max_time 600
+--max_time 300
 """
 
 def parseargs():
