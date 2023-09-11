@@ -63,23 +63,25 @@ def main():
   if len(study.trials) == 0:
     study.enqueue_trial({"learning_rate": 9e-6, "weight_decay": 1e-5})
     study.enqueue_trial({"learning_rate": 5e-6, "weight_decay": 1e-6})
-  for _ in range(args.n_trials):
+  for i in range(args.n_trials):
     formatted_cmd = cmd.format(study_name=args.study_name,
                                database_url=args.database_url)
     
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
     formatted_cmd = formatted_cmd.split()
-    p = subprocess.Popen(formatted_cmd)
+    #open subprocess and write to a file in home called optuna_optimization_i.log
+    with open(f"/new_data/optuna_optimization_{i}.log", "w") as f:
+        p = subprocess.Popen(formatted_cmd, stdout=f, stderr=f)
     ret_code = p.wait(timeout=4000)
     if ret_code != 0:
-      trial_number = None
-      #check the process stdout
-      stdout = p.communicate()[0]
-      for line in stdout.split('\n'):
-        if line.startswith("TRIAL_NUMBER:"):
-            trial_number = int(line[len("TRIAL_NUMBER:"):])
-            break
-      study.tell(trial_number, float("nan"))
+        trial_number = None
+        #check the process stdout
+        stdout, stderr = p.communicate(timeout=10)
+        for line in stdout.decode().split('\n'):
+            if line.startswith("TRIAL_NUMBER:"):
+                trial_number = int(line[len("TRIAL_NUMBER:"):])
+                break
+        study.tell(trial_number, float("nan"))
     
 if __name__ == "__main__":
   main()
