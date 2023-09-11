@@ -60,7 +60,9 @@ def main():
   for _ in range(args.n_trials):
     trial = study.ask()
     lr = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
-    wd = trial.suggest_float("weight_decay", 0.0, 0.1, log=True)
+    wd = trial.suggest_float("weight_decay", 1e-6, 0.1, log=True)
+    if wd < 1e-5:
+      wd = 0.0
     formatted_cmd = cmd.format(learning_rate=lr, 
                                weight_decay=wd,
                                trial_number=trial.number,
