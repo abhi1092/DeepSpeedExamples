@@ -254,6 +254,7 @@ def main():
 
     args.global_rank = torch.distributed.get_rank()
     print_rank_0(f'column_names: {args.column_names}', color="GREEN")
+    print_rank_0(f'args: {args}', color="GREEN")
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
                                     enable_tensorboard=args.enable_tensorboard,
@@ -372,20 +373,29 @@ def main():
         
     def optuna_operations(loss, step, final=False):
         if study:
+            print_rank_0(f"debugging", color="RED", include_caller=True)
             if final:
                 # Report final metric
+                print_rank_0(f"debugging", color="RED", include_caller=True)
                 final_metric_value = evaluation(model, eval_dataloader)
+                print_rank_0(f"debugging", color="RED", include_caller=True)
                 study.tell(trial, final_metric_value)
             else:
+                print_rank_0(f"debugging", color="RED", include_caller=True)
                 trial.report(get_all_reduce_mean(loss).item(), step=step)
+                print_rank_0(f"debugging", color="RED", include_caller=True)
                 # Pruning based on the loss
+                print_rank_0(f"debugging", color="RED", include_caller=True)
                 if trial.should_prune():
+                    print_rank_0(f"debugging", color="RED", include_caller=True)
                     study.tell(trial, state=optuna.trial.TrialState.PRUNED)
                     exit()
                     
             # Check if max_time has passed and perform evaluation
             elapsed_time = time.time() - optuna_start_time
             if args.max_time and elapsed_time > args.max_time:
+                print_rank_0(f"debugging", color="RED", include_caller=True)
+                print_rank_0(f"EVALUATING AFTER MAX TIME EXCEDEED", color="GREEN")
                 final_metric_value = evaluation(model, eval_dataloader)
                 if args.global_rank == 0:
                     study.tell(trial, final_metric_value)
