@@ -317,11 +317,12 @@ def main():
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-
+    print_rank_0(f"eval_dataloader: {len(eval_dataloader)}", color="RED", include_caller=True)
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
         step = 1
+        print_rank_0(f"eval_dataloader: {len(eval_dataloader)}", color="RED", include_caller=True)
         for step, batch in enumerate(eval_dataloader):
             batch = to_device(batch, device)
             with torch.no_grad():

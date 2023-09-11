@@ -71,12 +71,12 @@ def main():
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
     formatted_cmd = formatted_cmd.split()
     #open subprocess and write to a file in home called optuna_optimization_i.log
-    p = subprocess.Popen(formatted_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(formatted_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     start = time.time()
     trial_number = None
     for line in p.stdout:
         line = line.decode()
-        print(line)
+        print(line, end="")
         if line.startswith("TRIAL_NUMBER:"):
             trial_number = int(line[len("TRIAL_NUMBER:"):])
         if time.time() - start > 4000:
