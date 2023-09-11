@@ -10,7 +10,7 @@ cmd = """torchrun \
 --rdzv_endpoint 127.0.0.1:1111 \
 main.py \
 --print_loss \
---data_path /new_data/datasets/summarization/tldr_sft_train_117k.jsonl \
+--data_path /new_data/datasets/summarization-2/tldr_sft_train_117k.jsonl \
 --data_split 10,0,0 \
 --prompt formatted_input \
 --chosen summary \
@@ -18,8 +18,8 @@ main.py \
 --per_device_train_batch_size 4 \
 --per_device_eval_batch_size 4 \
 --max_seq_len 2048 \
---learning_rate {learning_rate} \
---weight_decay {weight_decay} \
+--learning_rate 5e-6 \
+--weight_decay 0.0 \
 --num_train_epochs 1 \
 --gradient_accumulation_steps 2 \
 --gradient_checkpointing \
@@ -28,10 +28,8 @@ main.py \
 --seed 6742 \
 --zero_stage 2 \
 --deepspeed \
---deepspeed_config ../../step0_tuning_for_speed/ds_config_optimal_granite13b.json \
---optuna_trial_number {trial_number} \
 --optuna_study_name {study_name} \
---optuna_storage {database_url}
+--optuna_storage {database_url} \
 --max_time 3600
 """
 
@@ -62,15 +60,7 @@ def main():
     study.enqueue_trial({"learning_rate": 9e-6, "weight_decay": 1e-5})
     study.enqueue_trial({"learning_rate": 5e-6, "weight_decay": 1e-6})
   for _ in range(args.n_trials):
-    trial = study.ask()
-    lr = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
-    wd = trial.suggest_float("weight_decay", 1e-6, 0.1, log=True)
-    if wd <= 1e-5:
-      wd = 0.0
-    formatted_cmd = cmd.format(learning_rate=lr, 
-                               weight_decay=wd,
-                               trial_number=trial.number,
-                               study_name=args.study_name,
+    formatted_cmd = cmd.format(study_name=args.study_name,
                                database_url=args.database_url)
     
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
