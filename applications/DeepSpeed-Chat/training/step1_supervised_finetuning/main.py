@@ -381,15 +381,16 @@ def main():
                 print_rank_0(f"debugging", color="RED", include_caller=True)
                 study.tell(trial, final_metric_value)
             else:
-                print_rank_0(f"debugging", color="RED", include_caller=True)
-                trial.report(get_all_reduce_mean(loss).item(), step=step)
-                print_rank_0(f"debugging", color="RED", include_caller=True)
-                # Pruning based on the loss
-                print_rank_0(f"debugging", color="RED", include_caller=True)
-                if trial.should_prune():
+                if args.global_rank == 0:
                     print_rank_0(f"debugging", color="RED", include_caller=True)
-                    study.tell(trial, state=optuna.trial.TrialState.PRUNED)
-                    exit()
+                    trial.report(loss.item(), step=step)
+                    print_rank_0(f"debugging", color="RED", include_caller=True)
+                    # Pruning based on the loss
+                    print_rank_0(f"debugging", color="RED", include_caller=True)
+                    if trial.should_prune():
+                        print_rank_0(f"debugging", color="RED", include_caller=True)
+                        study.tell(trial, state=optuna.trial.TrialState.PRUNED)
+                        exit()
                     
             # Check if max_time has passed and perform evaluation
             elapsed_time = time.time() - optuna_start_time
