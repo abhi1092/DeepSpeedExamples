@@ -230,6 +230,8 @@ def setup_optuna(args):
     optuna_start_time = None
     if args.optuna_study_name and args.optuna_storage and args.local_rank == 0:
         study = optuna.load_study(study_name=args.optuna_study_name, storage=args.optuna_storage)
+        if args.local_rank == 0:
+            from IPython import embed; embed(header=get_caller())
         trial = optuna.trial.Trial(study, trial_number=args.optuna_trial_number) if args.optuna_trial_number is not None else None
         optuna_start_time = time.time()
     return study, trial, optuna_start_time
