@@ -40,10 +40,14 @@ def parseargs():
   parser.add_argument("--study_name", type=str, default="optuna_optimization")
   parser.add_argument("--n_trials", type=int, default=100)
   parser.add_argument("--database_url", type=str, required=True)
+  parser.add_argument("--reset", action="store_true")
   return parser.parse_args()
 
 def main():
   args = parseargs()
+  if args.reset:
+    optuna.delete_study(study_name=args.study_name, storage=args.database_url)
+  
   study = optuna.create_study(
     study_name=args.study_name,
     storage=args.database_url,
