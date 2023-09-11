@@ -199,10 +199,6 @@ def parse_args():
                         help='Prints loss at each step.')
     
     ## optuna optimization
-    parser.add_argument("--optuna_trial_number",
-                        type=int,
-                        default=None,
-                        help="The trial number for optuna optimization.")
     parser.add_argument("--optuna_study_name",
                         type=str,
                         default=None,
@@ -231,6 +227,7 @@ def setup_optuna(args):
     if args.optuna_study_name and args.optuna_storage and args.local_rank == 0:
         study = optuna.load_study(study_name=args.optuna_study_name, storage=args.optuna_storage)
         trial = study.ask()
+        print(f"TRIAL_NUMBER:{trial.number}", flush=True)
         optuna_start_time = time.time()
         args.learning_rate = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
         args.weight_decay = trial.suggest_float("weight_decay", 1e-6, 0.1, log=True)
@@ -369,9 +366,6 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
-    
-    if args.local_rank == 0:
-        from IPython import embed; embed(header=get_caller())
 
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
@@ -382,7 +376,7 @@ def main():
                 # Report final metric
                 final_metric_value = evaluation(model, eval_dataloader)
                 study.tell(trial, final_metric_value)
-            else:
+            elif args.global_rank == 0:
                 # Report intermediate metric
                 trial.report(get_all_reduce_mean(loss).item(), step=step)
 
@@ -391,13 +385,14 @@ def main():
                     study.tell(trial, state=optuna.trial.TrialState.PRUNED)
                     exit()
 
-            # Check if max_time has passed and perform evaluation
-            elapsed_time = time.time() - optuna_start_time
-            if args.max_time and elapsed_time > args.max_time:
-                final_metric_value = evaluation(model, eval_dataloader)
+        # Check if max_time has passed and perform evaluation
+        elapsed_time = time.time() - optuna_start_time
+        if args.max_time and elapsed_time > args.max_time:
+            final_metric_value = evaluation(model, eval_dataloader)
+            if args.global_rank == 0:
                 study.tell(trial, final_metric_value)
-                print(f"Max time exceeded. Final Metric Value: {final_metric_value}")
-                exit()
+            print(f"Max time exceeded. Final Metric Value: {final_metric_value}")
+            exit()
 
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
@@ -425,7 +420,7 @@ def main():
             model.step()
             end = time.time()
             if torch.distributed.get_rank() == 0:
-                print_throughput(model.model, args, end - start,
+                print_throughput(model.module, args, end - start,
                                  args.global_rank)
             if step % 5 == 0:
                 optuna_operations(loss, step)
