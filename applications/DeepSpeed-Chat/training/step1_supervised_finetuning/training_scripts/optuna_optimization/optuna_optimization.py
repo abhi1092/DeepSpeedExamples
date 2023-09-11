@@ -1,4 +1,5 @@
 import argparse
+import time
 import optuna
 import subprocess
 
@@ -70,17 +71,18 @@ def main():
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
     formatted_cmd = formatted_cmd.split()
     #open subprocess and write to a file in home called optuna_optimization_i.log
-    with open(f"/new_data/optuna_optimization_{i}.log", "w") as f:
-        p = subprocess.Popen(formatted_cmd, stdout=f, stderr=f)
-    ret_code = p.wait(timeout=4000)
+    p = subprocess.Popen(formatted_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    start = time.time()
+    trial_number = None
+    for line in p.stdout:
+        print(line.decode())
+        if line.startswith(b"TRIAL_NUMBER:"):
+            trial_number = int(line[len("TRIAL_NUMBER:"):])
+        if time.time() - start > 4000:
+            break
+    ret_code = p.wait(timeout=10)
     if ret_code != 0:
-        trial_number = None
-        #check the process stdout
-        stdout, stderr = p.communicate(timeout=10)
-        for line in stdout.decode().split('\n'):
-            if line.startswith("TRIAL_NUMBER:"):
-                trial_number = int(line[len("TRIAL_NUMBER:"):])
-                break
+      if trial_number is not None:
         study.tell(trial_number, float("nan"))
     
 if __name__ == "__main__":
