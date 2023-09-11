@@ -75,8 +75,9 @@ def main():
     start = time.time()
     trial_number = None
     for line in p.stdout:
-        print(line.decode())
-        if line.startswith(b"TRIAL_NUMBER:"):
+        line = line.decode()
+        print(line)
+        if line.startswith("TRIAL_NUMBER:"):
             trial_number = int(line[len("TRIAL_NUMBER:"):])
         if time.time() - start > 4000:
             break
