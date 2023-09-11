@@ -289,38 +289,6 @@ def main():
         if args.only_optimize_lora:
             model = only_optimize_lora_parameters(model)
             model = make_model_gradient_checkpointing_compatible(model)
-            
-        # Split weights in two groups, one with weight decay and the other not.
-    optimizer_grouped_parameters = get_optimizer_grouped_parameters(
-        model, args.weight_decay, args.lora_learning_rate)
-
-    AdamOptimizer = DeepSpeedCPUAdam if args.offload else FusedAdam
-    optimizer = AdamOptimizer(optimizer_grouped_parameters,
-                              lr=args.learning_rate,
-                              betas=(0.9, 0.95))
-
-    num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader) / args.gradient_accumulation_steps)
-    lr_scheduler = get_scheduler(
-        name=args.lr_scheduler_type,
-        optimizer=optimizer,
-        num_warmup_steps=args.num_warmup_steps,
-        num_training_steps=args.num_train_epochs * num_update_steps_per_epoch,
-    )
-
-    model, optimizer, _, lr_scheduler = deepspeed.initialize(
-        model=model,
-        optimizer=optimizer,
-        args=args,
-        config=ds_config,
-        lr_scheduler=lr_scheduler,
-        dist_init_required=True)
-    
-    if args.local_rank == 0:
-        from IPython import embed; embed(header=get_caller())
-
-    if args.gradient_checkpointing:
-        model.gradient_checkpointing_enable()
 
     # Prepare the data
     train_phase = 1
@@ -373,6 +341,40 @@ def main():
             pass
         model.train()
         return perplexity
+    
+    
+
+    # Split weights in two groups, one with weight decay and the other not.
+    optimizer_grouped_parameters = get_optimizer_grouped_parameters(
+        model, args.weight_decay, args.lora_learning_rate)
+
+    AdamOptimizer = DeepSpeedCPUAdam if args.offload else FusedAdam
+    optimizer = AdamOptimizer(optimizer_grouped_parameters,
+                              lr=args.learning_rate,
+                              betas=(0.9, 0.95))
+
+    num_update_steps_per_epoch = math.ceil(
+        len(train_dataloader) / args.gradient_accumulation_steps)
+    lr_scheduler = get_scheduler(
+        name=args.lr_scheduler_type,
+        optimizer=optimizer,
+        num_warmup_steps=args.num_warmup_steps,
+        num_training_steps=args.num_train_epochs * num_update_steps_per_epoch,
+    )
+
+    model, optimizer, _, lr_scheduler = deepspeed.initialize(
+        model=model,
+        optimizer=optimizer,
+        args=args,
+        config=ds_config,
+        lr_scheduler=lr_scheduler,
+        dist_init_required=True)
+    
+    if args.local_rank == 0:
+        from IPython import embed; embed(header=get_caller())
+
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable()
         
     def optuna_operations(loss, step, final=False):
         if study:
