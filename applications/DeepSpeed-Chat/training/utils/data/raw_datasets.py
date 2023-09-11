@@ -408,10 +408,15 @@ class JsonlDataset(LocalJsonFileDataset):
         print_rank_0(f"Loading JsonlDataset {self.dataset_name}", rank=local_rank, color="GREEN")
         train_path = dataset_name
         eval_path = train_path
-        #check if eval path doesn't exist and make it equal to train otherwise
+        
+        # Check if eval path doesn't exist and make it equal to train otherwise
         if 'train' in train_path:
-            eval_path = train_path.replace('train', 'eval')
-        else:
+            for suffix in ['eval', 'val', 'dev', 'test', 'train']:
+                eval_path = train_path.replace('train', suffix)
+                if Path(eval_path).is_file():
+                    break
+                
+        if eval_path == train_path:
             print_rank_0(f"Warning: eval path {eval_path} does not exist, using train path instead", rank=local_rank, color="YELLOW")
             
         self.raw_datasets = load_dataset('json',
