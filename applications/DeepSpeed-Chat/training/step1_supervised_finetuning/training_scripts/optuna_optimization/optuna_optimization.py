@@ -69,7 +69,7 @@ def main():
     
     print(f'Running command:\n\n {formatted_cmd}\n\n =================== \n\n')
     formatted_cmd = formatted_cmd.split()
-    p = subprocess.Popen(formatted_cmd)
+    p = subprocess.Popen(formatted_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     ret_code = p.wait(timeout=4000)
     if ret_code != 0:
       trial_number = None
