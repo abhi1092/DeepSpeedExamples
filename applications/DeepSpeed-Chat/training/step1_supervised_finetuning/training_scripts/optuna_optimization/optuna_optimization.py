@@ -59,6 +59,8 @@ def main():
     study.enqueue_trial({"learning_rate": 5e-6, "weight_decay": 0.0})
   for _ in range(args.n_trials):
     trial = study.ask()
+    lr = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
+    wd = trial.suggest_float("weight_decay", 0.0, 0.1, log=True)
     formatted_cmd = cmd.format(learning_rate=lr, 
                                weight_decay=wd,
                                trial_number=trial.number,
