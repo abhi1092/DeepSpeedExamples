@@ -11,7 +11,7 @@ cmd = """torchrun \
 main.py \
 --print_loss \
 --data_path /new_data/datasets/summarization-2/tldr_sft_train_117k.jsonl \
---data_split 10,0,0 \
+--data_split 1,10,10 \
 --prompt formatted_input \
 --chosen summary \
 --model_name_or_path /new_data/rl-4-llm/granite_models/pretrained/step_225000_ckpt/ \
@@ -42,6 +42,10 @@ def parseargs():
   return parser.parse_args()
 
 def main():
+  #print a big red warning asking to return parameters to the right values
+  import logging
+  logging.basicConfig(level=logging.INFO)
+  logging.warning("WARNING: make sure to reset the parameters to the right values before running the final training")
   args = parseargs()
   if args.reset:
     optuna.delete_study(study_name=args.study_name, storage=args.database_url)
@@ -52,7 +56,7 @@ def main():
     load_if_exists=True,
     direction="minimize",
     pruner=optuna.pruners.MedianPruner(n_startup_trials=3,
-                                       n_warmup_steps=3
+                                       n_warmup_steps=100,
                                        ),
     )
   # check if the study did not exist before
