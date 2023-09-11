@@ -230,10 +230,12 @@ def setup_optuna(args):
     optuna_start_time = None
     if args.optuna_study_name and args.optuna_storage and args.local_rank == 0:
         study = optuna.load_study(study_name=args.optuna_study_name, storage=args.optuna_storage)
-        if args.local_rank == 0:
-            from IPython import embed; embed(header=get_caller())
-        trial = optuna.trial.Trial(study, trial_number=args.optuna_trial_number) if args.optuna_trial_number is not None else None
+        trial = study.ask()
         optuna_start_time = time.time()
+        args.learning_rate = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
+        args.weight_decay = trial.suggest_float("weight_decay", 1e-6, 0.1, log=True)
+        if args.weight_decay <= 1e-5:
+            args.weight_decay = 0.0
     return study, trial, optuna_start_time
 
 
@@ -375,17 +377,17 @@ def main():
         model.gradient_checkpointing_enable()
         
     def optuna_operations(loss, step, final=False):
-        if trial and study:
+        if study:
             if final:
                 # Report final metric
                 final_metric_value = evaluation(model, eval_dataloader)
                 study.tell(trial, final_metric_value)
             else:
                 # Report intermediate metric
-                study.report(get_all_reduce_mean(loss).item(), step=step)
+                trial.report(get_all_reduce_mean(loss).item(), step=step)
 
                 # Pruning based on the loss
-                if study.should_prune(trial):
+                if trial.should_prune():
                     study.tell(trial, state=optuna.trial.TrialState.PRUNED)
                     exit()
 
