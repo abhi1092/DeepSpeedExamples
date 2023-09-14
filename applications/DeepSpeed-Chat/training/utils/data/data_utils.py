@@ -148,7 +148,9 @@ class PromptDataset(Dataset):
             return {
                 "input_ids": self.chosen_dataset[idx]["input_ids"],
                 "attention_mask": self.chosen_dataset[idx]["attention_mask"],
-                "labels": self.chosen_dataset[idx]["input_ids"]
+                "labels": self.chosen_dataset[idx]["input_ids"]\
+                    if "labels" not in self.chosen_dataset[idx] \
+                    else self.chosen_dataset[idx]["labels"]
             }
         elif self.train_phase == 2:
             return self.chosen_dataset[idx]["input_ids"], self.chosen_dataset[idx]["attention_mask"], \
@@ -168,6 +170,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
                 tmp_data)  # the accept response
+            prompt = raw_dataset.get_prompt(tmp_data)
             if chosen_sentence is not None:
                 chosen_sentence += end_of_conversation_token
                 chosen_token = tokenizer(chosen_sentence,
@@ -175,6 +178,16 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
+                prompt_token = tokenizer(prompt, 
+                                         return_tensors="pt",
+                                         max_length=max_seq_len,
+                                         padding="max_length",
+                                         truncation=True)
+                assert tokenizer.padding_side == "right"
+                chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
+                #get lenght of prompt token
+                prompt_length = prompt_token["attention_mask"].sum().item()
+                chosen_token['labels'][:prompt_length] = -100
                 chosen_token["input_ids"] = chosen_token["input_ids"].squeeze(
                     0)
                 chosen_token["attention_mask"] = chosen_token[
