@@ -324,12 +324,10 @@ def main():
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-    print_rank_0(f"eval_dataloader: {len(eval_dataloader)}", color="RED", include_caller=True)
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
         step = 1
-        print_rank_0(f"eval_dataloader: {len(eval_dataloader)}", color="RED", include_caller=True)
         for step, batch in enumerate(eval_dataloader):
             batch = to_device(batch, device)
             with torch.no_grad():
@@ -350,16 +348,16 @@ def main():
         return perplexity
     
     
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
         model, args.weight_decay, args.lora_learning_rate)
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     AdamOptimizer = DeepSpeedCPUAdam if args.offload else FusedAdam
     optimizer = AdamOptimizer(optimizer_grouped_parameters,
                               lr=args.learning_rate,
                               betas=(0.9, 0.95))
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     num_update_steps_per_epoch = math.ceil(
         len(train_dataloader) / args.gradient_accumulation_steps)
     lr_scheduler = get_scheduler(
@@ -368,7 +366,7 @@ def main():
         num_warmup_steps=args.num_warmup_steps,
         num_training_steps=args.num_train_epochs * num_update_steps_per_epoch,
     )
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     model, optimizer, _, lr_scheduler = deepspeed.initialize(
         model=model,
         optimizer=optimizer,
@@ -376,7 +374,7 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
         
