@@ -275,6 +275,13 @@ def main():
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+   
+    HUMAN_KEY = "<|user|>"
+    ASSISTANT_KEY = "<|assistant|>"
+    CONTEXT_KEY = "<|context|>"
+    END_KEY = "<|end|>"
+   
+    tokenizer.add_special_tokens({"additional_special_tokens": [CONTEXT_KEY, HUMAN_KEY, ASSISTANT_KEY, END_KEY]})
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
@@ -419,6 +426,12 @@ def main():
         model.train()
         for step, batch in enumerate(train_dataloader):
             start = time.time()
+            #decode all labels that are different from -100
+            if step % 10 == 0 and step < 100:
+                for l in batch['labels']:
+                    l[l != -100] = tokenizer.decode(l[l != -100], skip_special_tokens=True)
+                    print_rank_0(f"labels: {l}", color="YELLOW")
+                
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
             loss = outputs.loss
