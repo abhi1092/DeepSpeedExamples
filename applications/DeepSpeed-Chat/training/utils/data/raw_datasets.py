@@ -440,10 +440,10 @@ class JsonlDataset(LocalJsonFileDataset):
         return sample[self.columns.rejected]
     
     def get_prompt_and_chosen(self, sample):
-        return " " + sample[self.columns.prompt] + " " + sample[self.columns.chosen]
+        return sample[self.columns.prompt] + sample[self.columns.chosen]
     
     def get_prompt_and_rejected(self, sample):
-        return " " + sample[self.columns.prompt] + " " + sample[self.columns.rejected]
+        return sample[self.columns.prompt] + sample[self.columns.rejected]
 
 
 # Chinese dataset
