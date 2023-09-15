@@ -460,6 +460,7 @@ def main():
 
                 if args.global_rank == 0:
                     save_hf_format(model, tokenizer, args)
+                    tokenizer.save_pretrained(args.output_dir)
 
                 if args.zero_stage == 3:
                     # For zero stage 3, each gpu only has a part of the model, so we need a special save function
@@ -467,6 +468,7 @@ def main():
                                         args.global_rank,
                                         args.output_dir,
                                         zero_stage=args.zero_stage)
+                    
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
