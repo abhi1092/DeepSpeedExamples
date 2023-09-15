@@ -427,8 +427,7 @@ def main():
             #decode all labels that are different from -100
             if step % 10 == 0 and step < 100:
                 for l in batch['labels']:
-                    l[l != -100] = tokenizer.decode(l[l != -100], skip_special_tokens=True)
-                    print_rank_0(f"labels: {l}", color="YELLOW")
+                    print_rank_0(f"labels: {tokenizer.decode(l[l != -100], skip_special_tokens=True)}", color="YELLOW")
                 
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
