@@ -422,6 +422,18 @@ def main():
         args.global_rank)
     # perplexity = evaluation(model, eval_dataloader)
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
+    print_rank_0('saving the final model ...', args.global_rank)
+    model = convert_lora_to_linear_layer(model)
+
+    if args.global_rank == 0:
+        save_hf_format(model, tokenizer, args, sub_folder=f"step1_model/epoch_{epoch}_step_{step}")
+
+    if args.zero_stage == 3:
+        # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+        save_zero_three_model(model,
+                            args.global_rank,
+                            args.output_dir,
+                            zero_stage=args.zero_stage)
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
