@@ -431,12 +431,12 @@ def main():
         for step, batch in enumerate(train_dataloader):
             start = time.time()
             #decode all labels that are different from -100
-            if step % 10 == 0 and step < 100:
-                for l,input in zip(batch['labels'], batch['input_ids']):
-                    print_rank_0(f"labels: {tokenizer.decode(l[l != -100],)}", color="YELLOW")
-                    print_rank_0(f"input: {tokenizer.decode(input,)}", color="MAGENTA")
-                    # print int labels
-                    print_rank_0(f"labels: {l}", color="BLUE")
+            # if step % 10 == 0 and step < 100:
+            #     for l,input in zip(batch['labels'], batch['input_ids']):
+            #         print_rank_0(f"labels: {tokenizer.decode(l[l != -100],)}", color="YELLOW")
+            #         print_rank_0(f"input: {tokenizer.decode(input,)}", color="MAGENTA")
+            #         # print int labels
+            #         print_rank_0(f"labels: {l}", color="BLUE")
                 
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
@@ -459,8 +459,7 @@ def main():
                 model = convert_lora_to_linear_layer(model)
 
                 if args.global_rank == 0:
-                    save_hf_format(model, tokenizer, args)
-                    tokenizer.save_pretrained(args.output_dir)
+                    save_hf_format(model, tokenizer, args, subfolder=f"step1_model/epoch_{epoch}_step_{step}")
 
                 if args.zero_stage == 3:
                     # For zero stage 3, each gpu only has a part of the model, so we need a special save function
