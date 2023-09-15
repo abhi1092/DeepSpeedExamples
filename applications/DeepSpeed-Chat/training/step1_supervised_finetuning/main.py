@@ -146,7 +146,7 @@ def parse_args():
                         help="Where to store the model.")
     parser.add_argument("--save_steps",
                         type=int,
-                        default=1000,
+                        default=3000,
                         help="Save checkpoint every X updates steps.")
     parser.add_argument("--seed",
                         type=int,
@@ -454,7 +454,7 @@ def main():
             if step % 5 == 0:
                 optuna_operations(loss, step)
             
-            if args.output_dir is not None and step % args.save_steps == 0:
+            if args.output_dir is not None and (step+1) % args.save_steps == 0:
                 print_rank_0('saving the final model ...', args.global_rank)
                 model = convert_lora_to_linear_layer(model)
 
