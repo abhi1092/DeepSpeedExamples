@@ -179,7 +179,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          truncation=True,
                                          return_tensors="pt")
                 #check if last token is eos
-                if chosen_token["input_ids"][0][-1] != tokenizer.eos_token_id:
+                if chosen_token["input_ids"][0][-1] != end_of_conversation_token:
                     print_rank_0(f"Last token is not eos in {chosen_sentence}", color="RED")
                     continue
                 prompt_token = tokenizer(prompt, 
