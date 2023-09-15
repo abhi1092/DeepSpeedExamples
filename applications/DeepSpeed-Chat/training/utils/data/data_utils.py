@@ -172,6 +172,9 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 tmp_data)  # the accept response
             prompt = raw_dataset.get_prompt(tmp_data)
             if chosen_sentence is not None:
+                #print end of conversation token
+                print_rank_0(f'chosen_sentence: {chosen_sentence}', color="GREEN")
+                exit()
                 chosen_sentence += end_of_conversation_token
                 chosen_token = tokenizer(chosen_sentence,
                                          max_length=max_seq_len,
