@@ -165,6 +165,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
+    eos_enc = tokenizer.encode(end_of_conversation_token)
     if train_phase == 1:
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
@@ -179,7 +180,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          truncation=True,
                                          return_tensors="pt")
                 #check if last token is eos
-                if chosen_token["input_ids"][0][-1] != end_of_conversation_token:
+                if chosen_token["input_ids"][0][-1] != eos_enc:
                     print_rank_0(f"Last token is not eos in {chosen_sentence}", color="RED")
                     print_rank_0(f"-----------------", color="BLUE")
                     if torch.distributed.get_rank() == 0:
