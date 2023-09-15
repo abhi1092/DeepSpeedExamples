@@ -16,7 +16,7 @@ import os
 import hashlib
 from itertools import chain
 from . import raw_datasets
-from utils.utils import print_rank_0
+from utils.utils import get_caller, print_rank_0
 
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names=None):
@@ -182,6 +182,9 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 if chosen_token["input_ids"][0][-1] != end_of_conversation_token:
                     print_rank_0(f"Last token is not eos in {chosen_sentence}", color="RED")
                     print_rank_0(f"-----------------", color="BLUE")
+                    if torch.distributed.get_rank() == 0:
+                        from IPython import embed; embed(header=get_caller())
+                        exit()
                     continue
                 prompt_token = tokenizer(prompt, 
                                          return_tensors="pt",
