@@ -144,6 +144,10 @@ def parse_args():
                         type=str,
                         default=None,
                         help="Where to store the model.")
+    parser.add_argument("--save_steps",
+                        type=int,
+                        default=1000,
+                        help="Save checkpoint every X updates steps.")
     parser.add_argument("--seed",
                         type=int,
                         default=1234,
@@ -449,6 +453,20 @@ def main():
                                  args.global_rank)
             if step % 5 == 0:
                 optuna_operations(loss, step)
+            
+            if args.output_dir is not None and step % args.save_steps == 0:
+                print_rank_0('saving the final model ...', args.global_rank)
+                model = convert_lora_to_linear_layer(model)
+
+                if args.global_rank == 0:
+                    save_hf_format(model, tokenizer, args)
+
+                if args.zero_stage == 3:
+                    # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+                    save_zero_three_model(model,
+                                        args.global_rank,
+                                        args.output_dir,
+                                        zero_stage=args.zero_stage)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
@@ -458,19 +476,7 @@ def main():
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
         model.tput_timer.update_epoch_count()
 
-    if args.output_dir is not None:
-        print_rank_0('saving the final model ...', args.global_rank)
-        model = convert_lora_to_linear_layer(model)
 
-        if args.global_rank == 0:
-            save_hf_format(model, tokenizer, args)
-
-        if args.zero_stage == 3:
-            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
-            save_zero_three_model(model,
-                                  args.global_rank,
-                                  args.output_dir,
-                                  zero_stage=args.zero_stage)
 
 
 if __name__ == "__main__":
