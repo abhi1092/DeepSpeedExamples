@@ -166,6 +166,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     chosen_dataset = []
     reject_dataset = []
     eos_enc = tokenizer.encode(end_of_conversation_token)
+    number_droped = 0
     if train_phase == 1:
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
@@ -181,11 +182,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          return_tensors="pt")
                 #check if eos anywhere in chosen_token
                 if eos_enc[-1] not in chosen_token["input_ids"].squeeze(0):
-                    print_rank_0(f"Last token is not eos in {chosen_sentence}", color="RED")
-                    print_rank_0(f"-----------------", color="BLUE")
-                    if torch.distributed.get_rank() == 0:
-                        from IPython import embed; embed(header=get_caller())
-                        exit()
+                    number_droped += 1
                     continue
                 prompt_token = tokenizer(prompt, 
                                          return_tensors="pt",
@@ -202,6 +199,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_token["attention_mask"] = chosen_token[
                     "attention_mask"].squeeze(0)
                 chosen_dataset.append(chosen_token)
+        print_rank_0(f"Number of dropped samples: {number_droped}", color="GREEN")
 
     elif train_phase == 2:
         for i, tmp_data in enumerate(current_dataset):
