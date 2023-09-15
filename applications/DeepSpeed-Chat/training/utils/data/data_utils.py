@@ -178,6 +178,10 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
+                #check if last token is eos
+                if chosen_token["input_ids"][0][-1] != tokenizer.eos_token_id:
+                    print_rank_0(f"Last token is not eos in {chosen_sentence}", color="RED")
+                    continue
                 prompt_token = tokenizer(prompt, 
                                          return_tensors="pt",
                                          max_length=max_seq_len,
@@ -193,6 +197,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_token["attention_mask"] = chosen_token[
                     "attention_mask"].squeeze(0)
                 chosen_dataset.append(chosen_token)
+                if i > 100:
+                    exit()
 
     elif train_phase == 2:
         for i, tmp_data in enumerate(current_dataset):
