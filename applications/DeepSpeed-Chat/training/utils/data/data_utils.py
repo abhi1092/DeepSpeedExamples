@@ -179,8 +179,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
-                #check if last token is eos
-                if chosen_token["input_ids"][0][-1] != eos_enc:
+                #check if eos anywhere in chosen_token
+                if eos_enc[-1] not in chosen_token["input_ids"].squeeze(0):
                     print_rank_0(f"Last token is not eos in {chosen_sentence}", color="RED")
                     print_rank_0(f"-----------------", color="BLUE")
                     if torch.distributed.get_rank() == 0:
