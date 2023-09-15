@@ -308,6 +308,7 @@ def main():
         args.max_seq_len,
         sft_only_data_path=args.sft_only_data_path,
         column_names=args.column_names,
+        end_of_conversation_token=END_KEY,
     )
     # DataLoaders creation:
     if args.local_rank == -1:
@@ -429,6 +430,8 @@ def main():
                 for l,input in zip(batch['labels'], batch['input_ids']):
                     print_rank_0(f"labels: {tokenizer.decode(l[l != -100],)}", color="YELLOW")
                     print_rank_0(f"input: {tokenizer.decode(input,)}", color="MAGENTA")
+                    # print int labels
+                    print_rank_0(f"labels: {l}", color="BLUE")
                 
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
