@@ -412,7 +412,10 @@ class JsonlDataset(LocalJsonFileDataset):
         # Check if eval path doesn't exist and make it equal to train otherwise
         if 'train' in train_path:
             for suffix in ['eval', 'val', 'dev', 'test', 'train']:
-                eval_path = train_path.replace('train', suffix)
+                #replace only on the file name, not the path
+                file_name = Path(train_path).name
+                eval_path = file_name.replace('train', suffix)
+                eval_path = Path(train_path).parent / eval_path
                 if Path(eval_path).is_file():
                     break
                 
