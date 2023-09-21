@@ -1,0 +1,10 @@
+{
+  "zero_optimization": {
+    "stage": 2
+  },
+  "train_micro_batch_size_per_gpu": 4,
+  "bf16": {
+    "enabled": true
+  },
+  "gradient_accumulation_steps": 2
+}

@@ -3,11 +3,12 @@
 
 # DeepSpeed Team
 import os
-import torch
+import inspect
 import random
+import json
+import torch
 import numpy as np
 from transformers import set_seed, AutoTokenizer
-import json
 import deepspeed
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 import torch.nn as nn
@@ -15,10 +16,12 @@ from colorama import Fore, Style
 from torch.distributed import get_rank
 
 
-def print_rank_0(msg, rank=None, color=None):
+def print_rank_0(msg, rank=None, color=None, include_caller=False):
     if rank is None:
         rank = get_rank()
     if rank <= 0:
+        if include_caller:
+            msg = f"{get_caller(num_frames=2)}: {msg}"
         if color is not None:
             if color in ["GREEN", "RED", "BLUE", "YELLOW", "MAGENTA", "CYAN", "WHITE"]:
                 color = getattr(Fore, color)
@@ -79,10 +82,10 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
             model_json_file = json.load(open(model_json))
             try:
                 model_name = model_json_file["_name_or_path"]
-                tokenizer = AutoTokenizer.from_pretrained(
-                    model_name, fast_tokenizer=fast_tokenizer)
+                tokenizer = get_tokenizer(model_name,
+                                        fast_tokenizer=fast_tokenizer)
             except (HFValidationError, KeyError) as e:
-                print_rank_0(f"tokenizer failed based on model name (expected for granite) with exception {e}", color=Fore.RED)
+                print_rank_0(f"tokenizer failed based on model name (expected for granite) with exception {e}", color="RED")
                 tokenizer = get_tokenizer(model_name_or_path,
                                           fast_tokenizer=fast_tokenizer)
     else:
@@ -111,6 +114,7 @@ def save_hf_format(model, tokenizer, args, sub_folder=""):
     print("saved model")
     model_to_save.config.to_json_file(output_config_file)
     tokenizer.save_vocabulary(output_dir)
+    tokenizer.save_pretrained(output_dir)
 
 
 def set_random_seed(seed):
@@ -281,12 +285,25 @@ def save_zero_three_model(model_ema, global_rank, save_dir, zero_stage=0):
         if global_rank == 0:
             torch.save(output_state_dict, output_model_file)
         del output_state_dict
-        
-        
-import inspect
+
+def get_column_names(args):
+    if args.prompt is None and args.chosen is None and args.rejected is None:
+        column_names = None
+    else:
+        column_names = {}
+        for k in ['prompt', 'chosen', 'rejected']:
+            if getattr(args, k) is None:
+                column_names[k] = k
+            else:
+                column_names[k] = getattr(args, k)
+    return column_names
+
 #returns the calling file and line number in a string
-def get_caller():
+def get_caller(num_frames=1):
     frame = inspect.currentframe().f_back
+    for _ in range(num_frames-1):
+        frame = frame.f_back
     file_name = frame.f_code.co_filename
     line_number = frame.f_lineno
     return f"In {file_name}, line {line_number}"
+    

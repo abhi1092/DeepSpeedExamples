@@ -12,9 +12,11 @@ from transformers import (
 )
 from huggingface_hub import snapshot_download
 from transformers.deepspeed import HfDeepSpeedConfig
+from megatron_models import GPTMegatronForCausalLM
+
 
 from .reward_model import RewardModel
-from ..utils import load_state_dict_into_model, get_caller, print_rank_0
+from ..utils import load_state_dict_into_model, print_rank_0
 
 
 def create_hf_model(model_class,
@@ -39,13 +41,25 @@ def create_hf_model(model_class,
         dschf = None
     if rlhf_training:
         # the weight loading is handled by create critic model
-        model = model_class.from_config(model_config, trust_remote_code=True)
+        if "granite" in model_name_or_path:
+            print_rank_0("Using GPTMegatronForCausalLM", color="GREEN")
+            model = GPTMegatronForCausalLM._from_config(model_config)
+        else:
+            model = model_class.from_config(model_config)
     else:
-        model = model_class.from_pretrained(
-            model_name_or_path,
-            from_tf=bool(".ckpt" in model_name_or_path),
-            config=model_config,
-            trust_remote_code=True,
+        if "granite" in model_name_or_path:
+            print_rank_0("Using GPTMegatronForCausalLM", color="GREEN")
+            model = GPTMegatronForCausalLM.from_pretrained(
+                model_name_or_path,
+                # from_tf=bool(".ckpt" in model_name_or_path),
+                # config=model_config
+                )
+            model.inject_sdpa()
+        else:
+            model = model_class.from_pretrained(
+                model_name_or_path,
+                from_tf=bool(".ckpt" in model_name_or_path),
+                config=model_config
             )
 
     model.config.end_token_id = tokenizer.eos_token_id

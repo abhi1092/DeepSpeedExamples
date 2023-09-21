@@ -4,6 +4,7 @@ from utils.utils import print_rank_0, Fore
 # DeepSpeed Team
 
 import torch
+import deepspeed.comm as dist
 
 GLOBAL_BATCH_SIZE = 32
 MICRO_BATCH_SIZE = 4
@@ -90,51 +91,24 @@ def get_train_ds_config(offload,
             "device": device,
             "pin_memory": True
         },
-        "allgather_partitions": True,
-        "allgather_bucket_size": 5e8,
-        "overlap_comm": True,
-        "reduce_scatter": True,
-        "reduce_bucket_size": 5e8,
-        "contiguous_gradients": True,
-        # "stage3_param_persistence_threshold": 1e6,
-        # "stage3_max_live_parameters": 14e9,
-        # "stage3_prefetch_bucket_size": 1e9,
-        # "stage3_max_reuse_distance": 1e9,
-        "stage3_gather_16bit_weights_on_model_save": False,
-        "sub_group_size": 1e12,
-        # "stage3_param_persistence_threshold": 1e4,
-        # "stage3_max_live_parameters": 3e7,
-        # "stage3_prefetch_bucket_size": 3e7,
-        "stage3_param_persistence_threshold": "auto",
-        "stage3_max_live_parameters": "auto",
-        "stage3_prefetch_bucket_size": "auto",
-        "stage3_max_reuse_size": "auto",
-        "memory_efficient_linear": False,
-        # "stage3_param_persistence_threshold": 1e6,
-        # "stage3_max_live_parameters": 1e9,
-        # "stage3_prefetch_bucket_size": 5e8,
-        #   "allgather_partitions": True,
-        # "allgather_bucket_size": 1e9,
-        # "overlap_comm": False,
-        # "reduce_scatter": True,
-        # "reduce_bucket_size": 1e8,
-        # "contiguous_gradients": False
     }
     if enable_mixed_precision_lora:
         zero_opt_dict["zero_quantized_nontrainable_weights"] = True
-        zero_opt_dict["zero_hpz_partition_size"] = torch.cuda.device_count()
+        if dist.get_world_size() != torch.cuda.device_count():
+            zero_opt_dict["zero_hpz_partition_size"] = torch.cuda.device_count(
+            )
     return {
         "train_batch_size": GLOBAL_BATCH_SIZE,
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
         # "train_micro_batch_size_per_gpu": "auto",
         "steps_per_print": 10,
         "zero_optimization": zero_opt_dict,
-        # "bf16": {
-        #     "enabled": True
+        # "fp16": {
+        #     "enabled": True,
+        #     "loss_scale_window": 100
         # },
-        "fp16": {
-            "enabled": True,
-            "loss_scale_window": 100
+        "bf16": {
+            "enabled": True
         },
         "gradient_clipping": 1.0,
         "prescale_gradients": False,

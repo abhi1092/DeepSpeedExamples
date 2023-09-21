@@ -6,16 +6,13 @@ import deepspeed
 from torch.utils.data import SequentialSampler, DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from transformers import (
-  default_data_collator,
-)
 import argparse
 import os
 import sys
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from utils.data.data_utils import create_prompt_dataset, DataCollatorRLHF
-from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, save_zero_three_model, load_hf_tokenizer
+from utils.utils import print_rank_0, get_column_names, to_device, set_random_seed, load_hf_tokenizer
 from sampling_engine import SamplingEngine
 
 def parse_args():
@@ -31,13 +28,22 @@ def parse_args():
       'Path to the training dataset. Accepted format: 1) a single data path, 2) multiple datasets in the form: dataset1-path dataset2-path ...'
   )
   parser.add_argument(
-      '--prompt_column_name',
+      '--prompt',
       type=str,
       default='prompt',
       help=
       'Name of the column containing the prompt in the dataset. Default: prompt'
   )
-  
+  parser.add_argument('--chosen',
+                      type=str,
+                      default=None,
+                      help="Name of the column in the dataset that contains the chosen answer"
+  )
+  parser.add_argument('--rejected',
+                      type=str,
+                      default=None,
+                      help="Name of the column in the dataset that contains the rejected answer"
+  )  
   parser.add_argument(
     "--num_answers_per_prompt",
     type=int,
@@ -150,7 +156,7 @@ def make_sample(out, tokenizer, max_prompt_seq_len: int, num_answers_per_prompt:
 def main():
   args = parse_args()
   args.local_rank = int(os.environ["LOCAL_RANK"])
-  
+  args.column_names = get_column_names(args)
   if args.local_rank == -1:
       device = torch.device("cuda")
   else:
@@ -182,7 +188,7 @@ def main():
     tokenizer,
     args.max_prompt_seq_len,
     reload=True,
-    prompt_column_name=args.prompt_column_name,
+    column_names=args.column_names,
     )
   
   # DataLoaders creation:

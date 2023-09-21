@@ -5,6 +5,7 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+from pathlib import Path
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 from torch.nn.utils.rnn import pad_sequence
@@ -15,13 +16,11 @@ import os
 import hashlib
 from itertools import chain
 from . import raw_datasets
-from utils.utils import print_rank_0, Fore
-import torch
-from pathlib import Path
+from utils.utils import get_caller, print_rank_0
 
-def get_raw_dataset(dataset_name, output_path, seed, local_rank, prompt_column_name=None):
 
-    print_rank_0(f"Loading dataset {dataset_name} ...", color=Fore.GREEN, rank=local_rank)
+def get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names=None):
+
     if "Dahoas/rm-static" in dataset_name:
         return raw_datasets.DahoasRmstaticDataset(output_path, seed,
                                                   local_rank, dataset_name)
@@ -78,16 +77,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank, prompt_column_n
             )
         return raw_datasets.LocalJsonFileDataset(output_path, seed, local_rank,
                                                  dataset_name, chat_path)
-    elif "rlhf_oasst" in dataset_name:
-        return raw_datasets.ShareOasstCustom(output_path, seed, local_rank, "share-oasst", dataset_name)
-    elif "tldr_" in dataset_name:
-        return raw_datasets.RedditTLDR(output_path, seed, local_rank, "tldr_reddit", dataset_name)
-    elif "stage2" in dataset_name:
-        print_rank_0(f'stage 2 dataset {dataset_name}', color=Fore.GREEN, rank=local_rank)
-        return raw_datasets.Stage2Data(output_path, seed, local_rank, "stage2_data", dataset_name)
     elif ".jsonl" in Path(dataset_name).name:
-        print_rank_0(f'jsonl dataset {dataset_name}', color=Fore.GREEN, rank=local_rank)
-        return raw_datasets.JsonlDataset(output_path, seed, local_rank, dataset_name, prompt_column_name)
+        print_rank_0(f'jsonl dataset {dataset_name}', color="GREEN", rank=local_rank)
+        return raw_datasets.JsonlDataset(output_path, seed, local_rank, dataset_name, column_names)
     else:
         raise RuntimeError(
             f"We do not have configs for dataset {dataset_name}, but you can add it by yourself in raw_datasets.py."
@@ -156,7 +148,9 @@ class PromptDataset(Dataset):
             return {
                 "input_ids": self.chosen_dataset[idx]["input_ids"],
                 "attention_mask": self.chosen_dataset[idx]["attention_mask"],
-                "labels": self.chosen_dataset[idx]["input_ids"]
+                "labels": self.chosen_dataset[idx]["input_ids"]\
+                    if "labels" not in self.chosen_dataset[idx] \
+                    else self.chosen_dataset[idx]["labels"]
             }
         elif self.train_phase == 2:
             return self.chosen_dataset[idx]["input_ids"], self.chosen_dataset[idx]["attention_mask"], \
@@ -171,11 +165,14 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
+    eos_enc = tokenizer.encode(end_of_conversation_token)
+    number_droped = 0
     if train_phase == 1:
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
                 tmp_data)  # the accept response
+            prompt = raw_dataset.get_prompt(tmp_data)
             if chosen_sentence is not None:
                 chosen_sentence += end_of_conversation_token
                 chosen_token = tokenizer(chosen_sentence,
@@ -183,11 +180,26 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          padding="max_length",
                                          truncation=True,
                                          return_tensors="pt")
+                #check if eos anywhere in chosen_token
+                if eos_enc[-1] not in chosen_token["input_ids"].squeeze(0):
+                    number_droped += 1
+                    continue
+                prompt_token = tokenizer(prompt, 
+                                         return_tensors="pt",
+                                         max_length=max_seq_len,
+                                         padding="max_length",
+                                         truncation=True)
+                assert tokenizer.padding_side == "right"
+                chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
+                #get lenght of prompt token
+                prompt_length = prompt_token["attention_mask"].sum().item()
+                chosen_token['labels'][:prompt_length] = -100
                 chosen_token["input_ids"] = chosen_token["input_ids"].squeeze(
                     0)
                 chosen_token["attention_mask"] = chosen_token[
                     "attention_mask"].squeeze(0)
                 chosen_dataset.append(chosen_token)
+        print_rank_0(f"Number of dropped samples: {number_droped}", color="GREEN")
 
     elif train_phase == 2:
         for i, tmp_data in enumerate(current_dataset):
@@ -241,8 +253,13 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
-                   max_seq_len, prompt_column_name=None):
-    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, prompt_column_name)
+                   max_seq_len, column_names=None):
+    
+    raw_dataset = get_raw_dataset(dataset_name,
+                                  output_path, 
+                                  seed, 
+                                  local_rank, 
+                                  column_names)
     train_dataset = raw_dataset.get_train_data()
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
@@ -250,11 +267,13 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                               train_phase - 1,
                                               len(train_dataset))
     train_dataset = Subset(train_dataset, train_index)
-    train_dataset = create_dataset_split(train_dataset, raw_dataset,
-                                         train_phase, tokenizer,
+    train_dataset = create_dataset_split(train_dataset,
+                                         raw_dataset,
+                                         train_phase,
+                                         tokenizer,
                                          end_of_conversation_token,
-                                         max_seq_len)
-
+                                         max_seq_len
+                                         )
     eval_dataset = raw_dataset.get_eval_data()
     eval_index = get_raw_dataset_split_index(local_rank, output_path,
                                              raw_dataset.dataset_name_clean,
@@ -279,12 +298,12 @@ def create_prompt_dataset(local_rank,
                           end_of_conversation_token="<|endoftext|>", #TODO: need to change the end conversation token?
                           sft_only_data_path=[],
                           reload=False,
-                          prompt_column_name=None, #added only for sampling
+                          column_names=None, #added only for sampling
                           ):
     """
     Creates the prompt dataset
     """
-    print_rank_0(f"Creating prompt dataset {data_path} ...", color=Fore.GREEN, rank=0)
+    print_rank_0(f"Creating prompt dataset {data_path} ...", color="GREEN")
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
@@ -304,7 +323,7 @@ def create_prompt_dataset(local_rank,
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
-                seed, tokenizer, end_of_conversation_token, max_seq_len, prompt_column_name)
+                seed, tokenizer, end_of_conversation_token, max_seq_len, column_names)
         else:  # Blending datasets.
             train_datasets = []
             eval_datasets = []
@@ -313,7 +332,7 @@ def create_prompt_dataset(local_rank,
             for d_path in data_path:
                 train_dataset, eval_dataset = create_dataset(
                     local_rank, d_path, data_split, output_path, train_phase,
-                    seed, tokenizer, end_of_conversation_token, max_seq_len, prompt_column_name)
+                    seed, tokenizer, end_of_conversation_token, max_seq_len, column_names)
                 train_datasets.append(train_dataset)
                 eval_datasets.append(eval_dataset)
                 train_size += len(train_dataset)
@@ -342,6 +361,7 @@ def create_prompt_dataset(local_rank,
                     tokenizer,
                     end_of_conversation_token,
                     max_seq_len,
+                    column_names,
                 )
                 sft_train_datasets.append(sft_train_dataset)
                 sft_eval_datasets.append(sft_eval_dataset)

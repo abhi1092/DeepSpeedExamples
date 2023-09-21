@@ -8,6 +8,7 @@ import os
 import math
 import sys
 import time
+import optuna
 
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
@@ -26,10 +27,11 @@ from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from utils.data.data_utils import create_prompt_dataset
-from utils.utils import print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, get_optimizer_grouped_parameters, save_zero_three_model, load_hf_tokenizer
+from utils.utils import get_caller, get_column_names, print_rank_0, to_device, save_hf_format, set_random_seed, get_all_reduce_mean, get_optimizer_grouped_parameters, save_zero_three_model, load_hf_tokenizer
 from utils.ds_utils import get_train_ds_config
 from utils.module.lora import convert_linear_layer_to_lora, convert_lora_to_linear_layer, only_optimize_lora_parameters, make_model_gradient_checkpointing_compatible
 from utils.model.model_utils import create_hf_model
+from utils.perf import print_throughput
 
 
 def parse_args():
@@ -49,6 +51,21 @@ def parse_args():
                         'phase 1, 2, and 3 data. For example the split `6,2,2`'
                         'will use 60%% of data for phase 1, 20%% for phase 2'
                         'and 20%% for phase 3.')
+    parser.add_argument('--prompt',
+                      type=str,
+                      default=None,
+                      help="Name of the column in the dataset that contains the prompt"
+        )
+    parser.add_argument('--chosen',
+                        type=str,
+                        default=None,
+                        help="Name of the column in the dataset that contains the chosen answer"
+    )
+    parser.add_argument('--rejected',
+                        type=str,
+                        default=None,
+                        help="Name of the column in the dataset that contains the rejected answer"
+    )  
     parser.add_argument(
         '--sft_only_data_path',
         nargs='*',
@@ -127,6 +144,10 @@ def parse_args():
                         type=str,
                         default=None,
                         help="Where to store the model.")
+    parser.add_argument("--save_steps",
+                        type=int,
+                        default=3000,
+                        help="Save checkpoint every X updates steps.")
     parser.add_argument("--seed",
                         type=int,
                         default=1234,
@@ -180,27 +201,48 @@ def parse_args():
     parser.add_argument('--print_loss',
                         action='store_true',
                         help='Prints loss at each step.')
-    ## number of checkpoints to save
-    parser.add_argument('--save_n_checkpoints',
+    
+    ## optuna optimization
+    parser.add_argument("--optuna_study_name",
+                        type=str,
+                        default=None,
+                        help="The study name for optuna optimization.")
+    parser.add_argument("--optuna_storage",
+                        type=str,
+                        default=None,
+                        help="The storage for optuna optimization.")
+    parser.add_argument("--max_time",
                         type=int,
-                        default=4,
-                        help='Number of checkpoints to save.')
-    parser.add_argument("--start_saving_checkpoint_step",
-                        type=int,
-                        default=0,
-                        help="The step to start saving checkpoints.")
+                        default=None,
+                        help="The max number of seconds for optuna optimization.")
+    
+    
     parser = deepspeed.add_config_arguments(parser)
+    
+    
     args = parser.parse_args()
 
     return args
 
+def setup_optuna(args):
+    study = None
+    trial = None
+    optuna_start_time = None
+    if args.optuna_study_name and args.optuna_storage and args.local_rank == 0:
+        study = optuna.load_study(study_name=args.optuna_study_name, storage=args.optuna_storage)
+        trial = study.ask()
+        print(f"TRIAL_NUMBER:{trial.number}", flush=True)
+        optuna_start_time = time.time()
+        args.learning_rate = trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True)
+        args.weight_decay = trial.suggest_float("weight_decay", 1e-6, 0.1, log=True)
+        if args.weight_decay <= 1e-5:
+            args.weight_decay = 0.0
+    return study, trial, optuna_start_time
+
 
 def main():
     args = parse_args()
-    
-    #pretty print the args
-    
-    
+    args.column_names = get_column_names(args)
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
     if args.local_rank == -1:
@@ -211,8 +253,12 @@ def main():
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
         deepspeed.init_distributed()
-    args.global_rank = torch.distributed.get_rank()
+        
+    study, trial, optuna_start_time = setup_optuna(args)
 
+    args.global_rank = torch.distributed.get_rank()
+    print_rank_0(f'column_names: {args.column_names}', color="GREEN")
+    print_rank_0(f'args: {args}', color="GREEN")
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
                                     enable_tensorboard=args.enable_tensorboard,
@@ -223,16 +269,23 @@ def main():
     ds_config[
         'train_batch_size'] = args.per_device_train_batch_size * torch.distributed.get_world_size(
         ) * args.gradient_accumulation_steps
+    ds_config['gradient_accumulation_steps'] = args.gradient_accumulation_steps
 
     # If passed along, set the training seed now.
     set_random_seed(args.seed)
     tensor = torch.ByteTensor([False]).cuda()
     torch.distributed.all_reduce(tensor)
-    print(f"All reduce test 1 on global rank {args.global_rank} rank {args.local_rank}")
     torch.distributed.barrier()
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+   
+    HUMAN_KEY = "<|user|>"
+    ASSISTANT_KEY = "<|assistant|>"
+    CONTEXT_KEY = "<|context|>"
+    END_KEY = "<|end|>"
+   
+    tokenizer.add_special_tokens({"additional_special_tokens": [CONTEXT_KEY, HUMAN_KEY, ASSISTANT_KEY, END_KEY]})
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
@@ -257,7 +310,11 @@ def main():
         args.seed,
         tokenizer,
         args.max_seq_len,
-        sft_only_data_path=args.sft_only_data_path)
+        sft_only_data_path=args.sft_only_data_path,
+        column_names=args.column_names,
+        end_of_conversation_token=END_KEY,
+        reload=False,
+    )
     # DataLoaders creation:
     if args.local_rank == -1:
         train_sampler = RandomSampler(train_dataset)
@@ -273,10 +330,10 @@ def main():
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
+        step = 1
         for step, batch in enumerate(eval_dataloader):
             batch = to_device(batch, device)
             with torch.no_grad():
@@ -293,17 +350,20 @@ def main():
             perplexity = get_all_reduce_mean(perplexity).item()
         except:
             pass
+        model.train()
         return perplexity
-
+    
+    
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
         model, args.weight_decay, args.lora_learning_rate)
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     AdamOptimizer = DeepSpeedCPUAdam if args.offload else FusedAdam
     optimizer = AdamOptimizer(optimizer_grouped_parameters,
                               lr=args.learning_rate,
                               betas=(0.9, 0.95))
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     num_update_steps_per_epoch = math.ceil(
         len(train_dataloader) / args.gradient_accumulation_steps)
     print_rank_0("Getting lr scheduler")
@@ -321,26 +381,64 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
-
+    print_rank_0(f"debugging", color="RED", include_caller=True)
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
+        
+    def optuna_operations(loss, step, final=False):
+        if study:
+            print_rank_0(f"debugging", color="RED", include_caller=True)
+            if final:
+                # Report final metric
+                print_rank_0(f"debugging", color="RED", include_caller=True)
+                final_metric_value = evaluation(model, eval_dataloader)
+                print_rank_0(f"debugging", color="RED", include_caller=True)
+                study.tell(trial, final_metric_value)
+            else:
+                if args.global_rank == 0:
+                    trial.report(loss.item(), step=step)
+                    print_rank_0(f"debugging", color="RED", include_caller=True)
+                    # Pruning based on the loss
+                    print_rank_0(f"debugging", color="RED", include_caller=True)
+                    if trial.should_prune():
+                        print_rank_0(f"debugging", color="RED", include_caller=True)
+                        study.tell(trial, state=optuna.trial.TrialState.PRUNED)
+                        exit()
+                    
+            # Check if max_time has passed and perform evaluation
+            elapsed_time = time.time() - optuna_start_time
+            if args.max_time and elapsed_time > args.max_time:
+                print_rank_0(f"debugging", color="RED", include_caller=True)
+                print_rank_0(f"EVALUATING AFTER MAX TIME EXCEDEED", color="GREEN")
+                final_metric_value = evaluation(model, eval_dataloader)
+                if args.global_rank == 0:
+                    study.tell(trial, final_metric_value)
+                print(f"Max time exceeded. Final Metric Value: {final_metric_value}")
+                exit()
 
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
-    # print_rank_0(
-    #     f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
-    #     args.global_rank)
+    print_rank_0(
+        f"***** Evaluating perplexity, Epoch {0}/{args.num_train_epochs} *****",
+        args.global_rank)
     # perplexity = evaluation(model, eval_dataloader)
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
-    chkpts_saving_steps = math.ceil((len(train_dataloader) - args.start_saving_checkpoint_step)/ (args.save_n_checkpoints+1))
-        
-    print_rank_0(f"chkpts_saving_steps: {chkpts_saving_steps}", args.global_rank, color='GREEN')
+
     for epoch in range(args.num_train_epochs):
         print_rank_0(
             f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
             args.global_rank)
         model.train()
         for step, batch in enumerate(train_dataloader):
+            start = time.time()
+            #decode all labels that are different from -100
+            # if step % 10 == 0 and step < 100:
+            #     for l,input in zip(batch['labels'], batch['input_ids']):
+            #         print_rank_0(f"labels: {tokenizer.decode(l[l != -100],)}", color="YELLOW")
+            #         print_rank_0(f"input: {tokenizer.decode(input,)}", color="MAGENTA")
+            #         # print int labels
+            #         print_rank_0(f"labels: {l}", color="BLUE")
+                
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
             loss = outputs.loss
@@ -350,24 +448,26 @@ def main():
                 )
             model.backward(loss)
             model.step()
+            end = time.time()
+            if torch.distributed.get_rank() == 0:
+                print_throughput(model.module, args, end - start,
+                                 args.global_rank)
+            if step % 5 == 0:
+                optuna_operations(loss, step)
             
-            if args.output_dir is not None and step % chkpts_saving_steps == 0 and step >= args.start_saving_checkpoint_step:
-                print_rank_0(f'SAVING does NOT work with LORA', args.global_rank, color='RED')
-                start = time.time()
-                print_rank_0(f'saving the model at step {step} ...',
-                            args.global_rank,
-                            color='GREEN')
+            if args.output_dir is not None and (step+1) % args.save_steps == 0:
+                print_rank_0('saving the final model ...', args.global_rank)
+                model = convert_lora_to_linear_layer(model)
 
                 if args.global_rank == 0:
-                    save_hf_format(model, tokenizer, args, sub_folder=f"step_{step}")
+                    save_hf_format(model, tokenizer, args, sub_folder=f"step1_model/epoch_{epoch}_step_{step}")
 
                 if args.zero_stage == 3:
                     # For zero stage 3, each gpu only has a part of the model, so we need a special save function
                     save_zero_three_model(model,
                                         args.global_rank,
-                                        args.output_dir + f"/step_{step}",
+                                        args.output_dir,
                                         zero_stage=args.zero_stage)
-                print_rank_0(f"Saving model took {time.time() - start} seconds", args.global_rank, color='GREEN')
 
         #Evaluate perplexity on the validation set.
         print_rank_0(
@@ -376,23 +476,6 @@ def main():
         perplexity = evaluation(model, eval_dataloader)
         print_rank_0(f"ppl: {perplexity}", args.global_rank, color='GREEN')
         model.tput_timer.update_epoch_count()
-
-        
-
-    if args.output_dir is not None:
-        print_rank_0('saving the final model ...', args.global_rank)
-        model = convert_lora_to_linear_layer(model)
-
-        if args.global_rank == 0:
-            save_hf_format(model, tokenizer, args)
-
-        if args.zero_stage == 3:
-            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
-            save_zero_three_model(model,
-                                  args.global_rank,
-                                  args.output_dir,
-                                  zero_stage=args.zero_stage)
-
 
 if __name__ == "__main__":
     main()

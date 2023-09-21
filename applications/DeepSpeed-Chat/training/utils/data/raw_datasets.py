@@ -2,12 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # DeepSpeed Team
+from pathlib import Path
+from types import SimpleNamespace
 from datasets import load_dataset
 from torch.utils.data import Subset
 import re
 from utils.utils import get_caller, print_rank_0, Fore
 import torch
 from pathlib import Path
+
+from utils.utils import print_rank_0
 
 
 # The template prompt dataset class that all new dataset porting needs to
@@ -468,6 +472,54 @@ class Stage2Data(LocalJsonFileDataset):
         
         
     
+
+class JsonlDataset(LocalJsonFileDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name, column_names = None):
+        self.dataset_name = dataset_name
+        self.dataset_name_clean = Path(dataset_name).name
+        
+        print_rank_0(f"Loading JsonlDataset {self.dataset_name}", rank=local_rank, color="GREEN")
+        train_path = dataset_name
+        eval_path = train_path
+        
+        # Check if eval path doesn't exist and make it equal to train otherwise
+        if 'train' in train_path:
+            for suffix in ['eval', 'val', 'dev', 'test', 'train']:
+                #replace only on the file name, not the path
+                file_name = Path(train_path).name
+                eval_path = file_name.replace('train', suffix)
+                eval_path = str(Path(train_path).parent / eval_path)
+                if Path(eval_path).is_file():
+                    break
+                
+        if eval_path == train_path:
+            print_rank_0(f"Warning: eval path {eval_path} does not exist, using train path instead", rank=local_rank, color="YELLOW")
+            
+        self.raw_datasets = load_dataset('json',
+                                            data_files={
+                                                "train":
+                                                train_path,
+                                                "eval":
+                                                eval_path,
+                                            })
+        
+        column_names = column_names if column_names is not None else {'prompt': 'prompt', 'chosen': 'chosen', 'rejected': 'rejected'}
+        self.columns = SimpleNamespace(**column_names)
+        
+    def get_prompt(self, sample):
+        return sample[self.columns.prompt]
+    
+    def get_chosen(self, sample):
+        return sample[self.columns.chosen]
+    
+    def get_rejected(self, sample):
+        return sample[self.columns.rejected]
+    
+    def get_prompt_and_chosen(self, sample):
+        return sample[self.columns.prompt] + sample[self.columns.chosen]
+    
+    def get_prompt_and_rejected(self, sample):
+        return sample[self.columns.prompt] + sample[self.columns.rejected]
 
 
 # Chinese dataset
