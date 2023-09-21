@@ -14,5 +14,5 @@ Then you can run the file with:
 python -m training_scripts.optuna_optimization.optuna_optimization\
  --n_trials 100 \
  --study_name granite_13b\
- --storage sqlite:////new_data/granite_13b.db
+ --database_url sqlite:////new_data/granite_13b.db
 ```
