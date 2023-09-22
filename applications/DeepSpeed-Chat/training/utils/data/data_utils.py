@@ -6,6 +6,7 @@
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
 from pathlib import Path
+import time
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 from torch.nn.utils.rnn import pad_sequence
@@ -168,6 +169,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     reject_dataset = []
     eos_enc = tokenizer.encode(end_of_conversation_token)
     number_droped = 0
+    start_time = time.time()
     if train_phase == 1:
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
@@ -248,6 +250,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                         y = prompt_token[key_word].squeeze(0).flip(0)
                     prompt_token[key_word] = y
                 prompt_dataset.append(prompt_token)
+    print_rank_0(f"Time to create dataset: {time.time() - start_time}", color="GREEN", include_caller=True)
     return PromptDataset(prompt_dataset, chosen_dataset, reject_dataset,
                          tokenizer.pad_token_id, train_phase)
 
