@@ -162,6 +162,9 @@ class PromptDataset(Dataset):
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len):
+    #print debug rank 0
+    print_rank_0(f"Creating dataset split for train phase {train_phase} ...", color="RED", include_caller=True)
+    assert tokenizer.padding_side == "right"
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
@@ -189,7 +192,6 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                          max_length=max_seq_len,
                                          padding="max_length",
                                          truncation=True)
-                assert tokenizer.padding_side == "right"
                 chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
                 #get lenght of prompt token
                 prompt_length = prompt_token["attention_mask"].sum().item()
