@@ -162,6 +162,7 @@ class PromptDataset(Dataset):
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len):
+    print_rank_0(f"Creating dataset for {get_caller()}", color="RED", include_caller=True)
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
