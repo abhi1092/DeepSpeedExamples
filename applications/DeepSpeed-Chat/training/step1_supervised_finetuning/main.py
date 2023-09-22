@@ -4,6 +4,7 @@
 
 # DeepSpeed Team
 import argparse
+from datetime import timedelta
 import os
 import math
 import sys
@@ -252,7 +253,7 @@ def main():
         device = torch.device("cuda", args.local_rank)
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         # torch.distributed.init_process_group(backend='nccl')
-        deepspeed.init_distributed()
+        deepspeed.init_distributed(timeout=timedelta(minutes=60))
         
     study, trial, optuna_start_time = setup_optuna(args)
 
