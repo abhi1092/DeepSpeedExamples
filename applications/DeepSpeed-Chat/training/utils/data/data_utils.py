@@ -300,7 +300,7 @@ def create_prompt_dataset(local_rank,
     """
     Creates the prompt dataset
     """
-    output_path = str(Path(output_path) / f"rank_{os.environ['RANK']}")
+    output_path = str(Path(output_path) / f"rank_{os.environ['GROUP_RANK']}")
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
