@@ -123,6 +123,9 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
             np.save(shuffle_idx_split_file_name,
                     shuffle_idx_split,
                     allow_pickle=True)
+    #set a barrier
+    print_rank_0(f"Waiting for all processes to reach this point, this will block if keep_in_ram is false gotta fix it.", color="RED", include_caller=True)
+    torch.distributed.barrier() #this will block if not all procceses have reached this point
     index = np.load(index_file_name, allow_pickle=True)
     return index.tolist()
 
