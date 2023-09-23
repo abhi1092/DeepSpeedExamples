@@ -5,6 +5,7 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 import time
 import torch
@@ -160,6 +161,69 @@ class PromptDataset(Dataset):
             return self.prompt_dataset[idx]["input_ids"],self.prompt_dataset[idx]["attention_mask"], \
                 self.pad_token_id
 
+class DatasetSplitter:
+    def __init__(self, raw_dataset, train_phase, tokenizer, end_of_conversation_token, max_seq_len, parallel=False):
+        self.raw_dataset = raw_dataset
+        self.train_phase = train_phase
+        self.tokenizer = tokenizer
+        self.end_of_conversation_token = end_of_conversation_token
+        self.max_seq_len = max_seq_len
+        self.eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
+        assert self.tokenizer.padding_side == "right"
+        self.parallel = parallel
+
+    def process_data(self, tmp_data):
+        if self.train_phase == 1:
+            chosen_sentence = self.raw_dataset.get_prompt_and_chosen(tmp_data)
+            prompt = self.raw_dataset.get_prompt(tmp_data)
+            if chosen_sentence is not None:
+                chosen_sentence += self.end_of_conversation_token
+                chosen_token = self.tokenizer(chosen_sentence,
+                                            max_length=self.max_seq_len,
+                                            padding="max_length",
+                                            truncation=True,
+                                            return_tensors="pt")
+                #check if eos anywhere in chosen_token
+                if self.eos_token_id not in chosen_token["input_ids"].squeeze(0):
+                    return None
+                prompt_token = self.tokenizer(prompt, 
+                                            return_tensors="pt",
+                                            max_length=self.max_seq_len,
+                                            padding="max_length",
+                                            truncation=True)
+                
+                chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
+                #get lenght of prompt token
+                prompt_length = prompt_token["attention_mask"].sum().item()
+                chosen_token['labels'][:prompt_length] = -100
+                chosen_token["input_ids"] = chosen_token["input_ids"].squeeze(
+                    0)
+                chosen_token["attention_mask"] = chosen_token[
+                    "attention_mask"].squeeze(0)
+                
+                return chosen_token
+        else:
+            raise NotImplementedError   
+        return None
+
+    def create_dataset_split(self, current_dataset):
+        chosen_dataset = []
+        if self.parallel:
+            with ProcessPoolExecutor(os.cpu_count()//4) as executor:
+                chosen_dataset = list(executor.map(self.process_data, current_dataset))
+        else:
+            chosen_dataset = [self.process_data(d) for d in current_dataset]
+        
+        chosen_dataset_filtered = [d for d in chosen_dataset if d is not None]
+        
+        print_rank_0(f"Number of dropped samples: {len(chosen_dataset) - len(chosen_dataset_filtered)}", color="GREEN")
+        
+        return chosen_dataset_filtered
+
+    # def __getstate__(self):
+    #     state = self.__dict__.copy()
+    #     return state
+
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len):
@@ -259,6 +323,8 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
                    max_seq_len, column_names=None):
     raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names)
+    splitter = DatasetSplitter(raw_dataset, train_phase, tokenizer, end_of_conversation_token, max_seq_len, parallel=True)
+    
     train_dataset = raw_dataset.get_train_data()
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
@@ -266,10 +332,11 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                               train_phase - 1,
                                               len(train_dataset))
     train_dataset = Subset(train_dataset, train_index)
-    train_dataset = create_dataset_split(train_dataset, raw_dataset,
-                                         train_phase, tokenizer,
-                                         end_of_conversation_token,
-                                         max_seq_len)
+    train_dataset = splitter.create_dataset_split(train_dataset)
+    # train_dataset = create_dataset_split(train_dataset, raw_dataset,
+    #                                      train_phase, tokenizer,
+    #                                      end_of_conversation_token,
+    #                                      max_seq_len)
 
     eval_dataset = raw_dataset.get_eval_data()
     eval_index = get_raw_dataset_split_index(local_rank, output_path,
@@ -278,9 +345,10 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                              data_split, train_phase - 1,
                                              len(eval_dataset))
     eval_dataset = Subset(eval_dataset, eval_index)
-    eval_dataset = create_dataset_split(eval_dataset, raw_dataset, train_phase,
-                                        tokenizer, end_of_conversation_token,
-                                        max_seq_len)
+    eval_dataset = splitter.create_dataset_split(eval_dataset)
+    # eval_dataset = create_dataset_split(eval_dataset, raw_dataset, train_phase,
+    #                                     tokenizer, end_of_conversation_token,
+    #                                     max_seq_len)
     return train_dataset, eval_dataset
 
 
@@ -300,6 +368,7 @@ def create_prompt_dataset(local_rank,
     """
     Creates the prompt dataset
     """
+    output_path = f"{output_path}/global_rank_{torch.distributed.get_rank()}"
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
@@ -312,6 +381,10 @@ def create_prompt_dataset(local_rank,
     eval_fname = f"{output_path}/evaldata_{fname}.pt"
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
+    if cache_found:
+        print_rank_0(f"Loading cached dataset from {output_path}", color="GREEN")
+    else:
+        print_rank_0(f"Creating dataset at {output_path}", color="GREEN")
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
 
