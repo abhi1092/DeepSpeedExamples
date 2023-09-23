@@ -246,7 +246,6 @@ def main():
     args.column_names = get_column_names(args)
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
-    args.node_rank = int(os.environ["NODE_RANK"])
     print(args)
     from IPython import embed; embed()
     exit()
