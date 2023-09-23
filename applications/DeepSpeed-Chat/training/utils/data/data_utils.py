@@ -387,8 +387,12 @@ def create_prompt_dataset(local_rank,
         print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)
     torch.distributed.barrier()
+    start = time.time()
     print_rank_0(f"Loading dataset from {train_fname} rank: {local_rank}", color="GREEN", rank=0)
-    return torch.load(train_fname), torch.load(eval_fname)
+    train_dataset, eval_dataset = torch.load(train_fname), torch.load(
+        eval_fname)
+    print_rank_0(f"Time to load dataset: {time.time() - start}", color="GREEN", rank=0)
+    return train_dataset, eval_dataset
 
 
 class DataCollatorReward:

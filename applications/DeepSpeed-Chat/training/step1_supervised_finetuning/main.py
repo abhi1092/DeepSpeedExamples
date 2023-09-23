@@ -318,7 +318,7 @@ def main():
         sft_only_data_path=args.sft_only_data_path,
         column_names=args.column_names,
         end_of_conversation_token=END_KEY,
-        reload=False,
+        reload=True,
     )
     # DataLoaders creation:
     if args.local_rank == -1:
