@@ -247,8 +247,8 @@ def main():
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
     print(args)
-    from IPython import embed; embed()
-    exit()
+    if args.local_rank = 0:
+        from IPython import embed; embed()
     
     
     if args.local_rank == -1:
