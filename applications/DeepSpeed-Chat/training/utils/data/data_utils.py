@@ -317,7 +317,7 @@ def create_prompt_dataset(local_rank,
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
 
-    if (buf_create_cache.item() != 0 or reload):
+    if not (buf_create_cache.item() != 0 or reload):
         print_rank_0(f"Loading cached dataset from {train_fname} rank: {local_rank}", color="GREEN")
     else:
         print_rank_0(f"Creating dataset at {train_fname}  rank: {local_rank}", color="GREEN")
