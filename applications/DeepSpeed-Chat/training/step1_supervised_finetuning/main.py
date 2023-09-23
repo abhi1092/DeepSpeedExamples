@@ -246,6 +246,11 @@ def main():
     args.column_names = get_column_names(args)
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
+    args.node_rank = int(os.environ["NODE_RANK"])
+    print(args)
+    exit()
+    
+    
     if args.local_rank == -1:
         device = torch.device("cuda")
     else:
