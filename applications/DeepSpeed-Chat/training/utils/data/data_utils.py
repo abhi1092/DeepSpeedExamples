@@ -123,9 +123,6 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
             np.save(shuffle_idx_split_file_name,
                     shuffle_idx_split,
                     allow_pickle=True)
-    #set a barrier
-    print_rank_0(f"Waiting for all processes to reach this point, this will block if keep_in_ram is false gotta fix it.", color="RED", include_caller=True)
-    torch.distributed.barrier() #this will block if not all procceses have reached this point
     index = np.load(index_file_name, allow_pickle=True)
     return index.tolist()
 
@@ -299,12 +296,11 @@ def create_prompt_dataset(local_rank,
                           sft_only_data_path=[],
                           reload=False,
                           column_names=None, #added only for sampling
-                          keep_in_ram=True,
                           ):
     """
     Creates the prompt dataset
     """
-    # output_path = str(Path(output_path) / f"rank_{os.environ['GROUP_RANK']}")
+    output_path = str(Path(output_path) / f"rank_{os.environ['GROUP_RANK']}")
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
@@ -326,7 +322,7 @@ def create_prompt_dataset(local_rank,
     else:
         print_rank_0(f"Creating dataset at {train_fname}  rank: {local_rank}", color="GREEN")
         
-    if (local_rank <= 0 and (buf_create_cache.item() != 0 or reload)) or keep_in_ram:
+    if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
@@ -385,8 +381,6 @@ def create_prompt_dataset(local_rank,
                 eval_dataset = ConcatDataset([eval_dataset, sft_eval_dataset])
                 shuffle_idx = get_shuffle_idx(seed, len(eval_dataset))
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
-        if keep_in_ram:
-            return train_dataset, eval_dataset
         print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
         start = time.time()
         torch.save(train_dataset, train_fname)
