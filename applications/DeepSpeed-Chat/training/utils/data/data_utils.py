@@ -296,6 +296,7 @@ def create_prompt_dataset(local_rank,
     """
     Creates the prompt dataset
     """
+    output_path = f"{output_path}/global_rank_{torch.distributed.get_rank()}"
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
@@ -308,6 +309,10 @@ def create_prompt_dataset(local_rank,
     eval_fname = f"{output_path}/evaldata_{fname}.pt"
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
+    if cache_found:
+        print_rank_0(f"Loading cached dataset from {output_path}", color="GREEN")
+    else:
+        print_rank_0(f"Creating dataset at {output_path}", color="GREEN")
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
 
