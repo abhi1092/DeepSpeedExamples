@@ -315,9 +315,9 @@ def create_prompt_dataset(local_rank,
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     if cache_found:
-        print_rank_0(f"Loading cached dataset from {output_path} rank: {local_rank}", color="GREEN", rank=0)
+        print_rank_0(f"Loading cached dataset from {train_fname} rank: {local_rank}", color="GREEN", rank=0)
     else:
-        print_rank_0(f"Creating dataset at {output_path}  rank: {local_rank}", color="GREEN", rank=0)
+        print_rank_0(f"Creating dataset at {train_fname}  rank: {local_rank}", color="GREEN", rank=0)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
 
@@ -380,6 +380,7 @@ def create_prompt_dataset(local_rank,
                 eval_dataset = ConcatDataset([eval_dataset, sft_eval_dataset])
                 shuffle_idx = get_shuffle_idx(seed, len(eval_dataset))
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
+        print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
         torch.save(train_dataset, train_fname)
         torch.save(eval_dataset, eval_fname)
     torch.distributed.barrier()
