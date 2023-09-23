@@ -314,13 +314,14 @@ def create_prompt_dataset(local_rank,
     eval_fname = f"{output_path}/evaldata_{fname}.pt"
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
-    if cache_found:
-        print_rank_0(f"Loading cached dataset from {train_fname} rank: {local_rank}", color="GREEN", rank=0)
-    else:
-        print_rank_0(f"Creating dataset at {train_fname}  rank: {local_rank}", color="GREEN", rank=0)
-    buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
+    buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
 
+    if (buf_create_cache.item() != 0 or reload):
+        print_rank_0(f"Loading cached dataset from {train_fname} rank: {local_rank}", color="GREEN")
+    else:
+        print_rank_0(f"Creating dataset at {train_fname}  rank: {local_rank}", color="GREEN")
+        
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
@@ -381,9 +382,12 @@ def create_prompt_dataset(local_rank,
                 shuffle_idx = get_shuffle_idx(seed, len(eval_dataset))
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
         print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
+        start = time.time()
         torch.save(train_dataset, train_fname)
+        print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)
     torch.distributed.barrier()
+    print_rank_0(f"Loading dataset from {train_fname} rank: {local_rank}", color="GREEN", rank=0)
     return torch.load(train_fname), torch.load(eval_fname)
 
 
