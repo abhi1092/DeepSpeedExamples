@@ -145,6 +145,13 @@ def parse_args():
                         type=str,
                         default=None,
                         help="Where to store the model.")
+    parser.add_argument("--save_checkpoint",
+                        action='store_true',
+                        help="Save a deepspeed checkpoint every save_steps steps.")
+    parser.add_argument("--load_checkpoint_path",
+                        type=str,
+                        default=None,
+                        help="Path to load checkpoint from.")
     parser.add_argument("--save_steps",
                         type=int,
                         default=3000,
@@ -388,6 +395,9 @@ def main():
     print_rank_0(f"debugging", color="RED", include_caller=True)
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
+    
+    if args.load_checkpoint_path:
+        model.load_checkpoint(args.load_checkpoint_path)
         
     def optuna_operations(loss, step, final=False):
         if study:
@@ -472,6 +482,11 @@ def main():
                                         args.global_rank,
                                         args.output_dir,
                                         zero_stage=args.zero_stage)
+                    
+                if args.save_checkpoint:
+                    output_path = os.path.join(args.output_dir, f"deepspeed_checkoint_{epoch}_{step}")
+                    os.makedirs(output_path, exist_ok=True)
+                    model.save_checkpoint(output_path)
                     
 
         # Evaluate perplexity on the validation set.
