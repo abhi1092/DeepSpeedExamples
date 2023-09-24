@@ -5,7 +5,7 @@ function run_training() {
     cd /app/DeepSpeedExamples-internal/applications/DeepSpeed-Chat/training/step1_supervised_finetuning
     git pull
     git checkout fixing_oom_step0
-    HF_DATASETS_CACHE=/app/hf nohup torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint="${MASTER_ADDR}:${MASTER_PORT}" \
+    HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint="${MASTER_ADDR}:${MASTER_PORT}" \
     main.py \
    --print_loss \
    --data_path  /new_data/datasets/forca_092423_splits/train_${split_index}.jsonl \
@@ -30,7 +30,7 @@ function run_training() {
    --zero_stage 2 \
    --deepspeed \
    --output_dir /new_data/granite_v2_forca_092123/ \
-   --save_steps 100 > nohup_1.out 2>&1
+   --save_steps 100
 }
 
 for i in {0..4}
