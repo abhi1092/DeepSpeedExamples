@@ -502,7 +502,11 @@ def main():
                     output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
                     os.makedirs(output_path, exist_ok=True)
                     model.save_checkpoint(output_path)
-                    
+
+        if args.save_checkpoint:
+            output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
+            os.makedirs(output_path, exist_ok=True)
+            model.save_checkpoint(output_path)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
