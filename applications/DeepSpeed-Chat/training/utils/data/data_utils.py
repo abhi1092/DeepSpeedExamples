@@ -386,6 +386,9 @@ def create_prompt_dataset(local_rank,
         torch.save(train_dataset, train_fname)
         print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)
+        #delete train and eval datasets to save memory
+        del train_dataset
+        del eval_dataset
     torch.distributed.barrier()
     start = time.time()
     print_rank_0(f"Loading dataset from {train_fname} rank: {local_rank}", color="GREEN", rank=0)
