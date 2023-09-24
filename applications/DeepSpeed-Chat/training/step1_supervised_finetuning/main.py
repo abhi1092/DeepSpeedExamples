@@ -79,6 +79,11 @@ def parse_args():
         help=
         'Where to store the data-related files such as shuffle index. This needs to be on a local storage of a node (not on a shared storage)'
     )
+    #add argument accounting for split training, meaning that the model is trained on n equal parts of the data
+    parser.add_argument('--split_training_size',
+                        type=int,
+                        default=1,
+                        help="number of total splits the model will be trained on, this is required when the data can't be loaded in memory, this is used to compute the total number of steps and fix the lr scheduler, checkpointing is necessary in this case")
     parser.add_argument(
         "--model_name_or_path",
         type=str,
@@ -377,7 +382,7 @@ def main():
                               betas=(0.9, 0.95))
     print_rank_0(f"debugging", color="RED", include_caller=True)
     num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader) / args.gradient_accumulation_steps)
+        len(train_dataloader)*args.split_training_size / args.gradient_accumulation_steps)
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
@@ -395,8 +400,18 @@ def main():
     print_rank_0(f"debugging", color="RED", include_caller=True)
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
+        
+    #print a debugging message saying these lines must be deleted later
+    print_rank_0(f"DELETE THESE LINES!!! NOT REQUIRED TO START WITH A CHECKPOINT", color="RED", include_caller=True)
+    if args.save_checkpoint:
+        start = time.time()
+        output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
+        os.makedirs(output_path, exist_ok=True)
+        model.save_checkpoint(output_path)
+        print_rank_0(f"time to save checkpoint: {time.time() - start}", color="RED", include_caller=True)
     
-    if args.load_checkpoint_path:
+    #load checkpoint of load_checkpoint_path is not none and it contains a checkpoint
+    if args.load_checkpoint_path and os.path.exists(args.load_checkpoint_path):
         model.load_checkpoint(args.load_checkpoint_path)
         
     def optuna_operations(loss, step, final=False):
@@ -484,7 +499,7 @@ def main():
                                         zero_stage=args.zero_stage)
                     
                 if args.save_checkpoint:
-                    output_path = os.path.join(args.output_dir, f"deepspeed_checkoint_{epoch}_{step}")
+                    output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
                     os.makedirs(output_path, exist_ok=True)
                     model.save_checkpoint(output_path)
                     
