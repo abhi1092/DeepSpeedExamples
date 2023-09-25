@@ -6,7 +6,7 @@ function run_training() {
     git pull
     git checkout fixing_oom_step0
     #print warning in red
-    echo -e "\e[31mWARNING: Not loading checkpoint, only model.\e[0m"
+    echo -e "\e[31mWARNING: Not loading checkpoint, only model roll back arguments to main.py.\e[0m"
     # --load_checkpoint_path /new_data/granite_v2_forca_092123/deepspeed_checkpoint/\
     #--model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
     CMD="HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
@@ -33,7 +33,7 @@ function run_training() {
     --zero_stage 2 \
     --deepspeed \
     --output_dir /new_data/granite_v2_forca_092123/ \
-    --save_steps 1"
+    --save_steps 100"
     echo -e $CMD
     eval $CMD
 }
