@@ -33,7 +33,7 @@ function run_training() {
     --zero_stage 2 \
     --deepspeed \
     --output_dir /new_data/granite_v2_forca_092123/ \
-    --save_steps 100"
+    --save_steps 1"
     echo -e $CMD
     eval $CMD
 }

@@ -374,9 +374,9 @@ def main():
     optimizer = AdamOptimizer(optimizer_grouped_parameters,
                               lr=args.learning_rate,
                               betas=(0.9, 0.95))
-    print_rank_0("multiplying the number of steps by 5!", color="RED", include_caller=True)
+
     num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader)*5/ args.gradient_accumulation_steps)
+        len(train_dataloader)/ args.gradient_accumulation_steps)
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
