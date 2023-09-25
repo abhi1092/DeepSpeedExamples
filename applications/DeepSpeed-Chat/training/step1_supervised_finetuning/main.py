@@ -400,15 +400,6 @@ def main():
     print_rank_0(f"debugging", color="RED", include_caller=True)
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
-        
-    #print a debugging message saying these lines must be deleted later
-    print_rank_0(f"DELETE THESE LINES!!! NOT REQUIRED TO START WITH A CHECKPOINT", color="RED", include_caller=True)
-    if args.save_checkpoint:
-        start = time.time()
-        output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
-        os.makedirs(output_path, exist_ok=True)
-        model.save_checkpoint(output_path)
-        print_rank_0(f"time to save checkpoint: {time.time() - start}", color="RED", include_caller=True)
     
     #load checkpoint of load_checkpoint_path is not none and it contains a checkpoint
     if args.load_checkpoint_path and os.path.exists(args.load_checkpoint_path):

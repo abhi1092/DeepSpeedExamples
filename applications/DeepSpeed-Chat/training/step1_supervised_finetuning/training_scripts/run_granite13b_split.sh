@@ -33,7 +33,7 @@ function run_training() {
    --save_steps 100
 }
 
-for i in {0..4}
+for i in {1..4}
 do
     run_training $i
     # Here, you might want to check the process status before proceeding to the next iteration.
