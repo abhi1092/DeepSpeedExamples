@@ -8,7 +8,7 @@ function run_training() {
     CMD="HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
     main.py \
     --print_loss \
-    --data_path  /new_data/datasets/forca_092423_splits/train_4.jsonl \
+    --data_path  /new_data/datasets/forca/trainmix/forca_train_mix_145k.jsonl \
     --data_output_path /new_data/deepspeed_cache_data/\
     --save_checkpoint \
     --load_checkpoint_path /new_data/granite_v2_forca_092123/deepspeed_checkpoint/\

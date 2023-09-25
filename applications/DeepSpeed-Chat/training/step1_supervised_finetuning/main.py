@@ -306,6 +306,25 @@ def process_data(args, tokenizer, end_of_conversation_token):
                                       batch_size=args.per_device_train_batch_size)
         yield train_dataloader, eval_dataloader
 
+def save_model_operations(model, tokenizer, args, epoch, step):
+    if args.output_dir is None:
+        return
+
+    if (step + 1) % args.save_steps == 0:
+        if args.save_checkpoint:
+            output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
+            os.makedirs(output_path, exist_ok=True)
+            model.save_checkpoint(output_path)
+
+        print_rank_0('saving model ...', args.global_rank)
+        model = convert_lora_to_linear_layer(model)
+
+        if args.global_rank == 0:
+            save_hf_format(model, tokenizer, args, sub_folder=f"step1_model/epoch_{epoch}_step_{step}")
+
+        if args.zero_stage == 3:
+            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+            save_zero_three_model(model, args.global_rank, args.output_dir, zero_stage=args.zero_stage)
 
 def main():
     args = parse_args()
@@ -370,7 +389,8 @@ def main():
             model = only_optimize_lora_parameters(model)
             model = make_model_gradient_checkpointing_compatible(model)
             
-    train_dataloader, eval_dataloader = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
+    data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
+    train_dataloader, eval_dataloader = next(data_generator)
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
@@ -469,59 +489,39 @@ def main():
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
 
     for epoch in range(args.num_train_epochs):
-        print_rank_0(
-            f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
-            args.global_rank)
-        model.train()
-        for step, batch in enumerate(train_dataloader):
-            start = time.time()
-            #decode all labels that are different from -100
-            # if step % 10 == 0 and step < 100:
-            #     for l,input in zip(batch['labels'], batch['input_ids']):
-            #         print_rank_0(f"labels: {tokenizer.decode(l[l != -100],)}", color="YELLOW")
-            #         print_rank_0(f"input: {tokenizer.decode(input,)}", color="MAGENTA")
-            #         # print int labels
-            #         print_rank_0(f"labels: {l}", color="BLUE")
-                
-            batch = to_device(batch, device)
-            outputs = model(**batch, use_cache=False)
-            loss = outputs.loss
-            if args.print_loss:
-                print(
-                    f"Epoch: {epoch}, Step: {step}, Rank: {torch.distributed.get_rank()}, loss = {loss}"
-                )
-            model.backward(loss)
-            model.step()
-            end = time.time()
-            if torch.distributed.get_rank() == 0:
-                print_throughput(model.module, args, end - start,
-                                 args.global_rank)
-            if step % 5 == 0:
-                optuna_operations(loss, step)
-            
-            if args.output_dir is not None and (step+1) % args.save_steps == 0:
-                print_rank_0('saving model ...', args.global_rank)
-                model = convert_lora_to_linear_layer(model)
-
-                if args.global_rank == 0:
-                    save_hf_format(model, tokenizer, args, sub_folder=f"step1_model/epoch_{epoch}_step_{step}")
-
-                if args.zero_stage == 3:
-                    # For zero stage 3, each gpu only has a part of the model, so we need a special save function
-                    save_zero_three_model(model,
-                                        args.global_rank,
-                                        args.output_dir,
-                                        zero_stage=args.zero_stage)
+        step = 0
+        for train_dataloader, eval_dataloader in data_generator:
+            print_rank_0(
+                f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
+                args.global_rank)
+            model.train()
+            for batch in train_dataloader:
+                start = time.time()
                     
-                if args.save_checkpoint:
-                    output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
-                    os.makedirs(output_path, exist_ok=True)
-                    model.save_checkpoint(output_path)
+                batch = to_device(batch, device)
+                outputs = model(**batch, use_cache=False)
+                loss = outputs.loss
+                if args.print_loss:
+                    print(
+                        f"Epoch: {epoch}, Step: {step}, Rank: {torch.distributed.get_rank()}, loss = {loss}"
+                    )
+                model.backward(loss)
+                model.step()
+                end = time.time()
+                if torch.distributed.get_rank() == 0:
+                    print_throughput(model.module, args, end - start,
+                                    args.global_rank)
+                if step % 5 == 0:
+                    optuna_operations(loss, step)
+                
+                save_model_operations(model, tokenizer, args, epoch, step)
+                
+                step += 1
 
-        if args.save_checkpoint:
-            output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
-            os.makedirs(output_path, exist_ok=True)
-            model.save_checkpoint(output_path)
+            if args.save_checkpoint:
+                output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
+                os.makedirs(output_path, exist_ok=True)
+                model.save_checkpoint(output_path)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
@@ -530,7 +530,10 @@ def main():
         perplexity = evaluation(model, eval_dataloader)
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
         model.tput_timer.update_epoch_count()
+        
+        save_model_operations(model, tokenizer, args, epoch, step)
         torch.distributed.barrier()
+        exit(0)
 
 
 
