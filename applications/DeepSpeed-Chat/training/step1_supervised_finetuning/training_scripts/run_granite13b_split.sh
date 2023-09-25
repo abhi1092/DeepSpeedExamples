@@ -5,14 +5,17 @@ function run_training() {
     cd /app/DeepSpeedExamples-internal/applications/DeepSpeed-Chat/training/step1_supervised_finetuning
     git pull
     git checkout fixing_oom_step0
+    #print warning in red
+    echo -e "\e[31mWARNING: Not loading checkpoint, only model.\e[0m"
+    # --load_checkpoint_path /new_data/granite_v2_forca_092123/deepspeed_checkpoint/\
+    #--model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
     CMD="HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
     main.py \
     --print_loss \
     --data_path  /new_data/datasets/forca_092423_splits/train_4.jsonl \
     --data_output_path /new_data/deepspeed_cache_data/\
+    --model_name_or_path  /new_data/granite_v2_forca_092123/step1_model_4/epoch_0_step_199/\
     --save_checkpoint \
-    --load_checkpoint_path /new_data/granite_v2_forca_092123/deepspeed_checkpoint/\
-    --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
     --data_split 1,0,0 \
     --prompt formatted_input\
     --chosen targets\
@@ -25,7 +28,7 @@ function run_training() {
     --gradient_accumulation_steps 3 \
     --gradient_checkpointing \
     --lr_scheduler_type cosine \
-    --num_warmup_steps 200 \
+    --num_warmup_steps 10 \
     --seed 5739 \
     --zero_stage 2 \
     --deepspeed \
