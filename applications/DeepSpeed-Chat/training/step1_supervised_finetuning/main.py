@@ -79,11 +79,6 @@ def parse_args():
         help=
         'Where to store the data-related files such as shuffle index. This needs to be on a local storage of a node (not on a shared storage)'
     )
-    #add argument accounting for split training, meaning that the model is trained on n equal parts of the data
-    parser.add_argument('--split_training_size',
-                        type=int,
-                        default=1,
-                        help="number of total splits the model will be trained on, this is required when the data can't be loaded in memory, this is used to compute the total number of steps and fix the lr scheduler, checkpointing is necessary in this case")
     parser.add_argument(
         "--model_name_or_path",
         type=str,
@@ -370,26 +365,25 @@ def main():
         model.train()
         return perplexity
     
-    
-    print_rank_0(f"debugging", color="RED", include_caller=True)
+
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
         model, args.weight_decay, args.lora_learning_rate)
-    print_rank_0(f"debugging", color="RED", include_caller=True)
+
     AdamOptimizer = DeepSpeedCPUAdam if args.offload else FusedAdam
     optimizer = AdamOptimizer(optimizer_grouped_parameters,
                               lr=args.learning_rate,
                               betas=(0.9, 0.95))
-    print_rank_0(f"debugging", color="RED", include_caller=True)
+
     num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader)*args.split_training_size / args.gradient_accumulation_steps)
+        len(train_dataloader)/ args.gradient_accumulation_steps)
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
         num_warmup_steps=args.num_warmup_steps,
         num_training_steps=args.num_train_epochs * num_update_steps_per_epoch,
     )
-    print_rank_0(f"debugging", color="RED", include_caller=True)
+
     model, optimizer, _, lr_scheduler = deepspeed.initialize(
         model=model,
         optimizer=optimizer,
@@ -397,13 +391,14 @@ def main():
         config=ds_config,
         lr_scheduler=lr_scheduler,
         dist_init_required=True)
-    print_rank_0(f"debugging", color="RED", include_caller=True)
+    
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
     
     #load checkpoint of load_checkpoint_path is not none and it contains a checkpoint
     if args.load_checkpoint_path and os.path.exists(args.load_checkpoint_path):
         model.load_checkpoint(args.load_checkpoint_path)
+        torch.distributed.barrier()
         
     def optuna_operations(loss, step, final=False):
         if study:
@@ -476,7 +471,7 @@ def main():
                 optuna_operations(loss, step)
             
             if args.output_dir is not None and (step+1) % args.save_steps == 0:
-                print_rank_0('saving the final model ...', args.global_rank)
+                print_rank_0('saving model ...', args.global_rank)
                 model = convert_lora_to_linear_layer(model)
 
                 if args.global_rank == 0:
