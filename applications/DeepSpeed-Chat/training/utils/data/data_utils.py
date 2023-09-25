@@ -283,6 +283,17 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                         max_seq_len)
     return train_dataset, eval_dataset
 
+def save_dataset_splits(dataset, max_num_per_split, file_name):
+    splits = []
+    curr = 0
+    while curr < len(dataset):
+        split_name = f"{file_name}_{curr}.pt"
+        splits.append(split_name)
+        split_subset = Subset(dataset, range(curr, min(curr + max_num_per_split, len(dataset))))
+        torch.save(split_subset, split_name)
+        curr += max_num_per_split
+    return splits
+
 
 def create_prompt_dataset(local_rank,
                           data_path,
@@ -386,15 +397,15 @@ def create_prompt_dataset(local_rank,
         print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
         start = time.time()
         if max_num_per_split < len(train_dataset):
-            splits = save_dataset_splits(train_dataset, max_num_per_split, train_fname)
+            print_rank_0(f"Splitting train dataset into {len(train_dataset) // max_num_per_split} splits", color="GREEN", rank=0)
+            train_splits = save_dataset_splits(train_dataset, max_num_per_split, train_fname)
         else:
+            train_splits = [train_fname]
             torch.save(train_dataset, train_fname)
-            print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
-            torch.save(eval_dataset, eval_fname)
-        #delete train and eval datasets to save memory
-        del train_dataset
-        del eval_dataset
+        print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
+        torch.save(eval_dataset, eval_fname)
     torch.distributed.barrier()
+    return train_splits, eval_fname
     start = time.time()
     print_rank_0(f"Loading dataset from {train_fname} rank: {local_rank}", color="GREEN", rank=0)
     train_dataset, eval_dataset = torch.load(train_fname), torch.load(

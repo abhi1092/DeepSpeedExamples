@@ -52,6 +52,10 @@ def parse_args():
                         'phase 1, 2, and 3 data. For example the split `6,2,2`'
                         'will use 60%% of data for phase 1, 20%% for phase 2'
                         'and 20%% for phase 3.')
+    parser.add_argument('--max_num_per_split',
+                        type=int,
+                        default=int(1e5),
+                        help='saves splits of the dataset of maximum this size and loads them to memory sequentially to avoid memory issues.')
     parser.add_argument('--prompt',
                       type=str,
                       default=None,
@@ -247,6 +251,61 @@ def setup_optuna(args):
             args.weight_decay = 0.0
     return study, trial, optuna_start_time
 
+def process_data(args, tokenizer, end_of_conversation_token):
+    '''
+    This function will create the training and evaluation dataloaders.
+    
+    '''
+    # Prepare the data
+    train_phase = 1
+    train_splits, eval_fname = create_prompt_dataset(
+        args.local_rank,
+        args.data_path,
+        args.data_split,
+        args.data_output_path,
+        train_phase,
+        args.seed,
+        tokenizer,
+        args.max_seq_len,
+        sft_only_data_path=args.sft_only_data_path,
+        column_names=args.column_names,
+        end_of_conversation_token=end_of_conversation_token,
+        reload=False,
+        max_num_per_split=args.max_num_per_split,
+    )
+    torch.distributed.barrier()
+    train_dataset = torch.load(train_splits[0])
+    eval_dataset = torch.load(eval_fname)
+    # DataLoaders creation:
+    if args.local_rank == -1:
+        train_sampler = RandomSampler(train_dataset)
+        eval_sampler = SequentialSampler(eval_dataset)
+    else:
+        train_sampler = DistributedSampler(train_dataset)
+        eval_sampler = DistributedSampler(eval_dataset)
+    train_dataloader = DataLoader(train_dataset,
+                                  collate_fn=default_data_collator,
+                                  sampler=train_sampler,
+                                  batch_size=args.per_device_train_batch_size)
+    eval_dataloader = DataLoader(eval_dataset,
+                                 collate_fn=default_data_collator,
+                                 sampler=eval_sampler,
+                                 batch_size=args.per_device_eval_batch_size)
+    yield train_dataloader, eval_dataloader
+    
+    # keep yielding the next training splits
+    for split in train_splits[1:]:
+        train_dataset = torch.load(split)
+        if args.local_rank == -1:
+            train_sampler = RandomSampler(train_dataset)
+        else:
+            train_sampler = DistributedSampler(train_dataset)
+        train_dataloader = DataLoader(train_dataset,
+                                      collate_fn=default_data_collator,
+                                      sampler=train_sampler,
+                                      batch_size=args.per_device_train_batch_size)
+        yield train_dataloader, eval_dataloader
+
 
 def main():
     args = parse_args()
@@ -310,38 +369,8 @@ def main():
         if args.only_optimize_lora:
             model = only_optimize_lora_parameters(model)
             model = make_model_gradient_checkpointing_compatible(model)
-
-    # Prepare the data
-    train_phase = 1
-    train_dataset, eval_dataset = create_prompt_dataset(
-        args.local_rank,
-        args.data_path,
-        args.data_split,
-        args.data_output_path,
-        train_phase,
-        args.seed,
-        tokenizer,
-        args.max_seq_len,
-        sft_only_data_path=args.sft_only_data_path,
-        column_names=args.column_names,
-        end_of_conversation_token=END_KEY,
-        reload=False,
-    )
-    # DataLoaders creation:
-    if args.local_rank == -1:
-        train_sampler = RandomSampler(train_dataset)
-        eval_sampler = SequentialSampler(eval_dataset)
-    else:
-        train_sampler = DistributedSampler(train_dataset)
-        eval_sampler = DistributedSampler(eval_dataset)
-    train_dataloader = DataLoader(train_dataset,
-                                  collate_fn=default_data_collator,
-                                  sampler=train_sampler,
-                                  batch_size=args.per_device_train_batch_size)
-    eval_dataloader = DataLoader(eval_dataset,
-                                 collate_fn=default_data_collator,
-                                 sampler=eval_sampler,
-                                 batch_size=args.per_device_eval_batch_size)
+            
+    train_dataloader, eval_dataloader = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
@@ -501,7 +530,7 @@ def main():
         perplexity = evaluation(model, eval_dataloader)
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
         model.tput_timer.update_epoch_count()
-
+        torch.distributed.barrier()
 
 
 
