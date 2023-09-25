@@ -307,7 +307,6 @@ def create_prompt_dataset(local_rank,
     tokenizer_name = tokenizer.init_kwargs["name_or_path"].replace("/", "_")
     fname = f"{fname}_split{data_split}_phase{train_phase}_seed{seed}_tokenizer{tokenizer_name}_seqlen{max_seq_len}_sft{sft_cache_key}"
     fname = "_".join(fname.split("/"))
-    print_rank_0(f"fname: {fname} rank: {local_rank}", color="GREEN", rank=0)
     fname = hashlib.sha256(fname.encode()).hexdigest(
     )  # hash the file name to avoid too long file name
     train_fname = f"{output_path}/traindata_{fname}.pt"
