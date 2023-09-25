@@ -5,32 +5,34 @@ function run_training() {
     cd /app/DeepSpeedExamples-internal/applications/DeepSpeed-Chat/training/step1_supervised_finetuning
     git pull
     git checkout fixing_oom_step0
-    HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint="${MASTER_ADDR}:${MASTER_PORT}" \
+    CMD="HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
     main.py \
-   --print_loss \
-   --data_path  /new_data/datasets/forca_092423_splits/train_${split_index}.jsonl \
-   --data_output_path /new_data/deepspeed_cache_data/\
-   --save_checkpoint \
-   --load_checkpoint_path /new_data/granite_v2_forca_092123/deepspeed_checkpoint/\
-   --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
-   --data_split 1,0,0 \
-   --prompt formatted_input\
-   --chosen targets\
-   --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 8 \
-   --max_seq_len 2048 \
-   --learning_rate 6.9e-5 \
-   --weight_decay 0. \
-   --num_train_epochs 1 \
-   --gradient_accumulation_steps 3 \
-   --gradient_checkpointing \
-   --lr_scheduler_type cosine \
-   --num_warmup_steps 200 \
-   --seed 5739 \
-   --zero_stage 2 \
-   --deepspeed \
-   --output_dir /new_data/granite_v2_forca_092123/ \
-   --save_steps 100
+    --print_loss \
+    --data_path  /new_data/datasets/forca_092423_splits/train_${split_index}.jsonl \
+    --data_output_path /new_data/deepspeed_cache_data/\
+    --save_checkpoint \
+    --load_checkpoint_path /new_data/granite_v2_forca_092123/deepspeed_checkpoint/\
+    --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
+    --data_split 1,0,0 \
+    --prompt formatted_input\
+    --chosen targets\
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 8 \
+    --max_seq_len 2048 \
+    --learning_rate 6.9e-5 \
+    --weight_decay 0. \
+    --num_train_epochs 1 \
+    --gradient_accumulation_steps 3 \
+    --gradient_checkpointing \
+    --lr_scheduler_type cosine \
+    --num_warmup_steps 200 \
+    --seed 5739 \
+    --zero_stage 2 \
+    --deepspeed \
+    --output_dir /new_data/granite_v2_forca_092123/ \
+    --save_steps 100"
+    echo -e $CMD
+    eval $CMD
 }
 
 for i in {1..4}
