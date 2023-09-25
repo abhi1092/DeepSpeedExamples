@@ -296,6 +296,8 @@ def create_prompt_dataset(local_rank,
                           sft_only_data_path=[],
                           reload=False,
                           column_names=None, #added only for sampling
+                          #set max num split to the maximum integer
+                          max_num_per_split=float("inf")
                           ):
     """
     Creates the prompt dataset
@@ -383,9 +385,12 @@ def create_prompt_dataset(local_rank,
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
         print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
         start = time.time()
-        torch.save(train_dataset, train_fname)
-        print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
-        torch.save(eval_dataset, eval_fname)
+        if max_num_per_split < len(train_dataset):
+            splits = save_dataset_splits(train_dataset, max_num_per_split, train_fname)
+        else:
+            torch.save(train_dataset, train_fname)
+            print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
+            torch.save(eval_dataset, eval_fname)
         #delete train and eval datasets to save memory
         del train_dataset
         del eval_dataset
