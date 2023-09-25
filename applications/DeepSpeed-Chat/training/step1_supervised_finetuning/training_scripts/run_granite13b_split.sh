@@ -19,13 +19,13 @@ function run_training() {
    --per_device_train_batch_size 8 \
    --per_device_eval_batch_size 8 \
    --max_seq_len 2048 \
-   --learning_rate 5.47e-5 \
+   --learning_rate 6.9e-5 \
    --weight_decay 0. \
    --num_train_epochs 1 \
    --gradient_accumulation_steps 3 \
    --gradient_checkpointing \
    --lr_scheduler_type cosine \
-   --num_warmup_steps 100 \
+   --num_warmup_steps 200 \
    --seed 5739 \
    --zero_stage 2 \
    --deepspeed \
