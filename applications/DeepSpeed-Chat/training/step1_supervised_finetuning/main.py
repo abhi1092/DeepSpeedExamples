@@ -331,8 +331,8 @@ def main():
     args.column_names = get_column_names(args)
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
-    print(args)
-    print(os.environ)
+    print_rank_0(f"args: {args}", color="GREEN")
+    print_rank_0(f"{os.environ}", color="GREEN")
     
     
     if args.local_rank == -1:
@@ -446,6 +446,7 @@ def main():
     
     #load checkpoint of load_checkpoint_path is not none and it contains a checkpoint
     if args.load_checkpoint_path and os.path.exists(args.load_checkpoint_path):
+        print_rank_0(f"Loading checkpoint from {args.load_checkpoint_path}", color="GREEN")
         model.load_checkpoint(args.load_checkpoint_path)
         torch.distributed.barrier()
         
