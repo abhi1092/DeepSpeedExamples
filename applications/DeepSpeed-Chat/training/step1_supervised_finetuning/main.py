@@ -45,6 +45,9 @@ def parse_args():
                         help='Path to the training dataset. Accepted format:'
                         '1) a single data path, 2) multiple datasets in the'
                         'form: dataset1-path dataset2-path ...')
+    parser.add_argument('--reload_data',
+                        action='store_true',
+                        help='Reloads the data even if it was already preprocessed.')
     parser.add_argument('--data_split',
                         type=str,
                         default='2,4,4',
@@ -270,7 +273,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
         sft_only_data_path=args.sft_only_data_path,
         column_names=args.column_names,
         end_of_conversation_token=end_of_conversation_token,
-        reload=False,
+        reload=args.reload_data,
         max_num_per_split=args.max_num_per_split,
     )
     print_rank_0(f"len_train_dataset: {len_train_dataset}", color="GREEN")
