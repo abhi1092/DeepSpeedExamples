@@ -273,7 +273,6 @@ def process_data(args, tokenizer, end_of_conversation_token):
         reload=False,
         max_num_per_split=args.max_num_per_split,
     )
-    torch.distributed.barrier()
     start = time.time()
     print_rank_0(f"loading train_splits: {train_splits[0]} of {train_splits}", color="GREEN")
     train_dataset = torch.load(train_splits[0])

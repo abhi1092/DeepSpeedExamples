@@ -294,6 +294,19 @@ def save_dataset_splits(dataset, max_num_per_split, file_name):
         curr += max_num_per_split
     return splits
 
+def get_dataset_splits(file_name):
+    #list all files that start with file_name and end in `_i.pt`
+    splits = []
+    i = 0
+    while True:
+        split_name = f"{file_name}_{i}.pt"
+        if not os.path.isfile(split_name):
+            break
+        splits.append(split_name)
+        i += 1
+    if len(splits) == 0:
+        splits.append(file_name)
+    return splits
 
 def create_prompt_dataset(local_rank,
                           data_path,
@@ -404,6 +417,7 @@ def create_prompt_dataset(local_rank,
         print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)
     torch.distributed.barrier()
+    train_splits = get_dataset_splits(train_fname)
     return train_splits, eval_fname
 
 
