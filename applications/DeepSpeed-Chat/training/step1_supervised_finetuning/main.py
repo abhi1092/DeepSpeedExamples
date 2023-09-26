@@ -317,21 +317,20 @@ def save_model_operations(model, tokenizer, args, epoch, step):
     if args.output_dir is None:
         return
 
-    if (step + 1) % args.save_steps == 0:
-        if args.save_checkpoint:
-            output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
-            os.makedirs(output_path, exist_ok=True)
-            model.save_checkpoint(output_path)
+    if args.save_checkpoint:
+        output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
+        os.makedirs(output_path, exist_ok=True)
+        model.save_checkpoint(output_path)
 
-        print_rank_0('saving model ...', args.global_rank)
-        model = convert_lora_to_linear_layer(model)
+    print_rank_0('saving model ...', args.global_rank)
+    model = convert_lora_to_linear_layer(model)
 
-        if args.global_rank == 0:
-            save_hf_format(model, tokenizer, args, sub_folder=f"step1_model/epoch_{epoch}_step_{step}")
+    if args.global_rank == 0:
+        save_hf_format(model, tokenizer, args, sub_folder=f"sft_model/epoch_{epoch}_step_{step}")
 
-        if args.zero_stage == 3:
-            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
-            save_zero_three_model(model, args.global_rank, args.output_dir, zero_stage=args.zero_stage)
+    if args.zero_stage == 3:
+        # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+        save_zero_three_model(model, args.global_rank, args.output_dir, zero_stage=args.zero_stage)
 
 def main():
     args = parse_args()
@@ -498,12 +497,12 @@ def main():
     # perplexity = evaluation(model, eval_dataloader)
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
 
+    model.train()
     for epoch in range(args.num_train_epochs):
         step = 0
         print_rank_0(
             f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
             args.global_rank)
-        model.train()
         while train_dataloader is not None:
             for batch in train_dataloader:
                 start = time.time()
@@ -524,16 +523,12 @@ def main():
                 if step % 5 == 0:
                     optuna_operations(loss, step)
                 
-                save_model_operations(model, tokenizer, args, epoch, step)
+                if step % args.save_steps == 0:
+                    save_model_operations(model, tokenizer, args, epoch, step)
                 
                 step += 1
             
             train_dataloader = next(data_generator, None)
-
-        if args.save_checkpoint:
-            output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
-            os.makedirs(output_path, exist_ok=True)
-            model.save_checkpoint(output_path)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
@@ -543,7 +538,6 @@ def main():
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
         
         save_model_operations(model, tokenizer, args, epoch, step)
-        torch.distributed.barrier()
         
         #check if not last epoch, if yes, start the train loader again
         if epoch != args.num_train_epochs - 1:
