@@ -11,7 +11,6 @@ cmd() {
         --data_path  /new_data/datasets/forca/trainmix/forca_train_mix_145k.jsonl \
         --max_num_per_split 180000\
         --data_output_path /new_data/deepspeed_cache_data/\
-        --reload_data \
         --save_checkpoint \
         --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
         --data_split 1,0,0 \
