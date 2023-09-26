@@ -258,7 +258,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
     '''
     # Prepare the data
     train_phase = 1
-    train_splits, eval_fname, num_training_steps = create_prompt_dataset(
+    train_splits, eval_fname, len_train_dataset = create_prompt_dataset(
         args.local_rank,
         args.data_path,
         args.data_split,
@@ -273,6 +273,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
         reload=False,
         max_num_per_split=args.max_num_per_split,
     )
+    print_rank_0(f"len_train_dataset: {len_train_dataset}", color="GREEN")
     start = time.time()
     print_rank_0(f"loading train_splits: {train_splits[0]} of {train_splits}", color="GREEN")
     train_dataset = torch.load(train_splits[0])
@@ -293,7 +294,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-    yield train_dataloader, eval_dataloader, num_training_steps
+    yield train_dataloader, eval_dataloader, len_train_dataset
     
     # keep yielding the next training splits
     for split in train_splits[1:]:
@@ -392,6 +393,7 @@ def main():
             
     data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
     train_dataloader, eval_dataloader, len_train_dataset = next(data_generator)
+    
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0

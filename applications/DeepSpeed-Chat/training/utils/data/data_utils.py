@@ -422,9 +422,17 @@ def create_prompt_dataset(local_rank,
             torch.save(train_dataset, train_fname)
         print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)
+        len_train_dataset = torch.tensor([len(train_dataset)]).cuda()
+    else:
+        len_train_dataset = torch.tensor([0]).cuda()   
     torch.distributed.barrier()
+    
     train_splits = get_dataset_splits(train_fname)
-    return train_splits, eval_fname, len(train_dataset)
+    
+    torch.distributed.broadcast(len_train_dataset, src=0)
+    len_train_dataset = len_train_dataset.item()
+    
+    return train_splits, eval_fname, len_train_dataset
 
 
 class DataCollatorReward:
