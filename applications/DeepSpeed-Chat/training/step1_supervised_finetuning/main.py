@@ -54,7 +54,7 @@ def parse_args():
                         'and 20%% for phase 3.')
     parser.add_argument('--max_num_per_split',
                         type=int,
-                        default=int(1e5),
+                        default=int(1.7e5),
                         help='saves splits of the dataset of maximum this size and loads them to memory sequentially to avoid memory issues.')
     parser.add_argument('--prompt',
                       type=str,
