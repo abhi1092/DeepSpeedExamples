@@ -432,9 +432,9 @@ def main():
 
     num_update_steps_per_epoch = math.ceil(
         len_train_dataset / args.gradient_accumulation_steps)
-    if args.num_warmpup_steps == -1:
-        args.num_warmpup_steps = math.ceil(num_update_steps_per_epoch * args.num_train_epochs * 0.03)
-        print_rank_0(f"num_warmup_steps: {args.num_warmpup_steps}", color="YELLOW")
+    if args.num_warmup_steps == -1:
+        args.num_warmup_steps = math.ceil(num_update_steps_per_epoch * args.num_train_epochs * 0.03)
+        print_rank_0(f"num_warmup_steps: {args.num_warmup_steps}", color="YELLOW")
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
