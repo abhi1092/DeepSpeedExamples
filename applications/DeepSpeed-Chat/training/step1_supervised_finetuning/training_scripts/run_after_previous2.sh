@@ -17,13 +17,13 @@ cmd() {
         --data_split 1,0,0 \
         --prompt formatted_input\
         --chosen targets\
-        --per_device_train_batch_size 8 \
-        --per_device_eval_batch_size 8 \
+        --per_device_train_batch_size 2 \
+        --per_device_eval_batch_size 2 \
         --max_seq_len 2048 \
         --learning_rate 2e-5 \
         --weight_decay 0. \
         --num_train_epochs 3 \
-        --gradient_accumulation_steps 2 \
+        --gradient_accumulation_steps 1 \
         --gradient_checkpointing \
         --lr_scheduler_type linear \
         --num_warmup_steps -1 \
@@ -33,14 +33,14 @@ cmd() {
         --output_dir /new_data/granite_v1_forcav1_tulu/ \
         --save_steps 100 > /app/nohup_tulu.out 2>&1 &"
     echo -e $CMD
-    # eval $CMD
+    eval $CMD
 }
 
 # Wait for all torchrun processes to finish
 while ps aux | grep '[r]un_after_previous.sh' > /dev/null
 # while ps aux | grep '[s]leep 300' > /dev/null
 do
-    echo "Waiting for existing torchrun processes to finish..."
+    echo "Waiting for existing [r]un_after_previous.sh processes to finish..."
     sleep 60
 done
 
