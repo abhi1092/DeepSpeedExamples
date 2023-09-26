@@ -395,11 +395,11 @@ def create_prompt_dataset(local_rank,
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
         print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
         start = time.time()
+        train_splits = [train_fname]
         if max_num_per_split < len(train_dataset):
             print_rank_0(f"Splitting train dataset into {len(train_dataset) // max_num_per_split} splits", color="GREEN", rank=0)
             train_splits = save_dataset_splits(train_dataset, max_num_per_split, train_fname)
         else:
-            train_splits = [train_fname]
             torch.save(train_dataset, train_fname)
         print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)

@@ -274,8 +274,11 @@ def process_data(args, tokenizer, end_of_conversation_token):
         max_num_per_split=args.max_num_per_split,
     )
     torch.distributed.barrier()
+    start = time.time()
+    print_rank_0(f"loading train_splits: {train_splits[0]} of {train_splits}", color="GREEN")
     train_dataset = torch.load(train_splits[0])
     eval_dataset = torch.load(eval_fname)
+    print_rank_0(f"Loading data took {time.time() - start} seconds", color="GREEN")
     # DataLoaders creation:
     if args.local_rank == -1:
         train_sampler = RandomSampler(train_dataset)
@@ -295,6 +298,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
     
     # keep yielding the next training splits
     for split in train_splits[1:]:
+        print_rank_0(f"loading train_splits: {split}", color="GREEN")
         train_dataset = torch.load(split)
         if args.local_rank == -1:
             train_sampler = RandomSampler(train_dataset)
