@@ -331,9 +331,6 @@ def main():
     args.column_names = get_column_names(args)
     
     args.local_rank = int(os.environ["LOCAL_RANK"])
-    print_rank_0(f"args: {args}", color="GREEN")
-    print_rank_0(f"{os.environ}", color="GREEN")
-    
     
     if args.local_rank == -1:
         device = torch.device("cuda")
@@ -348,7 +345,8 @@ def main():
 
     args.global_rank = torch.distributed.get_rank()
     print_rank_0(f'column_names: {args.column_names}', color="GREEN")
-    print_rank_0(f'args: {args}', color="GREEN")
+    print_rank_0(f"args: {args}", color="GREEN")
+    print_rank_0(f"ENV: {os.environ}", color="GREEN")
     ds_config = get_train_ds_config(offload=args.offload,
                                     stage=args.zero_stage,
                                     enable_tensorboard=args.enable_tensorboard,
