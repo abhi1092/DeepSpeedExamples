@@ -12,7 +12,7 @@ cmd() {
         --max_num_per_split 180000\
         --data_output_path /new_data/deepspeed_cache_data/\
         --save_checkpoint \
-        --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
+        --model_name_or_path  /new_data/granite_v1_forcav1_good_warmup/step1_model/epoch_2_step_199/\
         --data_split 1,0,0 \
         --prompt formatted_input\
         --chosen targets\
