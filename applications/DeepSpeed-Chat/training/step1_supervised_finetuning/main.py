@@ -541,10 +541,14 @@ def main():
             args.global_rank)
         perplexity = evaluation(model, eval_dataloader)
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
-        model.tput_timer.update_epoch_count()
         
         save_model_operations(model, tokenizer, args, epoch, step)
         torch.distributed.barrier()
+        
+        #check if not last epoch, if yes, start the train loader again
+        if epoch != args.num_train_epochs - 1:
+            data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
+            train_dataloader, _, _ = next(data_generator)
 
 
 
