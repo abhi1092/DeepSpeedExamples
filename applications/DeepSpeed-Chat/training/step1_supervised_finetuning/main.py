@@ -432,6 +432,8 @@ def main():
 
     num_update_steps_per_epoch = math.ceil(
         len_train_dataset / args.gradient_accumulation_steps)
+    if args.num_warmpup_steps == -1:
+        args.num_warmpup_steps = num_update_steps_per_epoch * args.num_train_epochs * 0.03
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
@@ -542,7 +544,6 @@ def main():
         
         save_model_operations(model, tokenizer, args, epoch, step)
         torch.distributed.barrier()
-        exit(0)
 
 
 
