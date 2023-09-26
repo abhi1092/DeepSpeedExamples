@@ -33,14 +33,15 @@ cmd() {
         --output_dir /new_data/granite_v1_forcav1_good_warmup/ \
         --save_steps 100"
     echo -e $CMD
+    eval $CMD
 }
 
 # Wait for all torchrun processes to finish
-# while pgrep -x "torchrun" > /dev/null
-while ps aux | grep '[s]leep 300' > /dev/null
+while pgrep -x "torchrun" > /dev/null
+# while ps aux | grep '[s]leep 300' > /dev/null
 do
     echo "Waiting for existing torchrun processes to finish..."
-    sleep 10
+    sleep 60
 done
 
 # Execute the command
