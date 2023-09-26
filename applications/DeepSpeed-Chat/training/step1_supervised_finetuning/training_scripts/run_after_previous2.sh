@@ -6,7 +6,7 @@ cmd() {
     cd /app/DeepSpeedExamples-internal/applications/DeepSpeed-Chat/training/step1_supervised_finetuning/ &&\
     git pull &&\
     git checkout fixing_oom_step0 &&\
-    HF_DATASETS_CACHE=/app/hf nohup torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
+    HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
         main.py \
         --print_loss \
         --data_path  /new_data/datasets/forca/trainmix/forca_train_mix_145k.jsonl \
@@ -31,7 +31,7 @@ cmd() {
         --zero_stage 2 \
         --deepspeed \
         --output_dir /new_data/granite_v1_forcav1_tulu/ \
-        --save_steps 100 > /app/nohup_tulu.out 2>&1 &"
+        --save_steps 100"
     echo -e $CMD
     eval $CMD
 }
