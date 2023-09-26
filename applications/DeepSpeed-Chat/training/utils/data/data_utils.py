@@ -411,6 +411,7 @@ def create_prompt_dataset(local_rank,
                 eval_dataset = ConcatDataset([eval_dataset, sft_eval_dataset])
                 shuffle_idx = get_shuffle_idx(seed, len(eval_dataset))
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
+        print_rank_0(f"the number of data in train_dataset: {len(train_dataset)}", color="GREEN")
         print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
         start = time.time()
         train_splits = [train_fname]
@@ -423,7 +424,7 @@ def create_prompt_dataset(local_rank,
         torch.save(eval_dataset, eval_fname)
     torch.distributed.barrier()
     train_splits = get_dataset_splits(train_fname)
-    return train_splits, eval_fname
+    return train_splits, eval_fname, len(train_dataset)
 
 
 class DataCollatorReward:

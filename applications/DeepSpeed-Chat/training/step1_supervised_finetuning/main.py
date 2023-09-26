@@ -258,7 +258,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
     '''
     # Prepare the data
     train_phase = 1
-    train_splits, eval_fname = create_prompt_dataset(
+    train_splits, eval_fname, num_training_steps = create_prompt_dataset(
         args.local_rank,
         args.data_path,
         args.data_split,
@@ -293,7 +293,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-    yield train_dataloader, eval_dataloader
+    yield train_dataloader, eval_dataloader, num_training_steps
     
     # keep yielding the next training splits
     for split in train_splits[1:]:
@@ -307,7 +307,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
                                       collate_fn=default_data_collator,
                                       sampler=train_sampler,
                                       batch_size=args.per_device_train_batch_size)
-        yield train_dataloader, eval_dataloader
+        yield train_dataloader
 
 def save_model_operations(model, tokenizer, args, epoch, step):
     if args.output_dir is None:
@@ -391,7 +391,7 @@ def main():
             model = make_model_gradient_checkpointing_compatible(model)
             
     data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
-    train_dataloader, eval_dataloader = next(data_generator)
+    train_dataloader, eval_dataloader, len_train_dataset = next(data_generator)
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
@@ -426,7 +426,7 @@ def main():
                               betas=(0.9, 0.95))
 
     num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader)/ args.gradient_accumulation_steps)
+        len_train_dataset / args.gradient_accumulation_steps)
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
@@ -492,11 +492,11 @@ def main():
 
     for epoch in range(args.num_train_epochs):
         step = 0
-        for train_dataloader, eval_dataloader in data_generator:
-            print_rank_0(
-                f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
-                args.global_rank)
-            model.train()
+        print_rank_0(
+            f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
+            args.global_rank)
+        model.train()
+        while train_dataloader is not None:
             for batch in train_dataloader:
                 start = time.time()
                     
@@ -519,11 +519,13 @@ def main():
                 save_model_operations(model, tokenizer, args, epoch, step)
                 
                 step += 1
+            
+            train_dataloader = next(data_generator, None)
 
-            if args.save_checkpoint:
-                output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
-                os.makedirs(output_path, exist_ok=True)
-                model.save_checkpoint(output_path)
+        if args.save_checkpoint:
+            output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
+            os.makedirs(output_path, exist_ok=True)
+            model.save_checkpoint(output_path)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
