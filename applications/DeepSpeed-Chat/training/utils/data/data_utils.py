@@ -284,6 +284,11 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
     return train_dataset, eval_dataset
 
 def save_dataset_splits(dataset, max_num_per_split, file_name):
+    #remove all existing files that start with file_name and end in `_i.pt` in the directory of file_name
+    for f in os.listdir(os.path.dirname(file_name)):
+        if f.startswith(file_name) and f.endswith(".pt"):
+            os.remove(os.path.join(os.path.dirname(file_name), f))
+        
     splits = []
     curr = 0
     while curr < len(dataset):
