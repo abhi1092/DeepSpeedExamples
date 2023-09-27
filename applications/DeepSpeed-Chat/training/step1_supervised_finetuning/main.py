@@ -318,9 +318,11 @@ def save_model_operations(model, tokenizer, args, epoch, step):
         return
 
     if args.save_checkpoint:
+        start = time.time()
         output_path = os.path.join(args.output_dir, "deepspeed_checkpoint")
         os.makedirs(output_path, exist_ok=True)
         model.save_checkpoint(output_path)
+        print_rank_0(f"Saving checkpoint took {time.time() - start} seconds", color="GREEN")
 
     print_rank_0('saving model ...', args.global_rank)
     model = convert_lora_to_linear_layer(model)
@@ -539,8 +541,7 @@ def main():
         perplexity = evaluation(model, eval_dataloader)
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
         
-        print_rank_0(f"!!!!! debugging !!!!!!!! change this line for further things.", color="RED", include_caller=True)
-        # save_model_operations(model, tokenizer, args, epoch, step)
+        save_model_operations(model, tokenizer, args, epoch, step)
         
         #check if not last epoch, if yes, start the train loader again
         if epoch != args.num_train_epochs - 1:
