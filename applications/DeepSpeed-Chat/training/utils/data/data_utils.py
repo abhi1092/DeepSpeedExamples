@@ -297,6 +297,7 @@ def save_dataset_splits(dataset, max_num_per_split, file_name):
         split_name = f"{file_name}_{curr}.pt"
         splits.append(split_name)
         split_subset = Subset(dataset, range(curr, min(curr + max_num_per_split, len(dataset))))
+        print_rank_0(f"len(split_subset) = {len(split_subset)}", color="YELLOW", rank=0)
         print_rank_0(f"Saving {split_name} data split", color="GREEN", rank=0)
         torch.save(split_subset, split_name)
         curr += max_num_per_split
