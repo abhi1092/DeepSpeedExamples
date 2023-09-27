@@ -297,7 +297,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
                                  collate_fn=default_data_collator,
                                  sampler=eval_sampler,
                                  batch_size=args.per_device_eval_batch_size)
-    yield train_dataloader, eval_dataloader, len_train_dataset
+    yield train_dataloader, eval_dataloader, len_train_dataset//args.per_device_train_batch_size
     
     # keep yielding the next training splits
     for split in train_splits[1:]:
@@ -381,7 +381,7 @@ def main():
    
     tokenizer.add_special_tokens({"additional_special_tokens": [CONTEXT_KEY, HUMAN_KEY, ASSISTANT_KEY, END_KEY]})
     data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
-    train_dataloader, eval_dataloader, len_train_dataset = next(data_generator)
+    train_dataloader, eval_dataloader, total_num_batches = next(data_generator)
     
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
@@ -430,7 +430,7 @@ def main():
                               betas=(0.9, 0.95))
 
     num_update_steps_per_epoch = math.ceil(
-        len(train_dataloader) / args.gradient_accumulation_steps)
+        total_num_batches / args.gradient_accumulation_steps)
     if args.num_warmup_steps == -1:
         args.num_warmup_steps = math.ceil(num_update_steps_per_epoch * args.num_train_epochs * 0.03)
         print_rank_0(f"num_warmup_steps: {args.num_warmup_steps}", color="YELLOW")
