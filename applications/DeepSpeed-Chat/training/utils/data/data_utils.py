@@ -321,18 +321,16 @@ def save_dataset_splits(dataset, max_num_per_split, file_name):
         curr += max_num_per_split
     return splits
 
+
 def get_dataset_splits(file_name):
-    #list all files that start with file_name and end in `_i.pt`
-    splits = []
-    i = 0
-    while True:
-        split_name = f"{file_name}_{i}.pt"
-        if not os.path.isfile(split_name):
-            break
-        splits.append(split_name)
-        i += 1
+    # Use glob to get all files that start with file_name and end with .pt
+    splits = sorted(glob.glob(f"{file_name}_*.pt"))
+    
+    # If no such files are found, return a list with just the file_name
     if len(splits) == 0:
         splits.append(file_name)
+    
+    print_rank_0(f"found {splits} data splits", color="MAGENTA")
     return splits
 
 def create_prompt_dataset(local_rank,

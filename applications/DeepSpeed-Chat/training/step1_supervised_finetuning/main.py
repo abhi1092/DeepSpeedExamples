@@ -301,7 +301,6 @@ def process_data(args, tokenizer, end_of_conversation_token):
     
     eval_dataloader = make_dataloader(eval_fname, is_eval=True)
     
-    
     # Now, for each train split, load it, create a DataLoader, and then yield it
     for split in train_splits:
         print_rank_0(f"yielding split {split}", color="CYAN")
@@ -539,7 +538,8 @@ def main():
         perplexity = evaluation(model, eval_dataloader)
         print_rank_0(f"ppl: {perplexity}", args.global_rank)
         
-        save_model_operations(model, tokenizer, args, epoch, step)
+        print_rank_0(f"!!!!! debugging !!!!!!!! change this line for further things.", color="RED", include_caller=True)
+        # save_model_operations(model, tokenizer, args, epoch, step)
         
         #check if not last epoch, if yes, start the train loader again
         if epoch != args.num_train_epochs - 1:
