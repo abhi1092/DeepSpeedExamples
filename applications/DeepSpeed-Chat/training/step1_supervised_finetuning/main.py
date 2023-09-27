@@ -255,7 +255,7 @@ def setup_optuna(args):
             args.weight_decay = 0.0
     return study, trial, optuna_start_time
 
-def process_data(args, tokenizer, end_of_conversation_token):
+def process_data(args, tokenizer, end_of_conversation_token, epoch=0):
     '''
     This function will create the training and evaluation dataloaders.
     
@@ -286,7 +286,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
         dataset = torch.load(fname)
         
         if args.local_rank == -1:
-            sampler = SequentialSampler(dataset) if is_eval else RandomSampler(dataset)
+            sampler = SequentialSampler(dataset) if is_eval else RandomSampler(dataset, generator=torch.Generator().manual_seed(args.seed+epoch))
         else:
             sampler = DistributedSampler(dataset)
         
@@ -501,9 +501,10 @@ def main():
     for epoch in range(args.num_train_epochs):
         step = 0
         print_rank_0(
-            f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
+            f"Beginning of Epoch {epoch+1}/{args.num_train_epochs},",
             args.global_rank)
         while train_dataloader is not None:
+            print_rank_0(f"Total Micro Batches in split: {len(train_dataloader)}", color="GREEN")
             for batch in train_dataloader:
                 start = time.time()
                     
@@ -523,7 +524,7 @@ def main():
                 if step % 5 == 0:
                     optuna_operations(loss, step)
                 
-                if step + 1 % args.save_steps == 0:
+                if (step + 1) % args.save_steps == 0:
                     save_model_operations(model, tokenizer, args, epoch, step)
                 
                 step += 1
@@ -543,7 +544,7 @@ def main():
         
         #check if not last epoch, if yes, start the train loader again
         if epoch != args.num_train_epochs - 1:
-            data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
+            data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY, epoch=epoch+1)
             train_dataloader, _, _ = next(data_generator)
 
 
