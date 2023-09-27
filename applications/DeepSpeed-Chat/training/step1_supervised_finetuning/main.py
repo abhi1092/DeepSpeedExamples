@@ -523,7 +523,7 @@ def main():
                 if step % 5 == 0:
                     optuna_operations(loss, step)
                 
-                if step % args.save_steps == 0:
+                if step + 1 % args.save_steps == 0:
                     save_model_operations(model, tokenizer, args, epoch, step)
                 
                 step += 1
