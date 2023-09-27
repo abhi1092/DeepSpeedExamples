@@ -160,6 +160,23 @@ class PromptDataset(Dataset):
         elif self.train_phase == 3:
             return self.prompt_dataset[idx]["input_ids"],self.prompt_dataset[idx]["attention_mask"], \
                 self.pad_token_id
+    def get_subset(self, indices):
+        # Extract subsets from internal datasets if they're not empty
+        prompt_subset = [self.prompt_dataset[i] for i in indices] \
+            if len(self.prompt_dataset)>0 else []
+        chosen_subset = [self.chosen_dataset[i] for i in indices] \
+            if len(self.chosen_dataset)>0 else []
+        reject_subset = [self.reject_dataset[i] for i in indices] \
+            if len(self.reject_dataset)>0 else []
+
+        # Return new instance of PromptDataset
+        return PromptDataset(
+            prompt_subset,
+            chosen_subset,
+            reject_subset,
+            self.pad_token_id,
+            self.train_phase
+        )
 
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
@@ -296,8 +313,8 @@ def save_dataset_splits(dataset, max_num_per_split, file_name):
     while curr < len(dataset):
         split_name = f"{file_name}_{curr}.pt"
         splits.append(split_name)
-        from IPython import embed; embed(header=get_caller(), using=False)
-        split_subset = Subset(dataset, range(curr, min(curr + max_num_per_split, len(dataset))))
+        indices = range(curr, min(curr + max_num_per_split, len(dataset)))
+        split_subset = PromptDataset.get_subset(dataset, indices)
         print_rank_0(f"len(split_subset) = {len(split_subset)}", color="YELLOW", rank=0)
         print_rank_0(f"Saving {split_name} data split", color="GREEN", rank=0)
         torch.save(split_subset, split_name)
