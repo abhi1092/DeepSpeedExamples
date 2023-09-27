@@ -5,6 +5,7 @@
 # DeepSpeed Team
 import argparse
 from datetime import timedelta
+import gc
 import os
 import math
 import sys
@@ -276,43 +277,42 @@ def process_data(args, tokenizer, end_of_conversation_token):
         reload=args.reload_data,
         max_num_per_split=args.max_num_per_split,
     )
-    print_rank_0(f"len_train_dataset: {len_train_dataset}", color="GREEN")
-    start = time.time()
-    print_rank_0(f"loading train_splits: {train_splits[0]} of {train_splits}", color="GREEN")
-    train_dataset = torch.load(train_splits[0])
-    eval_dataset = torch.load(eval_fname)
-    print_rank_0(f"Loading data took {time.time() - start} seconds", color="GREEN")
-    # DataLoaders creation:
-    if args.local_rank == -1:
-        train_sampler = RandomSampler(train_dataset)
-        eval_sampler = SequentialSampler(eval_dataset)
-    else:
-        train_sampler = DistributedSampler(train_dataset)
-        eval_sampler = DistributedSampler(eval_dataset)
-    train_dataloader = DataLoader(train_dataset,
-                                  collate_fn=default_data_collator,
-                                  sampler=train_sampler,
-                                  batch_size=args.per_device_train_batch_size)
-    eval_dataloader = DataLoader(eval_dataset,
-                                 collate_fn=default_data_collator,
-                                 sampler=eval_sampler,
-                                 batch_size=args.per_device_eval_batch_size)
-    yield train_dataloader, eval_dataloader, len_train_dataset//args.per_device_train_batch_size
     
-    # keep yielding the next training splits
-    for split in train_splits[1:]:
-        print_rank_0(f"loading train_splits: {split}", color="GREEN")
-        train_dataset = torch.load(split)
+    print_rank_0(f"len_train_dataset: {len_train_dataset}", color="GREEN")
+    
+    def make_dataloader(fname, is_eval=False):
+        start = time.time()
+        print_rank_0(f"Loading data from {fname}", color="GREEN")
+        dataset = torch.load(fname)
+        
         if args.local_rank == -1:
-            train_sampler = RandomSampler(train_dataset)
+            sampler = SequentialSampler(dataset) if is_eval else RandomSampler(dataset)
         else:
-            train_sampler = DistributedSampler(train_dataset)
-        train_dataloader = DataLoader(train_dataset,
-                                      collate_fn=default_data_collator,
-                                      sampler=train_sampler,
-                                      batch_size=args.per_device_train_batch_size)
-        yield train_dataloader
-
+            sampler = DistributedSampler(dataset)
+        
+        dataloader = DataLoader(dataset,
+                                collate_fn=default_data_collator,
+                                sampler=sampler,
+                                batch_size=args.per_device_eval_batch_size if 'eval' in fname else args.per_device_train_batch_size)
+        
+        print_rank_0(f"Loading data from {fname} took {time.time() - start} seconds", color="GREEN")
+        
+        return dataloader
+    
+    eval_dataloader = make_dataloader(eval_fname, is_eval=True)
+    
+    
+    # Now, for each train split, load it, create a DataLoader, and then yield it
+    for split in train_splits:
+        train_dataloader = make_dataloader(split)
+        if split == train_splits[0]:
+            yield train_dataloader, eval_dataloader, len_train_dataset//args.per_device_train_batch_size
+        else:
+            yield train_dataloader
+        
+        del train_dataloader
+        gc.collect()
+        
 def save_model_operations(model, tokenizer, args, epoch, step):
     if args.output_dir is None:
         return
@@ -528,6 +528,7 @@ def main():
                 
                 step += 1
             
+            del train_dataloader
             train_dataloader = next(data_generator, None)
 
         # Evaluate perplexity on the validation set.
