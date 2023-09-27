@@ -9,7 +9,7 @@ cmd() {
     HF_DATASETS_CACHE=/app/hf torchrun --nnodes=${WORLD_SIZE} --node_rank=${RANK} --nproc_per_node=8 --rdzv_id=101 --rdzv_endpoint=\"${MASTER_ADDR}:${MASTER_PORT}\" \
         main.py \
         --print_loss \
-        --data_path  /new_data/datasets/forca_092123/forca_sft_mix_808k_train.jsonl \
+        --data_path  /new_data/datasets/forca_092623/forca_sft_mix_708k_train.jsonl \
         --max_num_per_split 160000\
         --data_output_path /new_data/deepspeed_cache_data/\
         --save_checkpoint \
@@ -17,13 +17,13 @@ cmd() {
         --data_split 1,0,0 \
         --prompt formatted_input\
         --chosen targets\
-        --per_device_train_batch_size 8 \
-        --per_device_eval_batch_size 8 \
+        --per_device_train_batch_size 2 \
+        --per_device_eval_batch_size 2 \
         --max_seq_len 2048 \
-        --learning_rate 6e-5 \
+        --learning_rate 2e-5 \
         --weight_decay 0. \
         --num_train_epochs 1 \
-        --gradient_accumulation_steps 3 \
+        --gradient_accumulation_steps 1 \
         --gradient_checkpointing \
         --lr_scheduler_type linear \
         --num_warmup_steps -1 \
