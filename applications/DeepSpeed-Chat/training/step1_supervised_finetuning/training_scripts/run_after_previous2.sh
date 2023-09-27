@@ -10,7 +10,7 @@ cmd() {
         main.py \
         --print_loss \
         --data_path  /new_data/datasets/forca_092623/forca_sft_mix_708k_train.jsonl \
-        --max_num_per_split 160000\
+        --max_num_per_split 145000\
         --data_output_path /new_data/deepspeed_cache_data/\
         --save_checkpoint \
         --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
