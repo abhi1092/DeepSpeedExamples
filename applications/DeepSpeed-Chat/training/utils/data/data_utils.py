@@ -5,6 +5,7 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+import glob
 import math
 from pathlib import Path
 import time
