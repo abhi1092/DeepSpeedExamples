@@ -5,6 +5,7 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+import math
 from pathlib import Path
 import time
 import torch
@@ -287,14 +288,16 @@ def save_dataset_splits(dataset, max_num_per_split, file_name):
     #remove all existing files that start with file_name and end in `_i.pt` in the directory of file_name
     for f in os.listdir(os.path.dirname(file_name)):
         if f.startswith(os.path.basename(file_name)) and f.endswith(".pt"):
+            print_rank_0(f"Removing {f} data split", color="GREEN", rank=0)
             os.remove(os.path.join(os.path.dirname(file_name), f))
-        
+    
     splits = []
     curr = 0
     while curr < len(dataset):
         split_name = f"{file_name}_{curr}.pt"
         splits.append(split_name)
         split_subset = Subset(dataset, range(curr, min(curr + max_num_per_split, len(dataset))))
+        print_rank_0(f"Saving {split_name} data split", color="GREEN", rank=0)
         torch.save(split_subset, split_name)
         curr += max_num_per_split
     return splits
@@ -336,7 +339,7 @@ def create_prompt_dataset(local_rank,
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
     tokenizer_name = tokenizer.init_kwargs["name_or_path"].replace("/", "_")
-    fname = f"{fname}_split{data_split}_phase{train_phase}_seed{seed}_tokenizer{tokenizer_name}_seqlen{max_seq_len}_sft{sft_cache_key}"
+    fname = f"{fname}_split{data_split}_phase{train_phase}_seed{seed}_tokenizer{tokenizer_name}_seqlen{max_seq_len}_sft{sft_cache_key}_mnps{max_num_per_split}"
     fname = "_".join(fname.split("/"))
     fname = hashlib.sha256(fname.encode()).hexdigest(
     )  # hash the file name to avoid too long file name
@@ -416,7 +419,7 @@ def create_prompt_dataset(local_rank,
         start = time.time()
         train_splits = [train_fname]
         if max_num_per_split < len(train_dataset):
-            print_rank_0(f"Splitting train dataset into {len(train_dataset) // max_num_per_split} splits", color="GREEN", rank=0)
+            print_rank_0(f"Splitting train dataset into {math.ceil(len(train_dataset)/max_num_per_split)} splits", color="GREEN", rank=0)
             train_splits = save_dataset_splits(train_dataset, max_num_per_split, train_fname)
         else:
             torch.save(train_dataset, train_fname)
