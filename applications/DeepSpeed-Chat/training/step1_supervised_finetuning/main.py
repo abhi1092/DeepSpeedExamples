@@ -380,6 +380,9 @@ def main():
     END_KEY = "<|end|>"
    
     tokenizer.add_special_tokens({"additional_special_tokens": [CONTEXT_KEY, HUMAN_KEY, ASSISTANT_KEY, END_KEY]})
+    data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
+    train_dataloader, eval_dataloader, len_train_dataset = next(data_generator)
+    
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
                             tokenizer,
@@ -392,9 +395,6 @@ def main():
         if args.only_optimize_lora:
             model = only_optimize_lora_parameters(model)
             model = make_model_gradient_checkpointing_compatible(model)
-            
-    data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
-    train_dataloader, eval_dataloader, len_train_dataset = next(data_generator)
     
     def evaluation(model, eval_dataloader):
         model.eval()

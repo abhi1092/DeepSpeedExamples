@@ -296,6 +296,7 @@ def save_dataset_splits(dataset, max_num_per_split, file_name):
     while curr < len(dataset):
         split_name = f"{file_name}_{curr}.pt"
         splits.append(split_name)
+        from IPython import embed; embed(header=get_caller(), using=False)
         split_subset = Subset(dataset, range(curr, min(curr + max_num_per_split, len(dataset))))
         print_rank_0(f"len(split_subset) = {len(split_subset)}", color="YELLOW", rank=0)
         print_rank_0(f"Saving {split_name} data split", color="GREEN", rank=0)
