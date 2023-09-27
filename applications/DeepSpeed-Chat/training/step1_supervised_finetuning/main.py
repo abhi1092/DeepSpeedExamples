@@ -457,11 +457,6 @@ def main():
         print_rank_0(f"Loading checkpoint from {args.load_checkpoint_path}", color="GREEN")
         model.load_checkpoint(args.load_checkpoint_path)
         torch.distributed.barrier()
-    
-    if args.global_rank == 0:
-        save_hf_format(model, tokenizer, args, sub_folder="sft_model/epoch_2_step_282")
-    torch.distributed.barrier()
-    exit()
         
     def optuna_operations(loss, step, final=False):
         if study:

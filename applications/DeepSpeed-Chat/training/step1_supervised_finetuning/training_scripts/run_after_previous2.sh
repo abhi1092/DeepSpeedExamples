@@ -31,7 +31,9 @@ cmd() {
         --zero_stage 2 \
         --deepspeed \
         --output_dir /new_data/granite_v1_forcav1_tulu/ \
-        --save_steps 100"
+        --save_steps 100\
+        --enable_tensorboard\
+        --tensorboard_path /new_data/granite_v1_forcav1_tulu/tensorboard/"
     echo -e $CMD
     eval $CMD
 }

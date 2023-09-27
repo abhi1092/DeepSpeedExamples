@@ -3,6 +3,7 @@
 
 # DeepSpeed Team
 import os
+import time
 import torch
 import random
 import numpy as np
@@ -107,7 +108,10 @@ def save_hf_format(model, tokenizer, args, sub_folder=""):
     for key in list(save_dict.keys()):
         if "lora" in key:
             del save_dict[key]
+    print_rank_0(f"Saving model to {output_dir}", color="GREEN")
+    start = time.time()
     torch.save(save_dict, output_model_file)
+    print_rank_0(f"Saving model took {time.time() - start} seconds", color="GREEN")
     model_to_save.config.to_json_file(output_config_file)
     tokenizer.save_vocabulary(output_dir)
     tokenizer.save_pretrained(output_dir)
