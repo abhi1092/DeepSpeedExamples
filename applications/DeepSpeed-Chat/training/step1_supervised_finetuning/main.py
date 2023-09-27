@@ -430,7 +430,7 @@ def main():
                               betas=(0.9, 0.95))
 
     num_update_steps_per_epoch = math.ceil(
-        len_train_dataset / args.gradient_accumulation_steps)
+        len(train_dataloader) / args.gradient_accumulation_steps)
     if args.num_warmup_steps == -1:
         args.num_warmup_steps = math.ceil(num_update_steps_per_epoch * args.num_train_epochs * 0.03)
         print_rank_0(f"num_warmup_steps: {args.num_warmup_steps}", color="YELLOW")
