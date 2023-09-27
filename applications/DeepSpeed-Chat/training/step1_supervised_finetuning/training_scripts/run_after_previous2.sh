@@ -13,17 +13,17 @@ cmd() {
         --max_num_per_split 160000\
         --data_output_path /new_data/deepspeed_cache_data/\
         --save_checkpoint \
-        --model_name_or_path  /ai-models-cos/granite-13b-base-v1/step_300000_ckpt/\
+        --model_name_or_path  /new_data/granite_v1_forcav1_tulu/sft_model/epoch_0_step_0/\
         --data_split 1,0,0 \
         --prompt formatted_input\
         --chosen targets\
-        --per_device_train_batch_size 8 \
-        --per_device_eval_batch_size 8 \
+        --per_device_train_batch_size 4 \
+        --per_device_eval_batch_size 4 \
         --max_seq_len 2048 \
         --learning_rate 2e-5 \
         --weight_decay 0. \
         --num_train_epochs 1 \
-        --gradient_accumulation_steps 2 \
+        --gradient_accumulation_steps 4 \
         --gradient_checkpointing \
         --lr_scheduler_type linear \
         --num_warmup_steps -1 \

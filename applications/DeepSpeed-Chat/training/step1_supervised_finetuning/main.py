@@ -430,7 +430,7 @@ def main():
                               betas=(0.9, 0.95))
 
     num_update_steps_per_epoch = math.ceil(
-        len_train_dataset / args.gradient_accumulation_steps)
+        len(train_dataloader) / args.gradient_accumulation_steps)
     if args.num_warmup_steps == -1:
         args.num_warmup_steps = math.ceil(num_update_steps_per_epoch * args.num_train_epochs * 0.03)
         print_rank_0(f"num_warmup_steps: {args.num_warmup_steps}", color="YELLOW")
@@ -523,7 +523,7 @@ def main():
                 if step % 5 == 0:
                     optuna_operations(loss, step)
                 
-                if step % args.save_steps == 0:
+                if step + 1 % args.save_steps == 0:
                     save_model_operations(model, tokenizer, args, epoch, step)
                 
                 step += 1
