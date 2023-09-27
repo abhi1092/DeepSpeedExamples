@@ -293,7 +293,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
         dataloader = DataLoader(dataset,
                                 collate_fn=default_data_collator,
                                 sampler=sampler,
-                                batch_size=args.per_device_eval_batch_size if 'eval' in fname else args.per_device_train_batch_size)
+                                batch_size=args.per_device_eval_batch_size if is_eval else args.per_device_train_batch_size)
         
         print_rank_0(f"Loading data from {fname} took {time.time() - start} seconds", color="GREEN")
         
@@ -304,6 +304,7 @@ def process_data(args, tokenizer, end_of_conversation_token):
     
     # Now, for each train split, load it, create a DataLoader, and then yield it
     for split in train_splits:
+        print_rank_0(f"yielding split {split}", color="CYAN")
         train_dataloader = make_dataloader(split)
         if split == train_splits[0]:
             yield train_dataloader, eval_dataloader, len_train_dataset//args.per_device_train_batch_size
