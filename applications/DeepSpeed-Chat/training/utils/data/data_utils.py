@@ -276,7 +276,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 repeat(tokenizer),
                 repeat(end_of_conversation_token),
                 repeat(max_seq_len),
-                repeat(eos_token_id))
+                repeat(tokenizer.encode(end_of_conversation_token)[-1]))
         results = list(starmap(process_single_data_point, args))
     
     chosen_dataset, reject_dataset, prompt_dataset = [], [], []    
