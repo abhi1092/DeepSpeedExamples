@@ -279,6 +279,7 @@ def process_data(args, tokenizer, end_of_conversation_token, epoch=0):
     )
     
     print_rank_0(f"len_train_dataset: {len_train_dataset}", color="GREEN")
+    total_num_batches = len_train_dataset/(args.per_device_train_batch_size*torch.distributed.get_world_size())
     
     def make_dataloader(fname, is_eval=False):
         start = time.time()
@@ -299,18 +300,15 @@ def process_data(args, tokenizer, end_of_conversation_token, epoch=0):
         
         return dataloader
     
-    eval_dataloader = make_dataloader(eval_fname, is_eval=True)
+    if epoch == 0:
+        eval_dataloader = make_dataloader(eval_fname, is_eval=True)
+        yield total_num_batches, eval_dataloader
     
     # Now, for each train split, load it, create a DataLoader, and then yield it
     for split in train_splits:
         print_rank_0(f"yielding split {split}", color="CYAN")
         train_dataloader = make_dataloader(split)
-        if split == train_splits[0]:
-            total_num_batches = len(train_dataloader)*len_train_dataset/args.max_num_per_split
-            yield train_dataloader, eval_dataloader, total_num_batches
-        else:
-            yield train_dataloader
-        
+        yield train_dataloader
         del train_dataloader
         gc.collect()
         
@@ -375,7 +373,7 @@ def main():
     torch.distributed.barrier()
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
-    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
+    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=False)
    
     HUMAN_KEY = "<|user|>"
     ASSISTANT_KEY = "<|assistant|>"
@@ -384,7 +382,7 @@ def main():
    
     tokenizer.add_special_tokens({"additional_special_tokens": [CONTEXT_KEY, HUMAN_KEY, ASSISTANT_KEY, END_KEY]})
     data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY)
-    train_dataloader, eval_dataloader, total_num_batches = next(data_generator)
+    total_num_batches, eval_dataloader = next(data_generator)
     
     model = create_hf_model(AutoModelForCausalLM,
                             args.model_name_or_path,
@@ -433,10 +431,12 @@ def main():
                               betas=(0.9, 0.95))
 
     num_update_steps_per_epoch = math.ceil(
-        total_num_batches / args.gradient_accumulation_steps)
+        total_num_batches / args.gradient_accumulation_steps / args.num_train_epochs)
+    print_rank_0(f"total_num_batches: {total_num_batches}", color="YELLOW")
+    print_rank_0(f"num_update_steps_per_epoch: {num_update_steps_per_epoch}", color="YELLOW")
     if args.num_warmup_steps == -1:
-        args.num_warmup_steps = math.ceil(num_update_steps_per_epoch * args.num_train_epochs * 0.03)
-        print_rank_0(f"num_warmup_steps: {args.num_warmup_steps}", color="YELLOW")
+        args.num_warmup_steps = math.ceil(total_num_batches * 0.03)
+    print_rank_0(f"num_warmup_steps: {args.num_warmup_steps}", color="YELLOW")
     lr_scheduler = get_scheduler(
         name=args.lr_scheduler_type,
         optimizer=optimizer,
