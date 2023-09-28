@@ -250,13 +250,13 @@ def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_
     g_tokenizer = _tokenizer #load_hf_tokenizer(_tokenizer, fast_tokenizer=False)
     g_end_of_conversation_token = _end_of_conversation_token
     g_max_seq_len = _max_seq_len
-    g_eos_token_id = _eos_token_id
+    g_eos_token_id = _tokenizer.encode(_end_of_conversation_token)[-1]
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len, parallel=False):
     print_rank_0(f"Creating dataset", color="RED", include_caller=True)
     start_time = time.time()
-    eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
+    # eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
     if parallel:
         print_rank_0("Using parallel processing", color="CYAN")
         with ProcessPoolExecutor(max_workers=os.cpu_count(),
@@ -266,7 +266,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                                                                     tokenizer,
                                                                                     end_of_conversation_token,
                                                                                     max_seq_len,
-                                                                                    eos_token_id)) as executor:
+                                                                                    # eos_token_id
+                                                                                    )) as executor:
             results = list(executor.map(process_single_data_point, current_dataset))
     else:
         args = zip(current_dataset,
