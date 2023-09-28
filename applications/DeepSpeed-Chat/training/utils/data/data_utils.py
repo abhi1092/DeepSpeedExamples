@@ -199,6 +199,7 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
     print(f"tmp_data = {tmp_data}")
     print(f"raw_dataset = {raw_dataset}")
     print(f"train_phase = {train_phase}")
+    print(f"train_phase is 1 = {train_phase==1}")
     print(f"tokenizer = {tokenizer}")
     print(f"end_of_conversation_token = {end_of_conversation_token}")
     print(f"max_seq_len = {max_seq_len}")
@@ -233,6 +234,7 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
             print(f"chosen_token = {chosen_token}")
             return chosen_token, None, None
     else:
+        print(f"train_phase_error {train_phase!=1}")
         raise NotImplementedError
     return None, None, None
 
