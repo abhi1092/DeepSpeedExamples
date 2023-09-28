@@ -237,6 +237,7 @@ def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len, parallel=False):
     print_rank_0(f"Creating dataset", color="RED", include_caller=True)
+    assert tokenizer.padding_side == "right"
     start_time = time.time()
     if parallel:
         print_rank_0("Using parallel processing", color="CYAN")
