@@ -243,7 +243,7 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
         raise NotImplementedError
     return None, None, None
 
-def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_conversation_token, _max_seq_len, _eos_token_id):
+def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_conversation_token, _max_seq_len):
     global g_raw_dataset, g_train_phase, g_tokenizer, g_end_of_conversation_token, g_max_seq_len, g_eos_token_id
     g_raw_dataset = _raw_dataset
     g_train_phase = _train_phase
