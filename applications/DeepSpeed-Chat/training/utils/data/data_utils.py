@@ -279,16 +279,19 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                    max_seq_len, column_names=None):
     raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names)
     train_dataset = raw_dataset.get_train_data()
+    print_rank_0(f"debbuging len(train_dataset) = {len(train_dataset)}", color="RED", include_caller=True)
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
                                               seed, "train", data_split,
                                               train_phase - 1,
                                               len(train_dataset))
     train_dataset = Subset(train_dataset, train_index)
+    print_rank_0(f"debbuging len(train_dataset) = {len(train_dataset)}", color="RED", include_caller=True)
     train_dataset = create_dataset_split(train_dataset, raw_dataset,
                                          train_phase, tokenizer,
                                          end_of_conversation_token,
                                          max_seq_len)
+    print_rank_0(f"debbuging len(train_dataset) = {len(train_dataset)}", color="RED", include_caller=True)
 
     eval_dataset = raw_dataset.get_eval_data()
     eval_index = get_raw_dataset_split_index(local_rank, output_path,
