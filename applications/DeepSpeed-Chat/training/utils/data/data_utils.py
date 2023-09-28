@@ -230,7 +230,7 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
                 0)
             chosen_token["attention_mask"] = chosen_token[
                 "attention_mask"].squeeze(0)
-
+            print(f"chosen_token = {chosen_token}")
             return chosen_token, None, None
     else:
         raise NotImplementedError
