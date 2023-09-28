@@ -211,14 +211,16 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
         if chosen_sentence is not None:
             print(f"chosen_sentence is not None")
             chosen_sentence += end_of_conversation_token
+            print(f"chosen_sentence = {chosen_sentence} + {get_caller()}")
             chosen_token = tokenizer(chosen_sentence,
                                     max_length=max_seq_len,
                                     padding="max_length",
                                     truncation=True,
                                     return_tensors="pt")
+            print(f"chosen_token = {chosen_token['input_ids']}")
             # check if eos anywhere in chosen_token
             if eos_token_id not in chosen_token["input_ids"].squeeze(0):
-                return None
+                return None, None, None
             prompt_token = tokenizer(prompt, 
                                     return_tensors="pt",
                                     max_length=max_seq_len,
