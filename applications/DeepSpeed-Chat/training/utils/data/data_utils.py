@@ -240,11 +240,12 @@ def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len, parallel=True):
-    print_rank_0(f"Creating dataset for {get_caller()}", color="RED", include_caller=True)
+    print_rank_0(f"Creating dataset", color="RED", include_caller=True)
     start_time = time.time()
     eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
     if parallel:
-        with ProcessPoolExecutor(max_workers=os.cpu_count()//4, 
+        print_rank_0("Using parallel processing", color="CYAN")
+        with ProcessPoolExecutor(max_workers=os.cpu_count(),
                                  initializer=data_processing_initializer, initargs=(raw_dataset,
                                                                                     train_phase,
                                                                                     tokenizer,
