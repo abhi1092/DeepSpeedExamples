@@ -252,7 +252,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
     if parallel:
         print_rank_0("Using parallel processing", color="CYAN")
-        with ProcessPoolExecutor(max_workers=os.cpu_count(),
+        with ProcessPoolExecutor(max_workers=2,
                                  initializer=data_processing_initializer, initargs=(raw_dataset,
                                                                                     train_phase,
                                                                                     tokenizer.name_or_path,
