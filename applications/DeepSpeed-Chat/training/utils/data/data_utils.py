@@ -218,6 +218,7 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
                                     truncation=True,
                                     return_tensors="pt")
             print(f"chosen_token = {chosen_token['input_ids']}")
+            print(f"eos in chosen_token = {eos_token_id in chosen_token['input_ids'].squeeze(0)}")
             # check if eos anywhere in chosen_token
             if eos_token_id not in chosen_token["input_ids"].squeeze(0):
                 return None, None, None
@@ -246,7 +247,7 @@ def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_
     global g_raw_dataset, g_train_phase, g_tokenizer, g_end_of_conversation_token, g_max_seq_len, g_eos_token_id
     g_raw_dataset = _raw_dataset
     g_train_phase = _train_phase
-    g_tokenizer = load_hf_tokenizer(_tokenizer, fast_tokenizer=False)
+    g_tokenizer = _tokenizer #load_hf_tokenizer(_tokenizer, fast_tokenizer=False)
     g_end_of_conversation_token = _end_of_conversation_token
     g_max_seq_len = _max_seq_len
     g_eos_token_id = _eos_token_id
@@ -261,7 +262,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
         with ProcessPoolExecutor(max_workers=2,
                                  initializer=data_processing_initializer, initargs=(raw_dataset,
                                                                                     train_phase,
-                                                                                    tokenizer.name_or_path,
+                                                                                    # tokenizer.name_or_path,
+                                                                                    tokenizer,
                                                                                     end_of_conversation_token,
                                                                                     max_seq_len,
                                                                                     eos_token_id)) as executor:
