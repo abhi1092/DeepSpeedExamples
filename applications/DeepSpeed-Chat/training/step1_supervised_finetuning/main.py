@@ -546,7 +546,6 @@ def main():
         #check if not last epoch, if yes, start the train loader again
         if epoch != args.num_train_epochs - 1:
             data_generator = process_data(args, tokenizer, end_of_conversation_token=END_KEY, epoch=epoch+1)
-            train_dataloader, _, _ = next(data_generator)
 
 
 
