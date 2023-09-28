@@ -265,6 +265,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     
     chosen_dataset, reject_dataset, prompt_dataset = [], [], []    
     if train_phase == 1:
+        from IPython import embed; embed(header=get_caller())
         chosen_dataset = [d[0] for d in results if d[0] is not None]
         print_rank_0(f"Number of dropped samples: {len(results) - len(chosen_dataset)}", color="GREEN")
     else:
