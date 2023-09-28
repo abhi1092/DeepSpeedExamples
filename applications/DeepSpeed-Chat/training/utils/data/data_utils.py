@@ -103,6 +103,7 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
                                 split_name, data_split, split_index,
                                 data_size):
     index_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_index}.npy"
+    print_rank_0(f"loading dataset index_file_name = {index_file_name}", color="CYAN")
     # reindex each time when using local jsonfile since it's more likely to get modified
     if (not os.path.isfile(index_file_name)) or (dataset_name == 'jsonfile'):
         splits = [float(s) for s in data_split.split(',')]
