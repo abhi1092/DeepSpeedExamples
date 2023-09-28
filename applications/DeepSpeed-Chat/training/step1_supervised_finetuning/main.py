@@ -306,7 +306,8 @@ def process_data(args, tokenizer, end_of_conversation_token, epoch=0):
         print_rank_0(f"yielding split {split}", color="CYAN")
         train_dataloader = make_dataloader(split)
         if split == train_splits[0]:
-            yield train_dataloader, eval_dataloader, len_train_dataset//args.per_device_train_batch_size
+            total_num_batches = len(train_dataloader)*len_train_dataset/args.max_num_per_split
+            yield train_dataloader, eval_dataloader, total_num_batches
         else:
             yield train_dataloader
         
