@@ -261,7 +261,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                                                                                     end_of_conversation_token,
                                                                                     max_seq_len,
                                                                                     eos_token_id)) as executor:
-            results = list(executor.map(process_single_data_point, current_dataset[:10]))
+            results = list(executor.map(process_single_data_point, [current_dataset[i] for i in range(10)]))
     else:
         args = zip(current_dataset,
                 repeat(raw_dataset),
