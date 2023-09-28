@@ -373,7 +373,7 @@ def main():
     torch.distributed.barrier()
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
-    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=False)
+    tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
    
     HUMAN_KEY = "<|user|>"
     ASSISTANT_KEY = "<|assistant|>"

@@ -196,29 +196,29 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
     if eos_token_id is None:
         eos_token_id = g_eos_token_id
     #print everything 
-    print(f"tmp_data = {tmp_data}")
-    print(f"raw_dataset = {raw_dataset}")
-    print(f"train_phase = {train_phase}")
-    print(f"train_phase is 1 = {train_phase==1}")
-    print(f"tokenizer = {tokenizer}")
-    print(f"end_of_conversation_token = {end_of_conversation_token}")
-    print(f"max_seq_len = {max_seq_len}")
-    print(f"eos_token_id = {eos_token_id}")
+    # print(f"tmp_data = {tmp_data}")
+    # print(f"raw_dataset = {raw_dataset}")
+    # print(f"train_phase = {train_phase}")
+    # print(f"train_phase is 1 = {train_phase==1}")
+    # print(f"tokenizer = {tokenizer}")
+    # print(f"end_of_conversation_token = {end_of_conversation_token}")
+    # print(f"max_seq_len = {max_seq_len}")
+    # print(f"eos_token_id = {eos_token_id}")
     if train_phase == 1:
         chosen_sentence = raw_dataset.get_prompt_and_chosen(tmp_data)
-        print(f"chosen_sentence = {chosen_sentence}")
+        # print(f"chosen_sentence = {chosen_sentence}")
         prompt = raw_dataset.get_prompt(tmp_data)
         if chosen_sentence is not None:
-            print(f"chosen_sentence is not None")
+            # print(f"chosen_sentence is not None")
             chosen_sentence += end_of_conversation_token
-            print(f"chosen_sentence = {chosen_sentence} + {get_caller()}")
+            # print(f"chosen_sentence = {chosen_sentence} + {get_caller()}")
             chosen_token = tokenizer(chosen_sentence,
                                     max_length=max_seq_len,
                                     padding="max_length",
                                     truncation=True,
                                     return_tensors="pt")
-            print(f"chosen_token = {chosen_token['input_ids']}")
-            print(f"eos in chosen_token = {eos_token_id in chosen_token['input_ids'].squeeze(0)}")
+            # print(f"chosen_token = {chosen_token['input_ids']}")
+            # print(f"eos in chosen_token = {eos_token_id in chosen_token['input_ids'].squeeze(0)}")
             # check if eos anywhere in chosen_token
             if eos_token_id not in chosen_token["input_ids"].squeeze(0):
                 return None, None, None
@@ -236,10 +236,10 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
                 0)
             chosen_token["attention_mask"] = chosen_token[
                 "attention_mask"].squeeze(0)
-            print(f"chosen_token = {chosen_token}")
+            # print(f"chosen_token = {chosen_token}")
             return chosen_token, None, None
     else:
-        print(f"train_phase_error {train_phase!=1}")
+        # print(f"train_phase_error {train_phase!=1}")
         raise NotImplementedError
     return None, None, None
 
@@ -259,7 +259,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
     eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
     if parallel:
         print_rank_0("Using parallel processing", color="CYAN")
-        with ProcessPoolExecutor(max_workers=2,
+        with ProcessPoolExecutor(max_workers=cpu_count()//4,
                                  initializer=data_processing_initializer, initargs=(raw_dataset,
                                                                                     train_phase,
                                                                                     # tokenizer.name_or_path,
