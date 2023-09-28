@@ -506,7 +506,7 @@ def main():
         print_rank_0(
             f"Beginning of Epoch {epoch+1}/{args.num_train_epochs},",
             args.global_rank)
-        while train_dataloader is not None:
+        for train_dataloader in data_generator:
             print_rank_0(f"Total Micro Batches in split: {len(train_dataloader)}", color="GREEN")
             for batch in train_dataloader:
                 start = time.time()
@@ -533,7 +533,6 @@ def main():
                 step += 1
             
             del train_dataloader
-            train_dataloader = next(data_generator, None)
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
