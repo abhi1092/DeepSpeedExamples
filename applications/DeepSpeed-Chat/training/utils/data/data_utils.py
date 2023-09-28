@@ -18,7 +18,7 @@ from datasets import load_dataset
 import numpy as np
 import os
 import hashlib
-from itertools import chain
+from itertools import chain, repeat, starmap
 from . import raw_datasets
 from utils.utils import get_caller, print_rank_0
 
@@ -181,72 +181,99 @@ class PromptDataset(Dataset):
             self.train_phase
         )
 
-class DatasetSplitter:
-    def __init__(self, raw_dataset, train_phase, tokenizer, end_of_conversation_token, max_seq_len, parallel=False):
-        self.raw_dataset = raw_dataset
-        self.train_phase = train_phase
-        self.tokenizer = tokenizer
-        self.end_of_conversation_token = end_of_conversation_token
-        self.max_seq_len = max_seq_len
-        self.eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
-        assert self.tokenizer.padding_side == "right"
-        self.parallel = parallel
+def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, tokenizer=None, end_of_conversation_token=None, max_seq_len=None, eos_token_id=None):
+    # If the function arguments are None, we're in parallel mode and should use the global variables
+    if raw_dataset is None:
+        raw_dataset = g_raw_dataset
+    if train_phase is None:
+        train_phase = g_train_phase
+    if tokenizer is None:
+        tokenizer = g_tokenizer
+    if end_of_conversation_token is None:
+        end_of_conversation_token = g_end_of_conversation_token
+    if max_seq_len is None:
+        max_seq_len = g_max_seq_len
+    if eos_token_id is None:
+        eos_token_id = g_eos_token_id
 
-    def process_data(self, tmp_data):
-        if self.train_phase == 1:
-            chosen_sentence = self.raw_dataset.get_prompt_and_chosen(tmp_data)
-            prompt = self.raw_dataset.get_prompt(tmp_data)
-            if chosen_sentence is not None:
-                chosen_sentence += self.end_of_conversation_token
-                chosen_token = self.tokenizer(chosen_sentence,
-                                            max_length=self.max_seq_len,
-                                            padding="max_length",
-                                            truncation=True,
-                                            return_tensors="pt")
-                #check if eos anywhere in chosen_token
-                if self.eos_token_id not in chosen_token["input_ids"].squeeze(0):
-                    return None
-                prompt_token = self.tokenizer(prompt, 
-                                            return_tensors="pt",
-                                            max_length=self.max_seq_len,
-                                            padding="max_length",
-                                            truncation=True)
+    if train_phase == 1:
+        chosen_sentence = raw_dataset.get_prompt_and_chosen(tmp_data)
+        prompt = raw_dataset.get_prompt(tmp_data)
+        if chosen_sentence is not None:
+            chosen_sentence += end_of_conversation_token
+            chosen_token = tokenizer(chosen_sentence,
+                                    max_length=max_seq_len,
+                                    padding="max_length",
+                                    truncation=True,
+                                    return_tensors="pt")
+            # check if eos anywhere in chosen_token
+            if eos_token_id not in chosen_token["input_ids"].squeeze(0):
+                return None
+            prompt_token = tokenizer(prompt, 
+                                    return_tensors="pt",
+                                    max_length=max_seq_len,
+                                    padding="max_length",
+                                    truncation=True)
 
-                chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
-                #get lenght of prompt token
-                prompt_length = prompt_token["attention_mask"].sum().item()
-                chosen_token['labels'][:prompt_length] = -100
-                chosen_token["input_ids"] = chosen_token["input_ids"].squeeze(
-                    0)
-                chosen_token["attention_mask"] = chosen_token[
-                    "attention_mask"].squeeze(0)
+            chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
+            # get length of prompt token
+            prompt_length = prompt_token["attention_mask"].sum().item()
+            chosen_token['labels'][:prompt_length] = -100
+            chosen_token["input_ids"] = chosen_token["input_ids"].squeeze(
+                0)
+            chosen_token["attention_mask"] = chosen_token[
+                "attention_mask"].squeeze(0)
 
-                return chosen_token, None, None
-        else:
-            raise NotImplementedError
-        return None
+            return chosen_token, None, None
+    else:
+        raise NotImplementedError
+    return None
 
-    def create_dataset_split(self, current_dataset):
-        chosen_dataset, reject_dataset, prompt_dataset = [], [], []
-        if self.parallel:
-            with ProcessPoolExecutor(os.cpu_count()//4) as executor:
-                results = list(executor.map(self.process_data, current_dataset))
-        else:
-            results = [self.process_data(d) for d in current_dataset]
-        
-        chosen_dataset_filtered = [d[0] for d in results if d[0] is not None]
-        
-        print_rank_0(f"Number of dropped samples: {len(chosen_dataset) - len(chosen_dataset_filtered)}", color="GREEN")
-        
-        return PromptDataset(prompt_dataset, chosen_dataset_filtered, reject_dataset,
-                         self.tokenizer.pad_token_id, self.train_phase)
-
-    # def __getstate__(self):
-    #     state = self.__dict__.copy()
-    #     return state
-
+def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_conversation_token, _max_seq_len, _eos_token_id):
+    global g_raw_dataset, g_train_phase, g_tokenizer, g_end_of_conversation_token, g_max_seq_len, g_eos_token_id
+    g_raw_dataset = _raw_dataset
+    g_train_phase = _train_phase
+    g_tokenizer = _tokenizer
+    g_end_of_conversation_token = _end_of_conversation_token
+    g_max_seq_len = _max_seq_len
+    g_eos_token_id = _eos_token_id
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
+                         end_of_conversation_token, max_seq_len, parallel=True):
+    print_rank_0(f"Creating dataset for {get_caller()}", color="RED", include_caller=True)
+    start_time = time.time()
+    eos_token_id = tokenizer.encode(end_of_conversation_token)[-1]
+    if parallel:
+        with ProcessPoolExecutor(max_workers=os.cpu_count()//4, 
+                                 initializer=data_processing_initializer, initargs=(raw_dataset,
+                                                                                    train_phase,
+                                                                                    tokenizer,
+                                                                                    end_of_conversation_token,
+                                                                                    max_seq_len,
+                                                                                    eos_token_id)) as executor:
+            results = list(executor.map(process_single_data_point, current_dataset))
+    else:
+        args = zip(current_dataset,
+                repeat(raw_dataset),
+                repeat(train_phase),
+                repeat(tokenizer),
+                repeat(end_of_conversation_token),
+                repeat(max_seq_len),
+                repeat(eos_token_id))
+        results = list(starmap(process_single_data_point, args))
+    
+    chosen_dataset, reject_dataset, prompt_dataset = [], [], []    
+    if train_phase == 1:
+        chosen_dataset = [d[0] for d in results if d[0] is not None]
+        print_rank_0(f"Number of dropped samples: {len(results) - len(chosen_dataset)}", color="GREEN")
+    else:
+        raise NotImplementedError
+    print_rank_0(f"Time to create dataset: {time.time() - start_time}", color="GREEN", include_caller=True)
+    return PromptDataset(prompt_dataset, chosen_dataset, reject_dataset,
+                         tokenizer.pad_token_id, train_phase)
+
+
+def create_dataset_split_(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len):
     print_rank_0(f"Creating dataset for {get_caller()}", color="RED", include_caller=True)
     prompt_dataset = []
@@ -344,7 +371,6 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
                    max_seq_len, column_names=None):
     raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names)
-    splitter = DatasetSplitter(raw_dataset, train_phase, tokenizer, end_of_conversation_token, max_seq_len, parallel=True)
     
     train_dataset = raw_dataset.get_train_data()
     print_rank_0(f"debbuging len(train_dataset) = {len(train_dataset)}", color="RED", include_caller=True)
@@ -354,11 +380,10 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                               train_phase - 1,
                                               len(train_dataset))
     train_dataset = Subset(train_dataset, train_index)
-    train_dataset = splitter.create_dataset_split(train_dataset)
-    # train_dataset = create_dataset_split(train_dataset, raw_dataset,
-    #                                      train_phase, tokenizer,
-    #                                      end_of_conversation_token,
-    #                                      max_seq_len)
+    train_dataset = create_dataset_split(train_dataset, raw_dataset,
+                                         train_phase, tokenizer,
+                                         end_of_conversation_token,
+                                         max_seq_len)
 
     eval_dataset = raw_dataset.get_eval_data()
     eval_index = get_raw_dataset_split_index(local_rank, output_path,
@@ -367,10 +392,9 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                              data_split, train_phase - 1,
                                              len(eval_dataset))
     eval_dataset = Subset(eval_dataset, eval_index)
-    eval_dataset = splitter.create_dataset_split(eval_dataset)
-    # eval_dataset = create_dataset_split(eval_dataset, raw_dataset, train_phase,
-    #                                     tokenizer, end_of_conversation_token,
-    #                                     max_seq_len)
+    eval_dataset = create_dataset_split(eval_dataset, raw_dataset, train_phase,
+                                        tokenizer, end_of_conversation_token,
+                                        max_seq_len)
     return train_dataset, eval_dataset
 
 def save_dataset_splits(dataset, max_num_per_split, file_name):
