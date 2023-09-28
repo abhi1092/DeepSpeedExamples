@@ -206,8 +206,10 @@ def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, toke
     print(f"eos_token_id = {eos_token_id}")
     if train_phase == 1:
         chosen_sentence = raw_dataset.get_prompt_and_chosen(tmp_data)
+        print(f"chosen_sentence = {chosen_sentence}")
         prompt = raw_dataset.get_prompt(tmp_data)
         if chosen_sentence is not None:
+            print(f"chosen_sentence is not None")
             chosen_sentence += end_of_conversation_token
             chosen_token = tokenizer(chosen_sentence,
                                     max_length=max_seq_len,
