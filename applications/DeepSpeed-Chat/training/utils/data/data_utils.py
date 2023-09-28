@@ -5,7 +5,11 @@
 """
 Part of the code was adopted from https://github.com/microsoft/Megatron-DeepSpeed/blob/main/megatron/data/dataset_utils.py
 """
+from concurrent.futures import ProcessPoolExecutor
+import glob
+import math
 from pathlib import Path
+import time
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 from torch.nn.utils.rnn import pad_sequence
@@ -14,9 +18,9 @@ from datasets import load_dataset
 import numpy as np
 import os
 import hashlib
-from itertools import chain
+from itertools import chain, repeat, starmap
 from . import raw_datasets
-from utils.utils import get_caller, print_rank_0
+from utils.utils import get_caller, load_hf_tokenizer, print_rank_0
 
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names=None):
@@ -100,6 +104,7 @@ def get_raw_dataset_split_index(local_rank, output_path, dataset_name, seed,
                                 split_name, data_split, split_index,
                                 data_size):
     index_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_index}.npy"
+    print_rank_0(f"loading dataset index_file_name = {index_file_name}", color="CYAN")
     # reindex each time when using local jsonfile since it's more likely to get modified
     if (not os.path.isfile(index_file_name)) or (dataset_name == 'jsonfile'):
         splits = [float(s) for s in data_split.split(',')]
@@ -158,18 +163,124 @@ class PromptDataset(Dataset):
         elif self.train_phase == 3:
             return self.prompt_dataset[idx]["input_ids"],self.prompt_dataset[idx]["attention_mask"], \
                 self.pad_token_id
+    def get_subset(self, indices):
+        # Extract subsets from internal datasets if they're not empty
+        prompt_subset = [self.prompt_dataset[i] for i in indices] \
+            if len(self.prompt_dataset)>0 else []
+        chosen_subset = [self.chosen_dataset[i] for i in indices] \
+            if len(self.chosen_dataset)>0 else []
+        reject_subset = [self.reject_dataset[i] for i in indices] \
+            if len(self.reject_dataset)>0 else []
 
+        # Return new instance of PromptDataset
+        return PromptDataset(
+            prompt_subset,
+            chosen_subset,
+            reject_subset,
+            self.pad_token_id,
+            self.train_phase
+        )
+
+def process_single_data_point(tmp_data, raw_dataset=None, train_phase=None, tokenizer=None, end_of_conversation_token=None, max_seq_len=None, eos_token_id=None):
+    # If the function arguments are None, we're in parallel mode and should use the global variables
+    if raw_dataset is None:
+        raw_dataset = g_raw_dataset
+    if train_phase is None:
+        train_phase = g_train_phase
+    if tokenizer is None:
+        tokenizer = g_tokenizer
+    if end_of_conversation_token is None:
+        end_of_conversation_token = g_end_of_conversation_token
+    if max_seq_len is None:
+        max_seq_len = g_max_seq_len
+    if eos_token_id is None:
+        eos_token_id = g_eos_token_id
+    if train_phase == 1:
+        chosen_sentence = raw_dataset.get_prompt_and_chosen(tmp_data)
+        prompt = raw_dataset.get_prompt(tmp_data)
+        if chosen_sentence is not None:
+            chosen_sentence += end_of_conversation_token
+            chosen_token = tokenizer(chosen_sentence,
+                                    max_length=max_seq_len,
+                                    padding="max_length",
+                                    truncation=True,
+                                    return_tensors="pt")
+            if eos_token_id not in chosen_token["input_ids"].squeeze(0):
+                return None, None, None
+            prompt_token = tokenizer(prompt, 
+                                    return_tensors="pt",
+                                    max_length=max_seq_len,
+                                    padding="max_length",
+                                    truncation=True)
+
+            chosen_token['labels'] = chosen_token["input_ids"].clone().squeeze(0)
+            prompt_length = prompt_token["attention_mask"].sum().item()
+            chosen_token['labels'][:prompt_length] = -100
+            chosen_token["input_ids"] = chosen_token["input_ids"].squeeze(
+                0)
+            chosen_token["attention_mask"] = chosen_token[
+                "attention_mask"].squeeze(0)
+            return chosen_token, None, None
+    else:
+        raise NotImplementedError
+    return None, None, None
+
+def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_conversation_token, _max_seq_len):
+    global g_raw_dataset, g_train_phase, g_tokenizer, g_end_of_conversation_token, g_max_seq_len, g_eos_token_id
+    g_raw_dataset = _raw_dataset
+    g_train_phase = _train_phase
+    g_tokenizer = _tokenizer #load_hf_tokenizer(_tokenizer, fast_tokenizer=False)
+    g_end_of_conversation_token = _end_of_conversation_token
+    g_max_seq_len = _max_seq_len
+    g_eos_token_id = _tokenizer.encode(_end_of_conversation_token)[-1]
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
-                         end_of_conversation_token, max_seq_len):
-    #print debug rank 0
-    print_rank_0(f"Creating dataset split for train phase {train_phase} ...", color="RED", include_caller=True)
+                         end_of_conversation_token, max_seq_len, parallel=False):
+    print_rank_0(f"Creating dataset", color="RED", include_caller=True)
     assert tokenizer.padding_side == "right"
+    start_time = time.time()
+    if parallel:
+        print_rank_0("Using parallel processing", color="CYAN")
+        with ProcessPoolExecutor(max_workers=os.cpu_count(),
+                                 initializer=data_processing_initializer, initargs=(raw_dataset,
+                                                                                    train_phase,
+                                                                                    # tokenizer.name_or_path,
+                                                                                    tokenizer,
+                                                                                    end_of_conversation_token,
+                                                                                    max_seq_len,
+                                                                                    # eos_token_id
+                                                                                    )) as executor:
+            results = list(executor.map(process_single_data_point, current_dataset))
+    else:
+        args = zip(current_dataset,
+                repeat(raw_dataset),
+                repeat(train_phase),
+                repeat(tokenizer),
+                repeat(end_of_conversation_token),
+                repeat(max_seq_len),
+                repeat(tokenizer.encode(end_of_conversation_token)[-1]))
+        results = list(starmap(process_single_data_point, args))
+    
+    chosen_dataset, reject_dataset, prompt_dataset = [], [], []    
+    if train_phase == 1:
+        chosen_dataset = [d[0] for d in results if d[0] is not None]
+        print_rank_0(f"Number of dropped samples: {len(results) - len(chosen_dataset)}", color="GREEN")
+    else:
+        raise NotImplementedError
+    print_rank_0(f"Time to create dataset: {time.time() - start_time}", color="GREEN", include_caller=True)
+    return PromptDataset(prompt_dataset, chosen_dataset, reject_dataset,
+                         tokenizer.pad_token_id, train_phase)
+
+
+def create_dataset_split_(current_dataset, raw_dataset, train_phase, tokenizer,
+                         end_of_conversation_token, max_seq_len):
+    print_rank_0(f"Creating dataset for {get_caller()}", color="RED", include_caller=True)
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
     eos_enc = tokenizer.encode(end_of_conversation_token)
     number_droped = 0
+    start_time = time.time()
     if train_phase == 1:
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
@@ -249,6 +360,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                         y = prompt_token[key_word].squeeze(0).flip(0)
                     prompt_token[key_word] = y
                 prompt_dataset.append(prompt_token)
+    print_rank_0(f"Time to create dataset: {time.time() - start_time}", color="GREEN", include_caller=True)
     return PromptDataset(prompt_dataset, chosen_dataset, reject_dataset,
                          tokenizer.pad_token_id, train_phase)
 
@@ -256,13 +368,10 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
                    max_seq_len, column_names=None):
+    raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names)
     
-    raw_dataset = get_raw_dataset(dataset_name,
-                                  output_path, 
-                                  seed, 
-                                  local_rank, 
-                                  column_names)
     train_dataset = raw_dataset.get_train_data()
+    print_rank_0(f"debbuging len(train_dataset) = {len(train_dataset)}", color="RED", include_caller=True)
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
                                               seed, "train", data_split,
@@ -288,6 +397,37 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                         max_seq_len)
     return train_dataset, eval_dataset
 
+def save_dataset_splits(dataset, max_num_per_split, file_name):
+    #remove all existing files that start with file_name and end in `_i.pt` in the directory of file_name
+    for f in os.listdir(os.path.dirname(file_name)):
+        if f.startswith(os.path.basename(file_name)) and f.endswith(".pt"):
+            print_rank_0(f"Removing {f} data split", color="GREEN", rank=0)
+            os.remove(os.path.join(os.path.dirname(file_name), f))
+    
+    splits = []
+    curr = 0
+    while curr < len(dataset):
+        split_name = f"{file_name}_{curr}.pt"
+        splits.append(split_name)
+        indices = range(curr, min(curr + max_num_per_split, len(dataset)))
+        split_subset = PromptDataset.get_subset(dataset, indices)
+        print_rank_0(f"len(split_subset) = {len(split_subset)}", color="YELLOW", rank=0)
+        print_rank_0(f"Saving {split_name} data split", color="GREEN", rank=0)
+        torch.save(split_subset, split_name)
+        curr += max_num_per_split
+    return splits
+
+
+def get_dataset_splits(file_name):
+    # Use glob to get all files that start with file_name and end with .pt
+    splits = sorted(glob.glob(f"{file_name}_*.pt"))
+    
+    # If no such files are found, return a list with just the file_name
+    if len(splits) == 0:
+        splits.append(file_name)
+    
+    print_rank_0(f"found {splits} data splits", color="MAGENTA")
+    return splits
 
 def create_prompt_dataset(local_rank,
                           data_path,
@@ -301,16 +441,18 @@ def create_prompt_dataset(local_rank,
                           sft_only_data_path=[],
                           reload=False,
                           column_names=None, #added only for sampling
+                          #set max num split to the maximum integer
+                          max_num_per_split=float("inf")
                           ):
     """
     Creates the prompt dataset
     """
-    print_rank_0(f"Creating prompt dataset {data_path} ...", color="GREEN")
+    output_path = str(Path(output_path) / f"rank_{os.environ['GROUP_RANK']}")
     os.makedirs(output_path, exist_ok=True)
     fname = "_".join(data_path)
     sft_cache_key = "_".join(sft_only_data_path)
     tokenizer_name = tokenizer.init_kwargs["name_or_path"].replace("/", "_")
-    fname = f"{fname}_split{data_split}_phase{train_phase}_seed{seed}_tokenizer{tokenizer_name}_seqlen{max_seq_len}_sft{sft_cache_key}"
+    fname = f"{fname}_split{data_split}_phase{train_phase}_seed{seed}_tokenizer{tokenizer_name}_seqlen{max_seq_len}_sft{sft_cache_key}_mnps{max_num_per_split}"
     fname = "_".join(fname.split("/"))
     fname = hashlib.sha256(fname.encode()).hexdigest(
     )  # hash the file name to avoid too long file name
@@ -318,9 +460,18 @@ def create_prompt_dataset(local_rank,
     eval_fname = f"{output_path}/evaldata_{fname}.pt"
 
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
+    if cache_found:
+        print_rank_0(f"Loading cached dataset from {output_path}", color="GREEN")
+    else:
+        print_rank_0(f"Creating dataset at {output_path}", color="GREEN")
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
 
+    if not (buf_create_cache.item() != 0 or reload):
+        print_rank_0(f"Loading cached dataset from {train_fname} rank: {local_rank}", color="GREEN")
+    else:
+        print_rank_0(f"Creating dataset at {train_fname}  rank: {local_rank}", color="GREEN")
+        
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
@@ -380,10 +531,30 @@ def create_prompt_dataset(local_rank,
                 eval_dataset = ConcatDataset([eval_dataset, sft_eval_dataset])
                 shuffle_idx = get_shuffle_idx(seed, len(eval_dataset))
                 eval_dataset = Subset(eval_dataset, shuffle_idx.tolist())
-        torch.save(train_dataset, train_fname)
+        print_rank_0(f"the number of data in train_dataset: {len(train_dataset)}", color="GREEN")
+        print_rank_0(f"Saving dataset to {train_fname} rank: {local_rank}", color="GREEN", rank=0)
+        start = time.time()
+        train_splits = [train_fname]
+        if max_num_per_split < len(train_dataset):
+            print_rank_0(f"Splitting train dataset into {math.ceil(len(train_dataset)/max_num_per_split)} splits", color="GREEN", rank=0)
+            train_splits = save_dataset_splits(train_dataset, max_num_per_split, train_fname)
+        else:
+            torch.save(train_dataset, train_fname)
+        print_rank_0(f"Time to save train dataset: {time.time() - start}", color="GREEN", rank=0)
         torch.save(eval_dataset, eval_fname)
+        #save len_train_dataset to a file
+        len_train_dataset = len(train_dataset)
+        torch.save(len_train_dataset, f"{output_path}/len_train_dataset_{fname}.pt")
+        print_rank_0(f"the number of data in training: {len(train_dataset)}", color="GREEN")
+        
     torch.distributed.barrier()
-    return torch.load(train_fname), torch.load(eval_fname)
+    
+    train_splits = get_dataset_splits(train_fname)
+
+    len_train_dataset = torch.load(f"{output_path}/len_train_dataset_{fname}.pt")
+    print_rank_0(f"the number of data in training: {len_train_dataset}", color="BLUE", include_caller=True, rank=0)
+    
+    return train_splits, eval_fname, len_train_dataset
 
 
 class DataCollatorReward:

@@ -489,6 +489,7 @@ class JsonlDataset(LocalJsonFileDataset):
                 file_name = Path(train_path).name
                 eval_path = file_name.replace('train', suffix)
                 eval_path = str(Path(train_path).parent / eval_path)
+                print_rank_0(f"Checking if eval path {eval_path} exists", color="GREEN")
                 if Path(eval_path).is_file():
                     break
                 

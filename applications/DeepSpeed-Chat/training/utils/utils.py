@@ -3,6 +3,7 @@
 
 # DeepSpeed Team
 import os
+import time
 import inspect
 import random
 import json
@@ -73,7 +74,7 @@ def get_tokenizer(model_name_or_path, fast_tokenizer=True):
     return tokenizer
 
 
-def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
+def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True, special_tokens=None):
     from huggingface_hub.utils._validators import HFValidationError
     if os.path.exists(model_name_or_path):
         # Locally tokenizer loading has some issue, so we need to force download
@@ -91,7 +92,8 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=True):
     else:
         tokenizer = get_tokenizer(model_name_or_path,
                                   fast_tokenizer=fast_tokenizer)
-
+    if special_tokens is not None:
+        tokenizer.add_special_tokens(special_tokens)
     return tokenizer
 
 
@@ -101,17 +103,17 @@ def save_hf_format(model, tokenizer, args, sub_folder=""):
     CONFIG_NAME = "config.json"
     WEIGHTS_NAME = "pytorch_model.bin"
     output_dir = os.path.join(args.output_dir, sub_folder)
-    print(output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    print("made dir")
     output_model_file = os.path.join(output_dir, WEIGHTS_NAME)
     output_config_file = os.path.join(output_dir, CONFIG_NAME)
     save_dict = model_to_save.state_dict()
     for key in list(save_dict.keys()):
         if "lora" in key:
             del save_dict[key]
+    print_rank_0(f"Saving model to {output_dir}", color="GREEN")
+    start = time.time()
     torch.save(save_dict, output_model_file)
-    print("saved model")
+    print_rank_0(f"Saving model took {time.time() - start} seconds", color="GREEN")
     model_to_save.config.to_json_file(output_config_file)
     tokenizer.save_vocabulary(output_dir)
     tokenizer.save_pretrained(output_dir)
