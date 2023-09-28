@@ -20,7 +20,7 @@ import os
 import hashlib
 from itertools import chain, repeat, starmap
 from . import raw_datasets
-from utils.utils import get_caller, print_rank_0
+from utils.utils import get_caller, load_hf_tokenizer, print_rank_0
 
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank, column_names=None):
@@ -233,7 +233,7 @@ def data_processing_initializer(_raw_dataset, _train_phase, _tokenizer, _end_of_
     global g_raw_dataset, g_train_phase, g_tokenizer, g_end_of_conversation_token, g_max_seq_len, g_eos_token_id
     g_raw_dataset = _raw_dataset
     g_train_phase = _train_phase
-    g_tokenizer = _tokenizer
+    g_tokenizer = load_hf_tokenizer(_tokenizer, fast_tokenizer=True)
     g_end_of_conversation_token = _end_of_conversation_token
     g_max_seq_len = _max_seq_len
     g_eos_token_id = _eos_token_id
@@ -248,7 +248,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
         with ProcessPoolExecutor(max_workers=os.cpu_count(),
                                  initializer=data_processing_initializer, initargs=(raw_dataset,
                                                                                     train_phase,
-                                                                                    tokenizer,
+                                                                                    tokenizer.name_or_path,
                                                                                     end_of_conversation_token,
                                                                                     max_seq_len,
                                                                                     eos_token_id)) as executor:
